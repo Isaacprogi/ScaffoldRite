@@ -1,0 +1,40 @@
+folder project {
+  folder src {
+    file game.ts
+    folder hand {
+      file faith.ts
+      file land.ts
+    }
+  }
+  file README.md
+}
+folder src {
+  folder arena {
+  }
+  folder favour {
+  }
+  folder game {
+    file index.ts
+    file plate.ts
+    file taste.ts
+    file play.ts
+    file goose.ts
+    file gate.ts
+    folder player {
+      file tooth.ts
+      file toose.ts
+    }
+  }
+  file index.ts
+}
+folder harvest {
+  file land
+}
+
+
+constraints {
+  require src/index.ts
+  forbid src/game/tape.ts
+  maxFilesByExt .ts 3 src/game
+  immutable src/game/tape.ts
+}
