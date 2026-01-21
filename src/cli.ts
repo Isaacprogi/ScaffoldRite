@@ -1,3 +1,6 @@
+#!/usr/bin/env node
+
+
 import fs from "fs";
 import path from "path";
 import { validateConstraints } from "./validator";
@@ -68,7 +71,7 @@ function printTree(root: FolderNode, indent = "") {
 const command = process.argv[2];
 
 if (!command) {
-  console.log("Usage: node dist/cli.js <command> <args>");
+  console.log("Usage: scaffoldrite <command> <args>");
   process.exit(1);
 }
 

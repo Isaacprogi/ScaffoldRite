@@ -1,12 +1,11 @@
 import { FolderNode, FileNode } from "./ast.js";
-import { parseConstraints ,Constraint} from "./constraints";
+import { parseConstraints, Constraint } from "./constraints";
 
 export type Structure = {
   root: FolderNode;
   constraints: Constraint[];
   rawConstraints: string[];
 };
-
 
 const INVALID_NAME_REGEX = /[^a-zA-Z0-9._-]/;
 
@@ -27,6 +26,7 @@ export function parseStructure(input: string): Structure {
 
   let constraints: string[] = [];
   let inConstraints = false;
+  let braceDepth = 0;
 
   for (let i = 0; i < lines.length; i++) {
     const lineNumber = i + 1;
@@ -35,22 +35,29 @@ export function parseStructure(input: string): Structure {
 
     if (line.length === 0) continue;
 
-        if (line === "constraints {") {
+    // Start constraints block
+    if (line === "constraints {") {
       inConstraints = true;
+      braceDepth = 1;
       continue;
     }
 
-    if (line === "}" && inConstraints) {
-      inConstraints = false;
-      continue;
-    }
-
+    // If we are inside constraints block
     if (inConstraints) {
+      if (line.includes("{")) braceDepth++;
+      if (line.includes("}")) braceDepth--;
+
+      // If braceDepth becomes 0, constraints ended
+      if (braceDepth === 0) {
+        inConstraints = false;
+        continue;
+      }
+
       constraints.push(line);
       continue;
     }
 
-
+    // Folder logic
     if (line.startsWith("folder ")) {
       const match = line.match(/^folder\s+(.+)\s+\{$/);
       if (!match) {
@@ -62,7 +69,6 @@ export function parseStructure(input: string): Structure {
 
       const parent = stack[stack.length - 1];
 
-      // Duplicate folder check
       if (parent.children.some(c => c.type === "folder" && c.name === name)) {
         throw new Error(`[Line ${lineNumber}] Duplicate folder name "${name}" in the same scope`);
       }
@@ -73,6 +79,7 @@ export function parseStructure(input: string): Structure {
       continue;
     }
 
+    // File logic
     if (line.startsWith("file ")) {
       const match = line.match(/^file\s+(.+)$/);
       if (!match) {
@@ -84,7 +91,6 @@ export function parseStructure(input: string): Structure {
 
       const parent = stack[stack.length - 1];
 
-      // Duplicate file check
       if (parent.children.some(c => c.type === "file" && c.name === name)) {
         throw new Error(`[Line ${lineNumber}] Duplicate file name "${name}" in the same scope`);
       }
@@ -94,6 +100,7 @@ export function parseStructure(input: string): Structure {
       continue;
     }
 
+    // Close folder
     if (line === "}") {
       if (stack.length === 1) {
         throw new Error(`[Line ${lineNumber}] Unexpected "}"`);
@@ -109,11 +116,9 @@ export function parseStructure(input: string): Structure {
     throw new Error(`Unclosed folder block`);
   }
 
-return {
-  root,
-  constraints: parseConstraints(constraints.join("\n")),
-  rawConstraints: constraints
-};
-
-
+  return {
+    root,
+    constraints: parseConstraints(constraints.join("\n")),
+    rawConstraints: constraints
+  };
 }

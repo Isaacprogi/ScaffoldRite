@@ -1,20 +1,21 @@
 {
-  "name": "structure-gen",
+   "name": "scaffoldrite",
   "version": "1.0.0",
   "type": "commonjs",
-  "bin": {
-    "structure-gen": "./dist/cli.js"
+   "bin": {
+    "scaffoldrite": "./dist/cli.js"
   },
   "scripts": {
-    "build": "tsc",
-    "start": "node dist/cli.js",
-    "dev": "ts-node src/cli.ts",
-    "prepare": "husky install",
-    "validate": "npm run build"
-  },
+  "dev": "tsx src/cli.ts",
+  "build": "tsc",
+  "start": "node dist/cli.js",
+  "type-check": "tsc --noEmit",
+  "validate": "npm run type-check && npm run build",
+  "test":"node dist/cli.js generate"
+},
   "devDependencies": {
     "@types/node": "^25.0.9",
-    "ts-node": "^10.9.2",
+    "tsx": "^4.21.0",
     "typescript": "^5.9.3"
   }
 }

@@ -1,21 +1,56 @@
-import { FolderNode, FileNode, Node } from "./ast";
-
 export type Constraint =
   | { type: "require"; path: string }
   | { type: "forbid"; path: string }
   | { type: "immutable"; path: string }
   | { type: "maxFiles"; path: string; value: number }
-  | { type: "maxFilesByExt"; path: string; value: number; ext: string };
+  | { type: "maxFilesByExt"; path: string; value: number; ext: string }
+  | { type: "maxFilesRecursive"; path: string; value: number }
+  | { type: "maxFilesByExtRecursive"; path: string; value: number; ext: string }
+  | { type: "maxFolders"; path: string; value: number }
+  | { type: "maxFoldersRecursive"; path: string; value: number }
+  | { type: "minFiles"; path: string; value: number }
+  | { type: "minFolders"; path: string; value: number }
+  | { type: "mustContain"; path: string; value: string }
+  | { type: "fileNameRegex"; path: string; regex: string }
+  | { type: "maxDepth"; path: string; value: number }
+  | { type: "mustHaveFile"; path: string; value: string }
+
+function splitArgs(line: string): string[] {
+  const args: string[] = [];
+  let current = "";
+  let inQuotes = false;
+
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+
+    if (ch === '"' || ch === "'") {
+      inQuotes = !inQuotes;
+      continue;
+    }
+
+    if (ch === " " && !inQuotes) {
+      if (current.length > 0) {
+        args.push(current);
+        current = "";
+      }
+      continue;
+    }
+
+    current += ch;
+  }
+
+  if (current.length > 0) args.push(current);
+  return args;
+}
 
 export function parseConstraints(input: string): Constraint[] {
-  const lines = input
-    .split("\n")
-    .map(l => l.trim())
-    .filter(l => l.length > 0);
-
+  const lines = input.split("\n");
   const constraints: Constraint[] = [];
 
-  for (const line of lines) {
+  for (let line of lines) {
+    line = line.trim();
+    if (!line) continue;
+
     if (line.startsWith("require ")) {
       const path = line.replace("require ", "").trim();
       constraints.push({ type: "require", path });
@@ -34,8 +69,25 @@ export function parseConstraints(input: string): Constraint[] {
       continue;
     }
 
+    if (line.startsWith("maxFilesByExtRecursive ")) {
+      const parts = splitArgs(line);
+      const ext = parts[1];
+      const value = Number(parts[2]);
+      const path = parts[3];
+      constraints.push({ type: "maxFilesByExtRecursive", path, value, ext });
+      continue;
+    }
+
+    if (line.startsWith("maxFilesRecursive ")) {
+      const parts = splitArgs(line);
+      const value = Number(parts[1]);
+      const path = parts[2];
+      constraints.push({ type: "maxFilesRecursive", path, value });
+      continue;
+    }
+
     if (line.startsWith("maxFilesByExt ")) {
-      const parts = line.split(" ");
+      const parts = splitArgs(line);
       const ext = parts[1];
       const value = Number(parts[2]);
       const path = parts[3];
@@ -44,12 +96,81 @@ export function parseConstraints(input: string): Constraint[] {
     }
 
     if (line.startsWith("maxFiles ")) {
-      const parts = line.split(" ");
+      const parts = splitArgs(line);
       const value = Number(parts[1]);
       const path = parts[2];
       constraints.push({ type: "maxFiles", path, value });
       continue;
     }
+
+    if (line.startsWith("maxFoldersRecursive ")) {
+      const parts = splitArgs(line);
+      const value = Number(parts[1]);
+      const path = parts[2];
+      constraints.push({ type: "maxFoldersRecursive", path, value });
+      continue;
+    }
+
+    if (line.startsWith("maxFolders ")) {
+      const parts = splitArgs(line);
+      const value = Number(parts[1]);
+      const path = parts[2];
+      constraints.push({ type: "maxFolders", path, value });
+      continue;
+    }
+
+    if (line.startsWith("minFiles ")) {
+      const parts = splitArgs(line);
+      const value = Number(parts[1]);
+      const path = parts[2];
+      constraints.push({ type: "minFiles", path, value });
+      continue;
+    }
+
+    if (line.startsWith("minFolders ")) {
+      const parts = splitArgs(line);
+      const value = Number(parts[1]);
+      const path = parts[2];
+      constraints.push({ type: "minFolders", path, value });
+      continue;
+    }
+
+    // ✅ FIXED ORDER
+    if (line.startsWith("mustContain ")) {
+      const parts = splitArgs(line);
+      const path = parts[1];  // <-- CORRECT
+      const value = parts[2];
+      constraints.push({ type: "mustContain", path, value });
+      continue;
+    }
+
+    if (line.startsWith("fileNameRegex ")) {
+      const parts = splitArgs(line);
+      const path = parts[1];  // <-- CORRECT
+      const regex = parts[2];
+      constraints.push({ type: "fileNameRegex", path, regex });
+      continue;
+    }
+
+    if (line.startsWith("maxDepth ")) {
+      const parts = splitArgs(line);
+      const value = Number(parts[1]);
+      const path = parts[2];
+      constraints.push({ type: "maxDepth", path, value });
+      continue;
+    }
+
+    if (line.startsWith("mustHaveFile ")) {
+      const parts = splitArgs(line);
+      const path = parts[1]; // <-- CORRECT
+      const value = parts[2];
+      constraints.push({ type: "mustHaveFile", path, value });
+      continue;
+    }
+
+    
+
+   
 
     throw new Error(`Unknown constraint: ${line}`);
   }
