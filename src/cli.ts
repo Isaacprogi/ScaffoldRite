@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 
-
 import fs from "fs";
 import path from "path";
 import { validateConstraints } from "./validator";
@@ -9,8 +8,16 @@ import { generateFS } from "./generator.js";
 import { FolderNode } from "./ast.js";
 import { addNode, deleteNode, renameNode } from "./structure.js";
 
+/* ===================== HELPERS ===================== */
+
+function warnIfNotEmpty(dir: string) {
+  if (fs.existsSync(dir) && fs.readdirSync(dir).length > 0) {
+    console.warn("⚠️ Output directory is not empty:", dir);
+  }
+}
+
 /**
- * Saves folders + constraints back to structure.txt
+ * Saves folders + constraints back to structure.sr
  */
 function saveStructure(
   root: FolderNode,
@@ -33,13 +40,11 @@ function saveStructure(
     lines.push(`${indent}}`);
   }
 
-  // write folders/files
   for (const child of root.children) {
     if (child.type === "folder") writeFolder(child);
     else lines.push(`file ${child.name}`);
   }
 
-  // write constraints back (CRITICAL FIX)
   if (rawConstraints.length > 0) {
     lines.push("");
     lines.push("constraints {");
@@ -68,6 +73,8 @@ function printTree(root: FolderNode, indent = "") {
   }
 }
 
+/* ===================== CLI SETUP ===================== */
+
 const command = process.argv[2];
 
 if (!command) {
@@ -75,10 +82,9 @@ if (!command) {
   process.exit(1);
 }
 
-const structurePath = "./structure.txt";
-const outputDir = "./output";
+const structurePath = process.argv[3] ?? "./structure.sr";
 
-/* ===================== GENERATE ===================== */
+/* ===================== LIST ===================== */
 
 if (command === "list") {
   const structure = loadAST(structurePath);
@@ -86,6 +92,8 @@ if (command === "list") {
   printTree(structure.root);
   process.exit(0);
 }
+
+/* ===================== VALIDATE ===================== */
 
 if (command === "validate") {
   const structure = loadAST(structurePath);
@@ -98,13 +106,18 @@ if (command === "validate") {
   process.exit(0);
 }
 
+/* ===================== GENERATE ===================== */
+
 if (command === "generate") {
   const structure = loadAST(structurePath);
 
   validateConstraints(structure.root, structure.constraints);
 
+  const outputDir = path.resolve(process.argv[4] ?? process.cwd());
+  warnIfNotEmpty(outputDir);
+
   generateFS(structure.root, outputDir);
-  console.log("Generated filesystem.");
+  console.log("Generated filesystem at:", outputDir);
 }
 
 /* ===================== CREATE ===================== */
@@ -115,20 +128,16 @@ if (command === "create") {
 
   const structure = loadAST(structurePath);
 
-  // validate existing structure
   validateConstraints(structure.root, structure.constraints);
 
-  // mutate
   addNode(structure.root, pathStr, type);
 
-  // validate again (IMPORTANT)
   validateConstraints(structure.root, structure.constraints);
 
-  saveStructure(
-    structure.root,
-    structure.rawConstraints,
-    structurePath
-  );
+  saveStructure(structure.root, structure.rawConstraints, structurePath);
+
+  const outputDir = path.resolve(process.argv[5] ?? process.cwd());
+  warnIfNotEmpty(outputDir);
 
   generateFS(structure.root, outputDir);
   console.log("Created successfully.");
@@ -147,11 +156,10 @@ if (command === "delete") {
 
   validateConstraints(structure.root, structure.constraints);
 
-  saveStructure(
-    structure.root,
-    structure.rawConstraints,
-    structurePath
-  );
+  saveStructure(structure.root, structure.rawConstraints, structurePath);
+
+  const outputDir = path.resolve(process.argv[5] ?? process.cwd());
+  warnIfNotEmpty(outputDir);
 
   generateFS(structure.root, outputDir);
   console.log("Deleted successfully.");
@@ -171,11 +179,10 @@ if (command === "rename") {
 
   validateConstraints(structure.root, structure.constraints);
 
-  saveStructure(
-    structure.root,
-    structure.rawConstraints,
-    structurePath
-  );
+  saveStructure(structure.root, structure.rawConstraints, structurePath);
+
+  const outputDir = path.resolve(process.argv[5] ?? process.cwd());
+  warnIfNotEmpty(outputDir);
 
   generateFS(structure.root, outputDir);
   console.log("Renamed successfully.");
