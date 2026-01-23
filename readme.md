@@ -2,7 +2,7 @@
 
 Scaffoldrite is a **project structure validator & generator**.
 
-You define your project structure using a simple `structure.txt` format, then run commands to validate, generate, or modify the structure.
+You define your project structure using a simple `structure.sr` format, then run commands to validate, generate, or modify the structure.
 
 ---
 
@@ -63,3 +63,16 @@ scaffoldrite list
 scaffoldrite create <path> <file|folder>
 scaffoldrite delete <path>
 scaffoldrite rename <path> <newName>
+
+
+
+🧠 Summary Table
+Command	What it does
+scaffoldrite init	Creates starter template
+scaffoldrite init --empty	Creates empty structure.sr
+scaffoldrite init --from-fs	Snapshot current folder into structure.sr
+scaffoldrite init --from-fs ./path	Snapshot target folder
+--ignore=dist,build	Exclude those folders from snapshot
+--include=node_modules	Include node_modules (override default ignore)
+--force	Overwrite existing structure.sr
+--yes	Skip confirmation prompts

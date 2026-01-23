@@ -33,6 +33,9 @@ export function parseStructure(input: string): Structure {
     const raw = lines[i];
     const line = raw.trim();
 
+      const codeLine = line.split("//")[0].trim();
+      if (codeLine.length === 0) continue;
+
     if (line.length === 0) continue;
 
     // Start constraints block

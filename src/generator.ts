@@ -4,22 +4,54 @@ import { visit } from "./visitor.js";
 import { FolderNode } from "./ast.js";
 
 export function generateFS(ast: FolderNode, outputDir: string) {
-  if (fs.existsSync(outputDir)) {
-    fs.rmSync(outputDir, { recursive: true, force: true });
-  }
+  const root = path.resolve(outputDir);
+  const expected = new Set<string>();
 
-  function createFolder(folderPath: string) {
+  function ensureFolder(folderPath: string) {
     if (!fs.existsSync(folderPath)) {
       fs.mkdirSync(folderPath, { recursive: true });
     }
   }
 
-  function createFile(filePath: string) {
-    fs.writeFileSync(filePath, "");
+  function ensureFile(filePath: string) {
+    if (!fs.existsSync(filePath)) {
+      fs.writeFileSync(filePath, "");
+    }
   }
 
+  // ✅ Ensure root exists and protect it
+  ensureFolder(root);
+  expected.add(root);
+
+  // 1️⃣ Create required structure
   visit(ast, {
-    folder: (_, nodePath) => createFolder(path.join(outputDir, nodePath)),
-    file: (_, nodePath) => createFile(path.join(outputDir, nodePath)),
+    folder: (_, nodePath) => {
+      const fullPath = path.join(root, nodePath);
+      expected.add(fullPath);
+      ensureFolder(fullPath);
+    },
+    file: (_, nodePath) => {
+      const fullPath = path.join(root, nodePath);
+      expected.add(fullPath);
+      ensureFile(fullPath);
+    },
   });
+
+  // 2️⃣ Remove extras (never root)
+  function clean(dir: string) {
+    for (const entry of fs.readdirSync(dir)) {
+      const fullPath = path.join(dir, entry);
+
+      if (!expected.has(fullPath)) {
+        fs.rmSync(fullPath, { recursive: true, force: true });
+        continue;
+      }
+
+      if (fs.statSync(fullPath).isDirectory()) {
+        clean(fullPath);
+      }
+    }
+  }
+
+  clean(root);
 }

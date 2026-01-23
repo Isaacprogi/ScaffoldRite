@@ -2,23 +2,67 @@
 
 import fs from "fs";
 import path from "path";
-import { validateConstraints } from "./validator";
-import { parseStructure } from "./parser";
+import readline from "readline";
+import { validateConstraints } from "./validator.js";
+import { parseStructure } from "./parser.js";
 import { generateFS } from "./generator.js";
 import { FolderNode } from "./ast.js";
 import { addNode, deleteNode, renameNode } from "./structure.js";
+import { validateFS } from "./validateFS.js";
+import { buildASTFromFS,DEFAULT_IGNORES } from "./fsToAst.js";
+import {DEFAULT_TEMPLATE} from './data/index.js'
+
+
+/* ===================== CONSTANTS ===================== */
+
+const structurePath = "./structure.sr";
+
+/* ===================== FLAG HELPERS ===================== */
+
+function hasFlag(flag: string) {
+  return process.argv.includes(flag);
+}
+
+function getFlagValue(flagPrefix: string): string[] {
+  return process.argv
+    .filter((arg) => arg.startsWith(flagPrefix))
+    .map((arg) => arg.split("=")[1])
+    .filter(Boolean);
+}
+
+function parseCSVFlag(flagName:string) {
+  return getFlagValue(flagName)
+    .flatMap((v) => v.split(","))
+    .map((v) => v.trim())
+    .filter(Boolean);
+}
 
 /* ===================== HELPERS ===================== */
 
-function warnIfNotEmpty(dir: string) {
-  if (fs.existsSync(dir) && fs.readdirSync(dir).length > 0) {
-    console.warn("⚠️ Output directory is not empty:", dir);
-  }
+function confirmProceed(dir: string): Promise<boolean> {
+  // Skip prompt if user asked for it
+  if (hasFlag("--yes") || hasFlag("-y")) return Promise.resolve(true);
+
+  if (!fs.existsSync(dir)) return Promise.resolve(true);
+  if (fs.readdirSync(dir).length === 0) return Promise.resolve(true);
+
+  console.warn("⚠️ Output directory is not empty:", dir);
+
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+
+  return new Promise((resolve) => {
+    rl.question("Proceed and apply changes? (y/N): ", (answer) => {
+      rl.close();
+      resolve(answer.toLowerCase() === "y" || answer.toLowerCase() === "yes");
+    });
+  });
 }
 
-/**
- * Saves folders + constraints back to structure.sr
- */
+/* ===================== STRUCTURE IO ===================== */
+
 function saveStructure(
   root: FolderNode,
   rawConstraints: string[],
@@ -28,15 +72,10 @@ function saveStructure(
 
   function writeFolder(folder: FolderNode, indent = "") {
     lines.push(`${indent}folder ${folder.name} {`);
-
     for (const child of folder.children) {
-      if (child.type === "folder") {
-        writeFolder(child, indent + "  ");
-      } else {
-        lines.push(`${indent}  file ${child.name}`);
-      }
+      if (child.type === "folder") writeFolder(child, indent + "  ");
+      else lines.push(`${indent}  file ${child.name}`);
     }
-
     lines.push(`${indent}}`);
   }
 
@@ -57,8 +96,8 @@ function saveStructure(
   fs.writeFileSync(filePath, lines.join("\n"));
 }
 
-function loadAST(filePath: string) {
-  const content = fs.readFileSync(filePath, "utf-8");
+function loadAST() {
+  const content = fs.readFileSync(structurePath, "utf-8");
   return parseStructure(content);
 }
 
@@ -73,117 +112,226 @@ function printTree(root: FolderNode, indent = "") {
   }
 }
 
-/* ===================== CLI SETUP ===================== */
+
+/* ===================== CLI ===================== */
 
 const command = process.argv[2];
 
-if (!command) {
-  console.log("Usage: scaffoldrite <command> <args>");
+  if (!command) {
+  console.log(`
+Usage:
+  scaffoldrite init [--force] [--yes]
+  scaffoldrite validate [dir]
+  scaffoldrite generate [dir]
+  scaffoldrite list
+  scaffoldrite create <path> <file|folder> [dir]
+  scaffoldrite delete <path> [dir]
+  scaffoldrite rename <path> <newName> [dir]
+`);
   process.exit(1);
 }
 
-const structurePath = process.argv[3] ?? "./structure.sr";
 
-/* ===================== LIST ===================== */
 
-if (command === "list") {
-  const structure = loadAST(structurePath);
-  console.log("Current structure:");
-  printTree(structure.root);
-  process.exit(0);
-}
 
-/* ===================== VALIDATE ===================== */
 
-if (command === "validate") {
-  const structure = loadAST(structurePath);
-  try {
-    validateConstraints(structure.root, structure.constraints);
-    console.log("✅ All constraints are satisfied");
-  } catch (err: any) {
-    console.log("❌ Validation failed:", err.message);
+const force = hasFlag("--force");
+const ifNotExists = hasFlag("--if-not-exists");
+const allowExtra = hasFlag("--allow-extra");
+const allowExtraPaths = getFlagValue("--allow-extra=");
+
+const args = process.argv.slice(3).filter((a) => !a.startsWith("--"));
+const arg3 = args[0];
+const arg4 = args[1];
+const arg5 = args[2];
+
+(async () => {
+
+/* ===== INIT ===== */
+ if (command === "init") {
+    const empty = hasFlag("--empty");
+    const fromFs = hasFlag("--from-fs");
+
+    if (fs.existsSync(structurePath) && !force) {
+    if (hasFlag("--yes") || hasFlag("-y")) {
+      // allow overwrite without prompt
+    } else {
+      console.error("❌ structure.sr already exists. Use --force to overwrite.");
+      process.exit(1);
+    }
   }
-  process.exit(0);
+
+    // 1️⃣ Empty init
+    if (empty) {
+      fs.writeFileSync(structurePath, "constraints {\n}\n");
+      console.log("✅ Empty structure.sr created");
+      return;
+    }
+
+    // 2️⃣ Init from filesystem
+    if (fromFs) {
+  const targetDir = path.resolve(args[0] ?? process.cwd());
+
+  const ignoreList = [...DEFAULT_IGNORES];
+  const ignoreExtra = parseCSVFlag("--ignore");
+  const includeExtra = parseCSVFlag("--include");
+
+  ignoreList.push(...ignoreExtra);
+  for (const item of includeExtra) {
+    const idx = ignoreList.indexOf(item);
+    if (idx !== -1) ignoreList.splice(idx, 1);
+  }
+
+  const ast = buildASTFromFS(targetDir, ignoreList);
+  saveStructure(ast, [], structurePath);
+
+  console.log(`✅ structure.sr generated from filesystem: ${targetDir}`);
+  console.log("ℹ️ No validation was performed");
+  return;
 }
 
-/* ===================== GENERATE ===================== */
 
-if (command === "generate") {
-  const structure = loadAST(structurePath);
+    // 3️⃣ Default template
+    fs.writeFileSync(structurePath, DEFAULT_TEMPLATE);
+    console.log("✅ structure.sr created");
+    return;
+  }
 
-  validateConstraints(structure.root, structure.constraints);
 
-  const outputDir = path.resolve(process.argv[4] ?? process.cwd());
-  warnIfNotEmpty(outputDir);
+  /* ===== LIST ===== */
+  if (command === "list") {
+    const structure = loadAST();
+    console.log("Current structure:");
+    printTree(structure.root);
+    return;
+  }
 
-  generateFS(structure.root, outputDir);
-  console.log("Generated filesystem at:", outputDir);
-}
+  /* ===== VALIDATE ===== */
+  if (command === "validate") {
+    const structure = loadAST();
+    try {
+      validateConstraints(structure.root, structure.constraints);
 
-/* ===================== CREATE ===================== */
+      // NEW: validate actual filesystem too
+      const outputDir = path.resolve(arg3 ?? process.cwd());
+      validateFS(
+        structure.root,
+        outputDir,
+        allowExtra,
+        allowExtraPaths
+      );
 
-if (command === "create") {
-  const pathStr = process.argv[3];
-  const type = process.argv[4] as "folder" | "file";
+      console.log("✅ All constraints and filesystem structure are valid");
+    } catch (err: any) {
+      console.error("❌ Validation failed:", err.message);
+    }
+    return;
+  }
 
-  const structure = loadAST(structurePath);
+  /* ===== GENERATE ===== */
+  if (command === "generate") {
+    const structure = loadAST();
+    validateConstraints(structure.root, structure.constraints);
 
-  validateConstraints(structure.root, structure.constraints);
+    const outputDir = path.resolve(arg3 ?? process.cwd());
 
-  addNode(structure.root, pathStr, type);
+    if (!(await confirmProceed(outputDir))) {
+      console.log("❌ Generation cancelled.");
+      return;
+    }
 
-  validateConstraints(structure.root, structure.constraints);
+    generateFS(structure.root, outputDir);
+    console.log("Generated filesystem at:", outputDir);
+    return;
+  }
 
-  saveStructure(structure.root, structure.rawConstraints, structurePath);
+  /* ===== CREATE ===== */
+  if (command === "create") {
+    if (!arg3 || !arg4) {
+      console.error(
+        "Usage: scaffoldrite create <path> <file|folder> [outputDir] [--force] [--if-not-exists] [--yes]"
+      );
+      process.exit(1);
+    }
 
-  const outputDir = path.resolve(process.argv[5] ?? process.cwd());
-  warnIfNotEmpty(outputDir);
+    const structure = loadAST();
+    validateConstraints(structure.root, structure.constraints);
 
-  generateFS(structure.root, outputDir);
-  console.log("Created successfully.");
-}
+    addNode(structure.root, arg3, arg4 as "file" | "folder", {
+      force,
+      ifNotExists,
+    });
 
-/* ===================== DELETE ===================== */
+    validateConstraints(structure.root, structure.constraints);
 
-if (command === "delete") {
-  const pathStr = process.argv[3];
+    const outputDir = path.resolve(arg5 ?? process.cwd());
 
-  const structure = loadAST(structurePath);
+    if (!(await confirmProceed(outputDir))) {
+      console.log("❌ Creation cancelled.");
+      return;
+    }
 
-  validateConstraints(structure.root, structure.constraints);
+    saveStructure(structure.root, structure.rawConstraints, structurePath);
+    generateFS(structure.root, outputDir);
+    console.log("Created successfully.");
+    return;
+  }
 
-  deleteNode(structure.root, pathStr);
+  /* ===== DELETE ===== */
+  if (command === "delete") {
+    if (!arg3) {
+      console.error("Usage: scaffoldrite delete <path> [outputDir] [--yes]");
+      process.exit(1);
+    }
 
-  validateConstraints(structure.root, structure.constraints);
+    const structure = loadAST();
+    validateConstraints(structure.root, structure.constraints);
 
-  saveStructure(structure.root, structure.rawConstraints, structurePath);
+    deleteNode(structure.root, arg3);
 
-  const outputDir = path.resolve(process.argv[5] ?? process.cwd());
-  warnIfNotEmpty(outputDir);
+    validateConstraints(structure.root, structure.constraints);
 
-  generateFS(structure.root, outputDir);
-  console.log("Deleted successfully.");
-}
+    const outputDir = path.resolve(arg4 ?? process.cwd());
 
-/* ===================== RENAME ===================== */
+    if (!(await confirmProceed(outputDir))) {
+      console.log("❌ Deletion cancelled.");
+      return;
+    }
 
-if (command === "rename") {
-  const pathStr = process.argv[3];
-  const newName = process.argv[4];
+    saveStructure(structure.root, structure.rawConstraints, structurePath);
+    generateFS(structure.root, outputDir);
+    console.log("Deleted successfully.");
+    return;
+  }
 
-  const structure = loadAST(structurePath);
+  /* ===== RENAME ===== */
+  if (command === "rename") {
+    if (!arg3 || !arg4) {
+      console.error(
+        "Usage: scaffoldrite rename <path> <newName> [outputDir] [--yes]"
+      );
+      process.exit(1);
+    }
 
-  validateConstraints(structure.root, structure.constraints);
+    const structure = loadAST();
+    validateConstraints(structure.root, structure.constraints);
 
-  renameNode(structure.root, pathStr, newName);
+    renameNode(structure.root, arg3, arg4);
 
-  validateConstraints(structure.root, structure.constraints);
+    validateConstraints(structure.root, structure.constraints);
 
-  saveStructure(structure.root, structure.rawConstraints, structurePath);
+    const outputDir = path.resolve(arg5 ?? process.cwd());
 
-  const outputDir = path.resolve(process.argv[5] ?? process.cwd());
-  warnIfNotEmpty(outputDir);
+    if (!(await confirmProceed(outputDir))) {
+      console.log("❌ Rename cancelled.");
+      return;
+    }
 
-  generateFS(structure.root, outputDir);
-  console.log("Renamed successfully.");
-}
+    saveStructure(structure.root, structure.rawConstraints, structurePath);
+    generateFS(structure.root, outputDir);
+    console.log("Renamed successfully.");
+    return;
+  }
+
+  console.error(`Unknown command: ${command}`);
+})();
