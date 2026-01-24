@@ -466,32 +466,40 @@ maxFilesByExtRecursive src .ts 5
 
 ### “Each Folder” Constraints
 
+These constraints apply a rule to every folder in a given scope.
+
+| Scope            | Meaning                                                    |
+| ---------------- | ---------------------------------------------------------- |
+| `*`              | Apply to **every folder in the root** (non-recursive)      |
+| `*` with a path  | Apply to **every folder inside that path** (non-recursive) |
+| `**`             | Apply **recursively** to all nested folders                |
+| `**` with a path | Apply recursively to all nested folders inside that path   |
 
 
-- `eachFolderMustContain <scope> <path> <value>`: Ensures each folder contains the value.
+<path> is optional. If omitted, it defaults to the current directory.
+
+- `eachFolderMustContain <scope> <path> <value>`: Ensures every folder in the scope contains a specific file or folder.
 
 ```bash
 eachFolderMustContain ** src index.ts
 ```
 
 
-
-- `eachFolderMustContainFile <scope> <path> <fileName>`: Ensures each folder contains a file.
+- `eachFolderMustContainFile <scope> <path> <fileName>`: Ensures every folder in the scope contains a file.
 
 ```bash
 eachFolderMustContainFile * src index.ts
 ```
 
 
-
-- `eachFolderMustContainFolder <scope> <path> <folderName>`: Ensures each folder contains a folder.
+- `eachFolderMustContainFolder <scope> <path> <folderName>`: Ensures every folder in the scope contains a folder.
 
 ```bash
 eachFolderMustContainFolder * src components
 ```
 
 
-- `eachFolderMustHaveExt <scope> <path> <ext>`: Ensures each folder contains a file with extension.
+- `eachFolderMustHaveExt <scope> <path> <ext>`: Ensures every folder in the scope contains at least one file with the given extension.
 
 ```bash
 eachFolderMustHaveExt ** src .ts
@@ -509,15 +517,15 @@ constraints {
 }
 ```
 
+### Notes
 
+- <path>  are relative to the root folder.
 
-## Notes
+- For commands that accept a <path>, the path is optional. If omitted, it defaults to the current directory.
 
-Paths are relative to the root folder
+- The root folder is treated as a virtual folder (__root__) and is ignored in output.
 
-Root is treated as a virtual folder (__root__) and ignored in output.
-
---yes skips all confirmation prompts.
+- --yes skips all confirmation prompts.
 
 
 
