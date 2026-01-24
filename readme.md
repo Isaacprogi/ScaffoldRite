@@ -124,7 +124,7 @@ scaffoldrite init
 scaffoldrite init --from-fs ./src --ignore=node_modules,dist
 ```
 
-- scaffoldrite validate: Validates the structure.sr file against the rules and the actual filesystem.
+- ** `scaffoldrite validate`: Validates the structure.sr file against the rules and the actual filesystem. **
 
 🔹 Usage
 
