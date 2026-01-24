@@ -61,6 +61,7 @@ flowchart LR
   C -->|Valid| D
   C -->|Invalid| F[Error Report]
 
+```
 
 ## 🚀 Installation
 
