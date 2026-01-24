@@ -1,24 +1,51 @@
 {
-   "name": "scaffoldrite",
-   "version": "1.0.0",
-   "type": "commonjs",
-   "bin": {
-      "scaffoldrite": "./dist/cli.js"
-   },
-   "scripts": {
-      "dev": "tsx src/cli.ts",
-      "build": "tsc",
-      "start": "node dist/cli.js",
-      "type-check": "tsc --noEmit",
-      "validate": "npm run type-check && npm run build",
-      "test": "jest"
-   },
-   "devDependencies": {
-      "@types/jest": "^30.0.0",
-      "@types/node": "^25.0.9",
-      "jest": "^30.2.0",
-      "ts-jest": "^29.4.6",
-      "tsx": "^4.21.0",
-      "typescript": "^5.9.3"
-   }
+  "name": "scaffoldrite",
+  "version": "1.0.0",
+  "description": "A project structure validator and generator CLI tool.",
+  "author": "Isaac Anasonye",
+  "license": "MIT",
+  "homepage": "https://github.com/Isaacprogi/scaffoldrite#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Isaacprogi/scaffoldrite.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Isaacprogi/scaffoldrite/issues"
+  },
+  "keywords": [
+    "cli",
+    "scaffold",
+    "project-structure",
+    "validator",
+    "generator",
+    "developer-tools",
+    "devtools",
+    "node"
+  ],
+  "type": "commonjs",
+  "bin": {
+    "scaffoldrite": "./dist/cli.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "dev": "tsx src/cli.ts",
+    "build": "tsc",
+    "start": "node dist/cli.js",
+    "type-check": "tsc --noEmit",
+    "validate": "npm run type-check && npm run build",
+    "test": "jest"
+  },
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "@types/node": "^25.0.9",
+    "jest": "^30.2.0",
+    "ts-jest": "^29.4.6",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  },
+  "engines": {
+    "node": ">=17"
+  }
 }
