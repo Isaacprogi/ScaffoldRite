@@ -166,27 +166,51 @@ scaffoldrite init --from-fs ./src --force
 scaffoldrite validate
 scaffoldrite validate --allow-extra
 scaffoldrite validate --allow-extra index.ts logs
-
 ```
+
 - `scaffoldrite generate`
 
 | Flag    | Description               |
 | ------- | ------------------------- |
 | `--yes` | Skip confirmation prompts |
 
+```bash
+scaffoldrite generate
+scaffoldrite generate ./output --yes
+```
+
 - `scaffoldrite create`
+
 | Flag              | Description                              |
 | ----------------- | ---------------------------------------- |
 | `--force`         | Overwrite existing file or folder        |
 | `--if-not-exists` | Skip creation if the path already exists |
 | `--yes`           | Skip confirmation prompts                |
 
+```bash
+scaffoldrite create src/utils folder
+scaffoldrite create src/index.ts file --force
+```
+
 - `scaffoldrite delete`
-- 
+
 | Flag    | Description               |
 | ------- | ------------------------- |
 | `--yes` | Skip confirmation prompts |
 
+```bash
+ scaffoldrite delete src/utils --yes
+```
+
+- `scaffoldrite rename`
+
+| Flag    | Description               |
+| ------- | ------------------------- |
+| `--yes` | Skip confirmation prompts |
+
+```bash
+scaffoldrite rename src/index.ts main.ts
+```
 
 - `scaffoldrite list`
 
