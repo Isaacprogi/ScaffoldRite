@@ -1,30 +1,32 @@
 # Scaffoldrite
 
-Scaffoldrite is a **project structure validator & generator**.
+**Scaffoldrite** is a **project structure validator & generator**.
 
 You define your project structure using a simple `structure.sr` format, then run commands to validate, generate, or modify the structure.
 
----
-
-## Who should use it?
-
-### ✅ Framework / Library creators
-To enforce strict project structure for generated projects.
-
-### ✅ Monorepo maintainers
-To enforce consistent folder rules across multiple packages.
-
-### ✅ Teams & Bootcamps
-To enforce a standard architecture and reduce mistakes.
-
-### ✅ Project generators
-To validate output before publishing.
+> **Note:** The `structure.sr` file is the source of truth — **not the directory itself**.
 
 ---
 
-## Features
+## 🚀 Who should use it?
 
-- Define folder + file structure using `structure.txt`
+### ✅ Framework / Library creators  
+Enforce strict project structure for generated projects.
+
+### ✅ Monorepo maintainers  
+Enforce consistent folder rules across multiple packages.
+
+### ✅ Teams & Bootcamps  
+Enforce a standard architecture and reduce mistakes.
+
+### ✅ Project generators  
+Validate output before publishing.
+
+---
+
+## ⭐ Features
+
+- Define folder + file structure using `structure.sr`
 - Validate structure against rules (constraints)
 - Generate filesystem output
 - Create / delete / rename files & folders
@@ -38,14 +40,27 @@ To validate output before publishing.
 
 ---
 
-It supports:
-- Creating starter templates
-- Validating folder/file structure
-- Generating folders and files
-- Modifying the structure file
-- Snapshotting an existing filesystem
+## 📦 Supported Actions
+
+- Creating starter templates  
+- Validating folder/file structure  
+- Generating folders and files  
+- Modifying the structure file  
+- Snapshotting an existing filesystem  
 
 ---
+
+## 📌 Source of Truth Flow Diagram
+
+```mermaid
+flowchart LR
+  A[structure.sr] --> B[Validator]
+  B --> C[Constraints Check]
+  B --> D[Generator]
+  D --> E[Filesystem Output]
+  C -->|Valid| D
+  C -->|Invalid| F[Error Report]
+
 
 ## 🚀 Installation
 
