@@ -9,8 +9,8 @@ import { generateFS } from "./generator.js";
 import { FolderNode } from "./ast.js";
 import { addNode, deleteNode, renameNode } from "./structure.js";
 import { validateFS } from "./validateFS.js";
-import { buildASTFromFS,DEFAULT_IGNORES } from "./fsToAst.js";
-import {DEFAULT_TEMPLATE} from './data/index.js'
+import { buildASTFromFS, DEFAULT_IGNORES } from "./fsToAst.js";
+import { DEFAULT_TEMPLATE } from './data/index.js'
 
 
 /* ===================== CONSTANTS ===================== */
@@ -23,6 +23,7 @@ function hasFlag(flag: string) {
   return process.argv.includes(flag);
 }
 
+
 function getFlagValue(flagPrefix: string): string[] {
   return process.argv
     .filter((arg) => arg.startsWith(flagPrefix))
@@ -30,7 +31,7 @@ function getFlagValue(flagPrefix: string): string[] {
     .filter(Boolean);
 }
 
-function parseCSVFlag(flagName:string) {
+function parseCSVFlag(flagName: string) {
   return getFlagValue(flagName)
     .flatMap((v) => v.split(","))
     .map((v) => v.trim())
@@ -46,7 +47,7 @@ function confirmProceed(dir: string): Promise<boolean> {
   if (!fs.existsSync(dir)) return Promise.resolve(true);
   if (fs.readdirSync(dir).length === 0) return Promise.resolve(true);
 
-  console.warn("⚠️ Output directory is not empty:", dir);
+  console.warn("Output directory is not empty:", dir);
 
   const rl = readline.createInterface({
     input: process.stdin,
@@ -104,10 +105,10 @@ function loadAST() {
 function printTree(root: FolderNode, indent = "") {
   for (const child of root.children) {
     if (child.type === "folder") {
-      console.log(`${indent}📁 ${child.name}`);
+      console.log(`${indent} ${child.name}`);
       printTree(child, indent + "  ");
     } else {
-      console.log(`${indent}📄 ${child.name}`);
+      console.log(`${indent} ${child.name}`);
     }
   }
 }
@@ -117,16 +118,16 @@ function printTree(root: FolderNode, indent = "") {
 
 const command = process.argv[2];
 
-  if (!command) {
+if (!command) {
   console.log(`
 Usage:
-  scaffoldrite init [--force] [--yes]
-  scaffoldrite validate [dir]
-  scaffoldrite generate [dir]
+  scaffoldrite init [--force] [--empty] [--from-fs <dir>]
+  scaffoldrite validate [dir] [--allow-extra] [--allow-extra <path1> <path2> ...]
+  scaffoldrite generate [dir] [--yes]
   scaffoldrite list
-  scaffoldrite create <path> <file|folder> [dir]
-  scaffoldrite delete <path> [dir]
-  scaffoldrite rename <path> <newName> [dir]
+  scaffoldrite create <path> <file|folder> [dir] [--force] [--if-not-exists]
+  scaffoldrite delete <path> [dir] [--yes]
+  scaffoldrite rename <path> <newName> [dir] [--yes]
 `);
   process.exit(1);
 }
@@ -134,11 +135,30 @@ Usage:
 
 
 
+function getFlagValuesAfter(flag: string) {
+  const index = process.argv.indexOf(flag);
+  if (index === -1) return [];
+  const values: string[] = [];
+  for (let i = index + 1; i < process.argv.length; i++) {
+    const arg = process.argv[i];
+    if (arg.startsWith("--")) break;
+    values.push(arg);
+  }
+  return values;
+}
+
+
+
 
 const force = hasFlag("--force");
 const ifNotExists = hasFlag("--if-not-exists");
+
+const allowExtraPaths = getFlagValuesAfter("--allow-extra");
 const allowExtra = hasFlag("--allow-extra");
-const allowExtraPaths = getFlagValue("--allow-extra=");
+
+
+
+
 
 const args = process.argv.slice(3).filter((a) => !a.startsWith("--"));
 const arg3 = args[0];
@@ -147,53 +167,49 @@ const arg5 = args[2];
 
 (async () => {
 
-/* ===== INIT ===== */
- if (command === "init") {
+  /* ===== INIT ===== */
+  if (command === "init") {
     const empty = hasFlag("--empty");
     const fromFs = hasFlag("--from-fs");
 
     if (fs.existsSync(structurePath) && !force) {
-    if (hasFlag("--yes") || hasFlag("-y")) {
-      // allow overwrite without prompt
-    } else {
-      console.error("❌ structure.sr already exists. Use --force to overwrite.");
+      console.error("structure.sr already exists. Use --force to overwrite.");
       process.exit(1);
     }
-  }
 
-    // 1️⃣ Empty init
+
+    // 1 Empty init
     if (empty) {
       fs.writeFileSync(structurePath, "constraints {\n}\n");
-      console.log("✅ Empty structure.sr created");
+      console.log("Empty structure.sr created");
       return;
     }
 
-    // 2️⃣ Init from filesystem
+    // 2 Init from filesystem
     if (fromFs) {
-  const targetDir = path.resolve(args[0] ?? process.cwd());
+      const targetDir = path.resolve(args[0] ?? process.cwd());
 
-  const ignoreList = [...DEFAULT_IGNORES];
-  const ignoreExtra = parseCSVFlag("--ignore");
-  const includeExtra = parseCSVFlag("--include");
+      const ignoreList = [...DEFAULT_IGNORES];
+      const ignoreExtra = parseCSVFlag("--ignore");
+      const includeExtra = parseCSVFlag("--include");
 
-  ignoreList.push(...ignoreExtra);
-  for (const item of includeExtra) {
-    const idx = ignoreList.indexOf(item);
-    if (idx !== -1) ignoreList.splice(idx, 1);
-  }
+      ignoreList.push(...ignoreExtra);
+      for (const item of includeExtra) {
+        const idx = ignoreList.indexOf(item);
+        if (idx !== -1) ignoreList.splice(idx, 1);
+      }
 
-  const ast = buildASTFromFS(targetDir, ignoreList);
-  saveStructure(ast, [], structurePath);
+      const ast = buildASTFromFS(targetDir, ignoreList);
+      saveStructure(ast, [], structurePath);
 
-  console.log(`✅ structure.sr generated from filesystem: ${targetDir}`);
-  console.log("ℹ️ No validation was performed");
-  return;
-}
+      console.log(`structure.sr generated from filesystem: ${targetDir}`);
+      return;
+    }
 
 
-    // 3️⃣ Default template
+    // 3 Default template
     fs.writeFileSync(structurePath, DEFAULT_TEMPLATE);
-    console.log("✅ structure.sr created");
+    console.log("structure.sr created");
     return;
   }
 
@@ -209,24 +225,32 @@ const arg5 = args[2];
   /* ===== VALIDATE ===== */
   if (command === "validate") {
     const structure = loadAST();
+
+    // Parse allow-extra here only
+    const allowExtraPaths = getFlagValuesAfter("--allow-extra");
+    const allowExtra = hasFlag("--allow-extra") && allowExtraPaths.length === 0;
+
+
+    // Find real output dir
+    const outputDirArg = args.find((a) => {
+      if (a.startsWith("--")) return false;
+      if (allowExtraPaths.includes(a)) return false;
+      return true;
+    });
+
+    const outputDir = path.resolve(outputDirArg ?? process.cwd());
+
     try {
       validateConstraints(structure.root, structure.constraints);
-
-      // NEW: validate actual filesystem too
-      const outputDir = path.resolve(arg3 ?? process.cwd());
-      validateFS(
-        structure.root,
-        outputDir,
-        allowExtra,
-        allowExtraPaths
-      );
-
-      console.log("✅ All constraints and filesystem structure are valid");
+      validateFS(structure.root, outputDir, allowExtra, allowExtraPaths);
+      console.log("All constraints and filesystem structure are valid");
     } catch (err: any) {
-      console.error("❌ Validation failed:", err.message);
+      console.error("Validation failed:", err.message);
     }
     return;
   }
+
+
 
   /* ===== GENERATE ===== */
   if (command === "generate") {
@@ -236,7 +260,7 @@ const arg5 = args[2];
     const outputDir = path.resolve(arg3 ?? process.cwd());
 
     if (!(await confirmProceed(outputDir))) {
-      console.log("❌ Generation cancelled.");
+      console.log("Generation cancelled.");
       return;
     }
 
@@ -267,7 +291,7 @@ const arg5 = args[2];
     const outputDir = path.resolve(arg5 ?? process.cwd());
 
     if (!(await confirmProceed(outputDir))) {
-      console.log("❌ Creation cancelled.");
+      console.log("Creation cancelled.");
       return;
     }
 
@@ -294,7 +318,7 @@ const arg5 = args[2];
     const outputDir = path.resolve(arg4 ?? process.cwd());
 
     if (!(await confirmProceed(outputDir))) {
-      console.log("❌ Deletion cancelled.");
+      console.log("Deletion cancelled.");
       return;
     }
 
@@ -323,7 +347,7 @@ const arg5 = args[2];
     const outputDir = path.resolve(arg5 ?? process.cwd());
 
     if (!(await confirmProceed(outputDir))) {
-      console.log("❌ Rename cancelled.");
+      console.log("Rename cancelled.");
       return;
     }
 

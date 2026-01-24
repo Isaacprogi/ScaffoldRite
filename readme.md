@@ -107,7 +107,8 @@ constraints {
 scaffoldrite init
 ```
 
-🔹 Flags
+
+### Flags
 
 | Flag | Description |
 |------|-------------|
@@ -117,8 +118,23 @@ scaffoldrite init
 | `--ignore=dist,build` | Ignore specified folders during snapshot |
 | `--include=node_modules` | Include `node_modules` (override default ignore list) |
 | `--force` | Overwrite existing `structure.sr` |
-| `--yes` | Skip confirmation prompts |
+| `--allow-extra` | Allow extra files/folders in the filesystem during validation |
+| `--allow-extra <path1> <path2> ...` | Allow specific extra files/folders during validation |
 
+
+## Default Ignore List
+
+These folders are ignored by default when running `scaffoldrite init --from-fs`:
+
+```
+  "node_modules",
+  ".git",
+  ".next",
+  "dist",
+  "build",
+  "coverage",
+  ".turbo",
+``
 
 ```bash
 scaffoldrite init --from-fs ./src --ignore=node_modules,dist
@@ -134,6 +150,15 @@ scaffoldrite validate
 
 ```bash
 scaffoldrite validate ./output
+```
+
+You can use the --allow-extra flag to ignore if there are files or folders in the filesystem not in the structure.sr
+
+```bash
+scaffoldrite validate --allow-extra 
+```
+```bash
+scaffoldrite validate --allow-extra index.ts
 ```
 
 
