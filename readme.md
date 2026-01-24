@@ -92,47 +92,69 @@ scaffoldrite init
 | `--yes` | Skip confirmation prompts |
 
 
-🔹 Example
+```bash
 scaffoldrite init --from-fs ./src --ignore=node_modules,dist
+```
 
 - scaffoldrite validate: Validates the structure.sr file against the rules and the actual filesystem.
 
 🔹 Usage
-scaffoldrite validate
 
-🔹 Example
+```bash
+scaffoldrite validate
+```
+
+```bash
 scaffoldrite validate ./output
+```
+
 
 - scaffoldrite generate: Generates the filesystem structure based on structure.sr.
 
 🔹 Usage
-scaffoldrite generate
 
-🔹 Example
+```bash
+scaffoldrite generate
+```
+
+```bash
 scaffoldrite generate ./output
+```
+
 
 - scaffoldrite list: Lists the current structure defined in structure.sr.
 
 🔹 Usage
+
+```bash
 scaffoldrite list
+```
 
 - scaffoldrite create <path> <file|folder>: Creates a file or folder inside the structure and regenerates filesystem.
 
 🔹 Usage
+```bash
 scaffoldrite create src/components folder
+```
 
-🔹 Example
+```bash
 scaffoldrite create src/index.ts file
+```
 
 - scaffoldrite delete <path>: Deletes a file or folder from the structure and regenerates filesystem.
 
 🔹 Usage
+
+```bash
 scaffoldrite delete src/components
+```
 
 - scaffoldrite rename <path> <newName>: Renames a file or folder inside the structure and regenerates filesystem.
 
 🔹 Usage
+```bash
 scaffoldrite rename src/index.ts main.ts
+```
 
 
 ## Constraints (Commands)
@@ -196,88 +218,74 @@ minFiles src 1
 minFolders src 1
 ```
 
-- maxDepth <path> <number>
+- maxDepth <path> <number>: Limits nesting depth.
 
-Limits nesting depth.
-
-Example:
-
+```bash
 -maxDepth src 3
+```
 
-- maxFilesRecursive <path> <number>
+- maxFilesRecursive <path> <number>: Limits files recursively.
 
-Limits files recursively.
-
-Example:
-
+```bash
 maxFilesRecursive src 10
+```
 
-- maxFoldersRecursive <path> <number>
+- maxFoldersRecursive <path> <number>: Limits folders recursively.
 
-Limits folders recursively.
-
-Example:
-
+```bash
 maxFoldersRecursive src 5
+```
 
-- maxFilesByExt <path> <ext> <number>
+- maxFilesByExt <path> <ext> <number>: Limits files by extension.
 
-Limits files by extension.
-
-Example:
-
+```bash
 maxFilesByExt src .ts 3
+```
 
-- maxFilesByExtRecursive <path> <ext> <number>
+- maxFilesByExtRecursive <path> <ext> <number>: Limits files by extension recursively.
 
-Limits files by extension recursively.
-
-Example:
-
+```bash
 maxFilesByExtRecursive src .ts 5
+```
 
 
 ### “Each Folder” Constraints
 
-- eachFolderMustContain <scope> <path> <value>
+- eachFolderMustContain <scope> <path> <value>: Ensures each folder contains the value.
 
-Ensures each folder contains the value.
-
-Example:
-
+```bash
 eachFolderMustContain ** src index.ts
+```
 
-- eachFolderMustContainFile <scope> <path> <fileName>
+- eachFolderMustContainFile <scope> <path> <fileName>: Ensures each folder contains a file.
 
-Ensures each folder contains a file.
-
-Example:
-
+```bash
 eachFolderMustContainFile * src index.ts
+```
 
-- eachFolderMustContainFolder <scope> <path> <folderName>
 
-Ensures each folder contains a folder.
+- eachFolderMustContainFolder <scope> <path> <folderName>: Ensures each folder contains a folder.
 
-Example:
-
+```bash
 eachFolderMustContainFolder * src components
+```
 
-- eachFolderMustHaveExt <scope> <path> <ext>
 
-Ensures each folder contains a file with extension.
+- eachFolderMustHaveExt <scope> <path> <ext>: Ensures each folder contains a file with extension.
 
-Example:
-
+```bash
 eachFolderMustHaveExt ** src .ts
+```
 
-📌 Example constraints block
+### Example constraints block
+
 constraints {
   require src
   mustContain src index.ts
   maxFiles src 5
   eachFolderMustContain ** src index.ts
 }
+
 
 
 ## 🧩 Notes
