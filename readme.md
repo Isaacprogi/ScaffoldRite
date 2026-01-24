@@ -73,14 +73,13 @@ constraints {
 
 ## Commands
 
-- scaffoldrite init
+- scaffoldrite init: Creates a starter structure.sr template.
 
-Creates a starter structure.sr template.
-
-🔹 Usage
+```bash
 scaffoldrite init
+```
 
-🔹 Options
+🔹 Flags
 
 | Flag | Description |
 |------|-------------|
@@ -96,9 +95,7 @@ scaffoldrite init
 🔹 Example
 scaffoldrite init --from-fs ./src --ignore=node_modules,dist
 
-- scaffoldrite validate
-
-Validates the structure.sr file against the rules and the actual filesystem.
+- scaffoldrite validate: Validates the structure.sr file against the rules and the actual filesystem.
 
 🔹 Usage
 scaffoldrite validate
@@ -106,9 +103,7 @@ scaffoldrite validate
 🔹 Example
 scaffoldrite validate ./output
 
-- scaffoldrite generate
-
-Generates the filesystem structure based on structure.sr.
+- scaffoldrite generate: Generates the filesystem structure based on structure.sr.
 
 🔹 Usage
 scaffoldrite generate
@@ -116,16 +111,12 @@ scaffoldrite generate
 🔹 Example
 scaffoldrite generate ./output
 
-- scaffoldrite list
-
-Lists the current structure defined in structure.sr.
+- scaffoldrite list: Lists the current structure defined in structure.sr.
 
 🔹 Usage
 scaffoldrite list
 
-- scaffoldrite create <path> <file|folder>
-
-Creates a file or folder inside the structure and regenerates filesystem.
+- scaffoldrite create <path> <file|folder>: Creates a file or folder inside the structure and regenerates filesystem.
 
 🔹 Usage
 scaffoldrite create src/components folder
@@ -133,16 +124,12 @@ scaffoldrite create src/components folder
 🔹 Example
 scaffoldrite create src/index.ts file
 
-- scaffoldrite delete <path>
-
-Deletes a file or folder from the structure and regenerates filesystem.
+- scaffoldrite delete <path>: Deletes a file or folder from the structure and regenerates filesystem.
 
 🔹 Usage
 scaffoldrite delete src/components
 
-- scaffoldrite rename <path> <newName>
-
-Renames a file or folder inside the structure and regenerates filesystem.
+- scaffoldrite rename <path> <newName>: Renames a file or folder inside the structure and regenerates filesystem.
 
 🔹 Usage
 scaffoldrite rename src/index.ts main.ts
@@ -155,77 +142,59 @@ All constraint rules must be inside the constraints {} block.
 
 ### Basic Constraints
 
-- require <path>
+- require <path>: Ensures the path exists.
 
-Ensures the path exists.
-
-Example:
-
+```bash
 require src
+```
 
-- forbid <path>
+- forbid <path>: Ensures the path does not exist.
 
-Ensures the path does not exist.
-
-Example:
-
+```bash
 forbid src/secret.txt
+```
 
-- mustContain <path> <value>
+- mustContain <path> <value>: Ensures folder contains a file/folder.
 
-Ensures folder contains a file/folder.
-
-Example:
-
+```bash
 mustContain src index.ts
+```
 
-- mustHaveFile <path> <fileName>
+- mustHaveFile <path> <fileName>: Ensures folder contains a specific file.
 
-Ensures folder contains a specific file.
-
-Example:
-
+```bash
 mustHaveFile src index.ts
+```
 
-- fileNameRegex <path> <regex>
+- fileNameRegex <path> <regex>: Ensures all files in folder match regex.
 
-Ensures all files in folder match regex.
-
-Example:
-
+```bash
 - fileNameRegex src ^[a-z]+\.ts$
+```
 
-- maxFiles <path> <number>
+- maxFiles <path> <number>: Limits number of files in folder.
 
-Limits number of files in folder.
-
-Example:
-
+```bash
 maxFiles src 3
+```
 
-- maxFolders <path> <number>
+- maxFolders <path> <number>: Limits number of folders in folder.
 
-Limits number of folders in folder.
-
-Example:
-
+```bash
 maxFolders src 2
+```
 
-- minFiles <path> <number>
+- minFiles <path> <number>: Requires minimum files.
 
-Requires minimum files.
-
-Example:
-
+```bash
 minFiles src 1
+```
 
-- minFolders <path> <number>
+- minFolders <path> <number>: Requires minimum folders.
 
-Requires minimum folders.
-
-Example:
-
+```bash
 minFolders src 1
+```
 
 - maxDepth <path> <number>
 
