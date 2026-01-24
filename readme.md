@@ -10,21 +10,21 @@ You define your project structure using a simple `structure.sr` format, then run
 
 ## 🚀 Who should use it?
 
-### ✅ Framework / Library creators  
+### Framework / Library creators  
 Enforce strict project structure for generated projects.
 
-### ✅ Monorepo maintainers  
+### Monorepo maintainers  
 Enforce consistent folder rules across multiple packages.
 
-### ✅ Teams & Bootcamps  
+### Teams & Bootcamps  
 Enforce a standard architecture and reduce mistakes.
 
-### ✅ Project generators  
+### Project generators  
 Validate output before publishing.
 
 ---
 
-## ⭐ Features
+##  Features
 
 - Define folder + file structure using `structure.sr`
 - Validate structure against rules (constraints)
@@ -40,7 +40,7 @@ Validate output before publishing.
 
 ---
 
-## 📦 Supported Actions
+##  Supported Actions
 
 - Creating starter templates  
 - Validating folder/file structure  
@@ -50,7 +50,7 @@ Validate output before publishing.
 
 ---
 
-## 📌 Source of Truth Flow Diagram
+## Source of Truth Flow Diagram
 
 ```yaml
 structure.sr
@@ -75,14 +75,14 @@ Filesystem Output
 
 ```
 
-## 🚀 Installation
+## Installation
 
 ```bash
 npm install -g scaffoldrite
 ```
 
 
-## 📁 structure.sr Format
+## structure.sr Format
 
 A typical structure.sr file looks like:
 
@@ -377,7 +377,7 @@ constraints {
 
 
 
-## 🧩 Notes
+## Notes
 
 Paths are relative to the root folder
 
