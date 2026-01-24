@@ -39,7 +39,7 @@ function countFolders(folder: FolderNode) {
   return folder.children.filter((c) => c.type === "folder").length;
 }
 
-// ✅ ONE correct implementation
+
 function countFilesRecursive(folder: FolderNode, ext?: string) {
   let count = 0;
   for (const child of folder.children) {
@@ -70,7 +70,7 @@ function maxDepth(folder: FolderNode, current = 0): number {
   return depth;
 }
 
-// ⭐ NEW HELPERS FOR "EACH FOLDER" RULES ⭐
+
 
 function getFoldersByScope(root: FolderNode, path: string, scope: "*" | "**") {
   const folder = findNodeByPath(root, path);
@@ -104,7 +104,6 @@ function getFoldersByScope(root: FolderNode, path: string, scope: "*" | "**") {
 export function validateConstraints(root: FolderNode, constraints: Constraint[]) {
   for (const c of constraints) {
 
-    // ✅ PATH REQUIRED ONLY FOR SOME RULES
     if (
       (c.type !== "eachFolderMustContain" &&
        c.type !== "eachFolderMustContainFile" &&

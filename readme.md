@@ -99,6 +99,36 @@ constraints {
 }
 ```
 
+## Command-line rules
+
+Scaffoldrite follows simple CLI rules:
+
+- The command must come first     
+
+```bash
+scaffoldrite <command> [options] [arguments] 
+```
+
+- Flags must come after the command.
+
+```bash
+scaffoldrite init --force
+scaffoldrite init --from-fs . --force
+```
+
+- Flags before the command are not supported
+
+```bash
+scaffoldrite --force init ❌
+```
+
+- Arguments without -- are positional
+
+  - Their meaning depends on order
+
+  - Changing the order changes behavior
+
+
 ## Commands
 
 - scaffoldrite init: Creates a starter structure.sr template.
@@ -108,18 +138,65 @@ scaffoldrite init
 ```
 
 
-### Flags
+### Flags by Command (Authoritative Reference)
 
-| Flag | Description |
-|------|-------------|
-| `--empty` | Creates an empty `structure.sr` with only constraints block |
-| `--from-fs` | Creates `structure.sr` from current filesystem |
-| `--from-fs ./path` | Snapshot a specific folder |
-| `--ignore=dist,build` | Ignore specified folders during snapshot |
-| `--include=node_modules` | Include `node_modules` (override default ignore list) |
-| `--force` | Overwrite existing `structure.sr` |
-| `--allow-extra` | Allow extra files/folders in the filesystem during validation |
-| `--allow-extra <path1> <path2> ...` | Allow specific extra files/folders during validation |
+- `scaffoldrite init`
+
+| Flag        | Description                                                  |
+| ----------- | ------------------------------------------------------------ |
+| `--empty`   | Create an empty `structure.sr` with only a constraints block |
+| `--from-fs` | Generate `structure.sr` from the filesystem                  |
+| `--force`   | Overwrite an existing `structure.sr` file                    |
+
+```bash
+scaffoldrite init
+scaffoldrite init --empty
+scaffoldrite init --from-fs
+scaffoldrite init --from-fs ./src --force
+
+```
+- `scaffoldrite validate`
+
+| Flag                      | Description                                             |
+| ------------------------- | ------------------------------------------------------- |
+| `--allow-extra`           | Allow extra files/folders not defined in `structure.sr` |
+| `--allow-extra <path...>` | Allow only specific extra files or folders              |
+
+```bash
+scaffoldrite validate
+scaffoldrite validate --allow-extra
+scaffoldrite validate --allow-extra index.ts logs
+
+```
+- `scaffoldrite generate`
+
+| Flag    | Description               |
+| ------- | ------------------------- |
+| `--yes` | Skip confirmation prompts |
+
+- `scaffoldrite create`
+| Flag              | Description                              |
+| ----------------- | ---------------------------------------- |
+| `--force`         | Overwrite existing file or folder        |
+| `--if-not-exists` | Skip creation if the path already exists |
+| `--yes`           | Skip confirmation prompts                |
+
+- `scaffoldrite delete`
+- 
+| Flag    | Description               |
+| ------- | ------------------------- |
+| `--yes` | Skip confirmation prompts |
+
+
+- `scaffoldrite list`
+
+No flags supported.
+
+```bash
+scaffoldrite list
+```
+
+
 
 
 ## Default Ignore List
@@ -136,9 +213,42 @@ These folders are ignored by default when running `scaffoldrite init --from-fs`:
   ".turbo",
 ```
 
+
+## .scaffoldignore
+
+scaffoldrite uses a .scaffoldignore file to ignore folders and files when.
+
+- Snapshotting a filesystem (`scaffoldrite init --from-fs`)
+
+- Validating (`scaffoldrite validate`)
+
+This works similarly to .gitignore.
+
+This will override the default ingores and if deleted falls back to default ignores except flags are used.
+
+### Notes
+
+- Lines starting with # are treated as comments
+
+- Blank lines are ignored
+
+- `.scaffoldignore` is not merged with the default list — it replaces it
+
+- It is used for validation and init and not with generation.
+
 ```bash
-scaffoldrite init --from-fs ./src --ignore=node_modules,dist
+# Ignore build output
+dist
+
+*.js  # Ignore compiled JS
+
+# Ignore logs
+*.log
+
+node_modules
+
 ```
+
 
 
 

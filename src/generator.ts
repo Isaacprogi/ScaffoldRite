@@ -19,11 +19,9 @@ export function generateFS(ast: FolderNode, outputDir: string) {
     }
   }
 
-  // ✅ Ensure root exists and protect it
   ensureFolder(root);
   expected.add(root);
 
-  // 1️⃣ Create required structure
   visit(ast, {
     folder: (_, nodePath) => {
       const fullPath = path.join(root, nodePath);

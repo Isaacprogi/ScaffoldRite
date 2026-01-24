@@ -9,15 +9,12 @@ import { generateFS } from "./generator.js";
 import { FolderNode } from "./ast.js";
 import { addNode, deleteNode, renameNode } from "./structure.js";
 import { validateFS } from "./validateFS.js";
-import { buildASTFromFS, DEFAULT_IGNORES } from "./fsToAst.js";
-import { DEFAULT_TEMPLATE } from './data/index.js'
+import { buildASTFromFS, DEFAULT_IGNORES,getIgnoreList } from "./fsToAst.js";
+import { DEFAULT_TEMPLATE, DEFAULT_IGNORE_TEMPLATE } from './data/index.js'
 
-
-/* ===================== CONSTANTS ===================== */
 
 const structurePath = "./structure.sr";
 
-/* ===================== FLAG HELPERS ===================== */
 
 function hasFlag(flag: string) {
   return process.argv.includes(flag);
@@ -38,7 +35,14 @@ function parseCSVFlag(flagName: string) {
     .filter(Boolean);
 }
 
+function getPassedFlags(): string[] {
+  return process.argv.filter((arg) => arg.startsWith("--"));
+}
+
+
 /* ===================== HELPERS ===================== */
+
+
 
 function confirmProceed(dir: string): Promise<boolean> {
   // Skip prompt if user asked for it
@@ -116,7 +120,40 @@ function printTree(root: FolderNode, indent = "") {
 
 /* ===================== CLI ===================== */
 
+const ALLOWED_FLAGS: Record<string, string[]> = {
+  init: ["--force", "--empty", "--from-fs"],
+  validate: ["--allow-extra"],
+  generate: ["--yes"],
+  create: ["--force", "--if-not-exists", "--yes"],
+  delete: ["--yes"],
+  rename: ["--yes"],
+  list: [],
+};
+
+
 const command = process.argv[2];
+
+const passedFlags = getPassedFlags();
+const allowedFlags = ALLOWED_FLAGS[command];
+
+if (!allowedFlags) {
+  console.error(`Unknown command: ${command}`);
+  process.exit(1);
+}
+
+const invalidFlags = passedFlags.filter(
+  (flag) => !allowedFlags.includes(flag)
+);
+
+if (invalidFlags.length > 0) {
+  console.error(
+  `Unknown flag(s) for '${command}': ${invalidFlags.join(", ")}\n` +
+  `Run 'scaffoldrite ${command} --help' to see available options.`
+);
+
+  process.exit(1);
+}
+
 
 if (!command) {
   console.log(`
@@ -133,8 +170,6 @@ Usage:
 }
 
 
-
-
 function getFlagValuesAfter(flag: string) {
   const index = process.argv.indexOf(flag);
   if (index === -1) return [];
@@ -148,16 +183,11 @@ function getFlagValuesAfter(flag: string) {
 }
 
 
-
-
 const force = hasFlag("--force");
 const ifNotExists = hasFlag("--if-not-exists");
 
 const allowExtraPaths = getFlagValuesAfter("--allow-extra");
 const allowExtra = hasFlag("--allow-extra");
-
-
-
 
 
 const args = process.argv.slice(3).filter((a) => !a.startsWith("--"));
@@ -168,50 +198,62 @@ const arg5 = args[2];
 (async () => {
 
   /* ===== INIT ===== */
-  if (command === "init") {
-    const empty = hasFlag("--empty");
-    const fromFs = hasFlag("--from-fs");
+if (command === "init") {
+  const empty = hasFlag("--empty");
+  const fromFs = hasFlag("--from-fs");
 
-    if (fs.existsSync(structurePath) && !force) {
-      console.error("structure.sr already exists. Use --force to overwrite.");
-      process.exit(1);
+  const ignorePath = "./.scaffoldignore";
+
+  // Prevent overwriting structure.sr unless --force
+  if (fs.existsSync(structurePath) && !force) {
+    console.error("structure.sr already exists. Use --force to overwrite.");
+    process.exit(1);
+  }
+
+  // Prevent overwriting scaffoldignore ALWAYS
+  if (fs.existsSync(ignorePath)) {
+    console.log(".scaffoldignore already exists. It will not be overwritten.");
+  }
+
+  // 1 Empty init
+  if (empty) {
+    fs.writeFileSync(structurePath, "constraints {\n}\n");
+
+    if (!fs.existsSync(ignorePath)) {
+      fs.writeFileSync(ignorePath, DEFAULT_IGNORE_TEMPLATE);
     }
 
-
-    // 1 Empty init
-    if (empty) {
-      fs.writeFileSync(structurePath, "constraints {\n}\n");
-      console.log("Empty structure.sr created");
-      return;
-    }
-
-    // 2 Init from filesystem
-    if (fromFs) {
-      const targetDir = path.resolve(args[0] ?? process.cwd());
-
-      const ignoreList = [...DEFAULT_IGNORES];
-      const ignoreExtra = parseCSVFlag("--ignore");
-      const includeExtra = parseCSVFlag("--include");
-
-      ignoreList.push(...ignoreExtra);
-      for (const item of includeExtra) {
-        const idx = ignoreList.indexOf(item);
-        if (idx !== -1) ignoreList.splice(idx, 1);
-      }
-
-      const ast = buildASTFromFS(targetDir, ignoreList);
-      saveStructure(ast, [], structurePath);
-
-      console.log(`structure.sr generated from filesystem: ${targetDir}`);
-      return;
-    }
-
-
-    // 3 Default template
-    fs.writeFileSync(structurePath, DEFAULT_TEMPLATE);
-    console.log("structure.sr created");
+    console.log("Empty structure.sr created");
     return;
   }
+
+  // 2 Init from filesystem
+  if (fromFs) {
+    const targetDir = path.resolve(args[0] ?? process.cwd());
+
+    const ignoreList = getIgnoreList();
+   const ast = buildASTFromFS(targetDir, ignoreList);
+
+    saveStructure(ast, [], structurePath);
+
+    if (!fs.existsSync(ignorePath)) {
+      fs.writeFileSync(ignorePath, DEFAULT_IGNORE_TEMPLATE);
+    }
+
+    console.log(`structure.sr generated from filesystem: ${targetDir}`);
+    return;
+  }
+
+  // Default init
+  fs.writeFileSync(structurePath, DEFAULT_TEMPLATE);
+
+  if (!fs.existsSync(ignorePath)) {
+    fs.writeFileSync(ignorePath, DEFAULT_IGNORE_TEMPLATE);
+  }
+
+  console.log("structure.sr created");
+  return;
+}
 
 
   /* ===== LIST ===== */

@@ -1,6 +1,8 @@
 import fs from "fs";
 import path from "path";
 import { FolderNode, FileNode } from "./ast.js";
+const ignoreFilePath = "./.scaffoldignore";
+
 
 export const DEFAULT_IGNORES = [
   "node_modules",
@@ -11,6 +13,27 @@ export const DEFAULT_IGNORES = [
   "coverage",
   ".turbo",
 ];
+
+export function loadIgnoreList(filePath: string): string[] {
+  if (!fs.existsSync(filePath)) return [];
+
+  const content = fs.readFileSync(filePath, "utf-8");
+  return content
+    .split("\n")
+    .map((x) => x.trim())
+    .map((x) => x.split("#")[0].trim())
+    .filter(Boolean);
+}
+
+
+
+  export function getIgnoreList(): string[] {
+  return fs.existsSync(ignoreFilePath)
+    ? loadIgnoreList(ignoreFilePath)
+    : DEFAULT_IGNORES;
+}
+
+
 
 export function buildASTFromFS(
   dir: string,

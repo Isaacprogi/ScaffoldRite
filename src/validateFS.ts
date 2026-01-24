@@ -2,6 +2,39 @@ import fs from "fs";
 import path from "path";
 import { FolderNode } from "./ast";
 
+const ignoreFilePath = "./.scaffoldignore";
+
+export const DEFAULT_IGNORES = [
+  "node_modules",
+  ".git",
+  ".next",
+  "dist",
+  "build",
+  "coverage",
+  ".turbo",
+];
+
+export function loadIgnoreList(filePath: string): string[] {
+  if (!fs.existsSync(filePath)) return [];
+
+  const content = fs.readFileSync(filePath, "utf-8");
+  return content
+    .split("\n")
+    .map((x) => x.trim())
+    .map((x) => x.split("#")[0].trim())
+    .filter(Boolean);
+}
+
+function getIgnoreList(): string[] {
+  return fs.existsSync(ignoreFilePath)
+    ? loadIgnoreList(ignoreFilePath)
+    : DEFAULT_IGNORES;
+}
+
+function isIgnored(itemName: string) {
+  return getIgnoreList().includes(itemName);
+}
+
 
 export function validateFS(
   root: FolderNode,
@@ -17,6 +50,9 @@ export function validateFS(
 
   // Check missing items in filesystem
   for (const child of root.children) {
+    // skip ignored files/folders
+    if (isIgnored(child.name)) continue;
+
     const expectedPath = path.join(dir, child.name);
     if (!fs.existsSync(expectedPath)) {
       throw new Error(`Missing in filesystem: ${expectedPath}`);
@@ -26,7 +62,6 @@ export function validateFS(
       if (!fs.statSync(expectedPath).isDirectory()) {
         throw new Error(`Expected folder but found file: ${expectedPath}`);
       }
-
       validateFS(child, expectedPath, allowExtra, allowExtraPaths);
     } else {
       if (!fs.statSync(expectedPath).isFile()) {
@@ -37,6 +72,10 @@ export function validateFS(
 
   // Check extra items in filesystem not in .sr
   for (const item of actualItems) {
+
+    // skip ignored files/folders
+    if (isIgnored(item)) continue;
+
     const existsInSr = root.children.some((c) => c.name === item);
     if (!existsInSr) {
       const extraPath = path.join(dir, item);
@@ -59,5 +98,3 @@ export function validateFS(
     }
   }
 }
-
-
