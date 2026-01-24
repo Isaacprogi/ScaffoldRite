@@ -1,0 +1,45 @@
+folder project {
+  file README.md
+}
+folder src {
+  file index.ts
+  file gold.lmm
+  folder game {
+    file tape.ts
+    file jam.ts
+  }
+  folder hand {
+    file faith.ts
+    file land.ts
+    folder arena {
+      file arena.ts
+    }
+  }
+}
+folder jude {
+  file index.ts
+  file last.ts
+  folder game {
+  }
+}
+folder harvest {
+  file land.ts
+}
+file folder
+
+constraints {
+  require src/index.ts
+  maxFiles 3 src/game
+  maxFilesRecursive 8 src
+  maxFilesByExt 2 src/hand .ts
+  maxFilesByExtRecursive 3 src .ts
+  maxFolders 2 src
+  maxFoldersRecursive 3 src
+  minFiles 1 src/game
+  minFolders 1 src
+  mustContain jude index.ts
+  mustContain jude game
+  fileNameRegex jude "^[a-z0-9]+\.ts$"
+  maxDepth jude 3
+  mustHaveFile jude last.ts
+}

@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import { buildASTFromFS } from "../fsToAst.js";
+import { buildASTFromFS } from "../src/fsToAst";
 
 describe("fsToAst", () => {
   const tempDir = path.join(process.cwd(), "__temp__");

@@ -1,46 +1,30 @@
-folder project {
-  file README.md
+file .gitignore
+folder .vscode {
+  file settings.json
 }
+file jest.config.mjs
+file package-lock.json
+file package.json
+file readme.md
 folder src {
-  file index.ts
-  file gold.lmm
-  folder game {
-    file tape.ts
-    file jam.ts
+  file ast.ts
+  file cli.ts
+  file constraints.ts
+  folder data {
+    file index.ts
   }
-  folder hand {
-    file faith.ts
-    file land.ts
-    folder arena {
-      file arena.ts
-    }
-  }
+  file fsToAst.ts
+  file generator.ts
+  file parser.ts
+  file structure.ts
+  file validateFS.ts
+  file validator.ts
+  file visitor.ts
 }
-folder jude {
-  file index.ts
-  file last.ts
-  folder game {
-  }
+file structure.pp
+folder tests {
+  file init.test.ts
+  file structure.test.ts
+  file validateFS.test.ts
 }
-folder harvest {
-  file land.ts
-}
-file folder
-
-constraints {
-  require src/index.ts
-  immutable src/game/tape.ts
-  maxFiles 3 src/game
-  maxFilesRecursive 8 src
-  maxFilesByExt 2 src/hand .ts
-  maxFilesByExtRecursive 3 src .ts
-  maxFolders 2 src
-  maxFoldersRecursive 3 src
-  minFiles 1 src/game
-  minFolders 1 src
-  mustContain jude index.ts
-  mustContain jude game
-  fileNameRegex jude "^[a-z0-9]+\.ts$"
-  maxDepth jude 3
-  mustHaveFile jude last.ts
-}
+file tsconfig.json

@@ -70,10 +70,48 @@ function maxDepth(folder: FolderNode, current = 0): number {
   return depth;
 }
 
+// ⭐ NEW HELPERS FOR "EACH FOLDER" RULES ⭐
+
+function getFoldersByScope(root: FolderNode, path: string, scope: "*" | "**") {
+  const folder = findNodeByPath(root, path);
+  if (!folder || folder.type !== "folder") return [];
+
+  const folders: FolderNode[] = [];
+
+  if (scope === "*") {
+    // only direct child folders
+    for (const child of folder.children) {
+      if (child.type === "folder") folders.push(child);
+    }
+  }
+
+  if (scope === "**") {
+    // recursively collect all folders
+    function traverse(f: FolderNode) {
+      for (const child of f.children) {
+        if (child.type === "folder") {
+          folders.push(child);
+          traverse(child);
+        }
+      }
+    }
+    traverse(folder);
+  }
+
+  return folders;
+}
+
 export function validateConstraints(root: FolderNode, constraints: Constraint[]) {
   for (const c of constraints) {
 
-    if (!c.path || c.path.trim() === "") {
+    // ✅ PATH REQUIRED ONLY FOR SOME RULES
+    if (
+      (c.type !== "eachFolderMustContain" &&
+       c.type !== "eachFolderMustContainFile" &&
+       c.type !== "eachFolderMustContainFolder" &&
+       c.type !== "eachFolderMustHaveExt") &&
+      (!c.path || c.path.trim() === "")
+    ) {
       throw new Error(`Constraint failed: path missing for ${c.type}`);
     }
 
@@ -87,14 +125,6 @@ export function validateConstraints(root: FolderNode, constraints: Constraint[])
       const node = findNodeByPath(root, c.path);
       if (node)
         throw new Error(`Constraint failed: forbidden path exists: ${c.path}`);
-    }
-
-    if (c.type === "immutable") {
-      const node = findNodeByPath(root, c.path);
-      if (!node)
-        throw new Error(
-          `Constraint failed: immutable path missing: ${c.path}`
-        );
     }
 
     if (c.type === "maxFiles") {
@@ -237,5 +267,64 @@ export function validateConstraints(root: FolderNode, constraints: Constraint[])
         );
     }
 
+    // ⭐ NEW RULES ⭐
+
+    if (c.type === "eachFolderMustContain") {
+      const folders = getFoldersByScope(root, c.path, c.scope);
+
+      for (const folder of folders) {
+        const exists = folder.children.some((x) => x.name === c.value);
+        if (!exists) {
+          throw new Error(
+            `Constraint failed: ${folder.name} must contain ${c.value}`
+          );
+        }
+      }
+    }
+
+    if (c.type === "eachFolderMustContainFile") {
+      const folders = getFoldersByScope(root, c.path, c.scope);
+
+      for (const folder of folders) {
+        const exists = folder.children.some(
+          (x) => x.type === "file" && x.name === c.value
+        );
+        if (!exists) {
+          throw new Error(
+            `Constraint failed: ${folder.name} must contain file ${c.value}`
+          );
+        }
+      }
+    }
+
+    if (c.type === "eachFolderMustContainFolder") {
+      const folders = getFoldersByScope(root, c.path, c.scope);
+
+      for (const folder of folders) {
+        const exists = folder.children.some(
+          (x) => x.type === "folder" && x.name === c.value
+        );
+        if (!exists) {
+          throw new Error(
+            `Constraint failed: ${folder.name} must contain folder ${c.value}`
+          );
+        }
+      }
+    }
+
+    if (c.type === "eachFolderMustHaveExt") {
+      const folders = getFoldersByScope(root, c.path, c.scope);
+
+      for (const folder of folders) {
+        const exists = folder.children.some(
+          (x) => x.type === "file" && x.name.endsWith(c.ext)
+        );
+        if (!exists) {
+          throw new Error(
+            `Constraint failed: ${folder.name} must contain a file with extension ${c.ext}`
+          );
+        }
+      }
+    }
   }
 }
