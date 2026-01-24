@@ -266,8 +266,6 @@ export function validateConstraints(root: FolderNode, constraints: Constraint[])
         );
     }
 
-    // ⭐ NEW RULES ⭐
-
     if (c.type === "eachFolderMustContain") {
       const folders = getFoldersByScope(root, c.path, c.scope);
 

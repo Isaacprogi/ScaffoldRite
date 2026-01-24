@@ -10,7 +10,7 @@ export function visit(
   visitor: Visitor,
   currentPath = ""
 ) {
-  // 👇 ignore virtual root in path
+  // ignore virtual root in path
   const isVirtualRoot = node.name === "__root__";
 
   const nodePath = isVirtualRoot
