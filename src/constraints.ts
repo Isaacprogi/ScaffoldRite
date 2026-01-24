@@ -136,7 +136,6 @@ export function parseConstraints(input: string): Constraint[] {
     }
 
     // NEW RULES PARSING (WITH SCOPE)
-    // NEW RULES PARSING (WITH SCOPE)
     if (line.startsWith("eachFolderMustContain ")) {
       const parts = splitArgs(line);
 

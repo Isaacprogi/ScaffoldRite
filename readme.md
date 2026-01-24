@@ -52,14 +52,26 @@ Validate output before publishing.
 
 ## 📌 Source of Truth Flow Diagram
 
-```mermaid
-flowchart LR
-  A[structure.sr] --> B[Validator]
-  B --> C[Constraints Check]
-  B --> D[Generator]
-  D --> E[Filesystem Output]
-  C -->|Valid| D
-  C -->|Invalid| F[Error Report]
+```yaml
+structure.sr
+     |
+     v
+  Validator
+     |
+     v
+Constraints Check
+     |
+     v
+  (Valid?) ---- No ---> Error Report
+     |
+    Yes
+     |
+     v
+  Generator
+     |
+     v
+Filesystem Output
+
 
 ```
 
