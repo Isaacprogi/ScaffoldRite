@@ -24,9 +24,6 @@ Validate output before publishing.
 
 ---
 
-
-
-
 ##  Features
 
 - Define folder + file structure using `structure.sr`
@@ -43,10 +40,6 @@ Validate output before publishing.
 
 ---
 
-
-
-
-
 ##  Supported Actions
 
 - Creating starter templates  
@@ -56,10 +49,6 @@ Validate output before publishing.
 - Snapshotting an existing filesystem  
 
 ---
-
-
-
-
 
 ## Source of Truth Flow Diagram
 
@@ -86,18 +75,11 @@ Filesystem Output
 
 ```
 
-
-
-
-
 ## Installation
 
 ```bash
 npm install -g scaffoldrite
 ```
-
-
-
 
 
 ## structure.sr Format
@@ -116,10 +98,6 @@ constraints {
   eachFolderMustContain ** src index.ts
 }
 ```
-
-
-
-
 
 ## Command-line rules
 
@@ -151,10 +129,6 @@ scaffoldrite --force init ❌
   - Changing the order changes behavior
 
 
-
-
-
-
 ## Commands
 
 - scaffoldrite init: Creates a starter structure.sr template.
@@ -162,10 +136,6 @@ scaffoldrite --force init ❌
 ```bash
 scaffoldrite init
 ```
-
-
-
-
 
 
 ### Flags by Command (Authoritative Reference)
