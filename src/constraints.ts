@@ -140,8 +140,10 @@ export function parseConstraints(input: string): Constraint[] {
       const parts = splitArgs(line);
 
       const scope = parts[1] as "*" | "**";
+      if (scope !== "*" && scope !== "**") {
+        throw new Error(`Invalid scope for eachFolderMustContain: ${scope}`);
+      }
 
-      // if only 3 parts, then path is root
       const hasPath = parts.length === 4;
       const path = hasPath ? parts[2] : "";
       const value = hasPath ? parts[3] : parts[2];
@@ -152,7 +154,11 @@ export function parseConstraints(input: string): Constraint[] {
 
     if (line.startsWith("eachFolderMustContainFile ")) {
       const parts = splitArgs(line);
+
       const scope = parts[1] as "*" | "**";
+      if (scope !== "*" && scope !== "**") {
+        throw new Error(`Invalid scope for eachFolderMustContainFile: ${scope}`);
+      }
 
       const hasPath = parts.length === 4;
       const path = hasPath ? parts[2] : "";
@@ -164,7 +170,11 @@ export function parseConstraints(input: string): Constraint[] {
 
     if (line.startsWith("eachFolderMustContainFolder ")) {
       const parts = splitArgs(line);
+
       const scope = parts[1] as "*" | "**";
+      if (scope !== "*" && scope !== "**") {
+        throw new Error(`Invalid scope for eachFolderMustContainFolder: ${scope}`);
+      }
 
       const hasPath = parts.length === 4;
       const path = hasPath ? parts[2] : "";
@@ -176,7 +186,11 @@ export function parseConstraints(input: string): Constraint[] {
 
     if (line.startsWith("eachFolderMustHaveExt ")) {
       const parts = splitArgs(line);
+
       const scope = parts[1] as "*" | "**";
+      if (scope !== "*" && scope !== "**") {
+        throw new Error(`Invalid scope for eachFolderMustHaveExt: ${scope}`);
+      }
 
       const hasPath = parts.length === 4;
       const path = hasPath ? parts[2] : "";
@@ -185,7 +199,6 @@ export function parseConstraints(input: string): Constraint[] {
       constraints.push({ type: "eachFolderMustHaveExt", path, ext, scope });
       continue;
     }
-
 
     // EXISTING RULES
     if (line.startsWith("mustContain ")) {

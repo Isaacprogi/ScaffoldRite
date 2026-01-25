@@ -35,45 +35,63 @@ function isIgnored(itemName: string) {
   return getIgnoreList().includes(itemName);
 }
 
-
 export function validateFS(
   root: FolderNode,
   dir: string,
   allowExtra = false,
-  allowExtraPaths: string[] = []
+  allowExtraPaths: string[] = [],
+  currentPath = ""
 ) {
   if (!fs.existsSync(dir)) {
-    throw new Error(`Folder does not exist: ${dir}`);
+    throw new Error(
+      `Folder does not exist: ${dir}\n` +
+      `Expected folder according to structure.sr at: ${currentPath || "root"}`
+    );
   }
 
   const actualItems = fs.readdirSync(dir);
 
   // Check missing items in filesystem
   for (const child of root.children) {
-    // skip ignored files/folders
     if (isIgnored(child.name)) continue;
 
     const expectedPath = path.join(dir, child.name);
+    const expectedSrPath = path.join(currentPath, child.name);
+
     if (!fs.existsSync(expectedPath)) {
-      throw new Error(`Missing in filesystem: ${expectedPath}`);
+      throw new Error(
+        `Missing in filesystem: ${expectedPath}\n` +
+        `Expected according to structure.sr at: ${expectedSrPath}`
+      );
     }
 
     if (child.type === "folder") {
       if (!fs.statSync(expectedPath).isDirectory()) {
-        throw new Error(`Expected folder but found file: ${expectedPath}`);
+        throw new Error(
+          `Expected folder but found file: ${expectedPath}\n` +
+          `structure.sr expects a folder at: ${expectedSrPath}`
+        );
       }
-      validateFS(child, expectedPath, allowExtra, allowExtraPaths);
+
+      validateFS(
+        child,
+        expectedPath,
+        allowExtra,
+        allowExtraPaths,
+        expectedSrPath
+      );
     } else {
       if (!fs.statSync(expectedPath).isFile()) {
-        throw new Error(`Expected file but found folder: ${expectedPath}`);
+        throw new Error(
+          `Expected file but found folder: ${expectedPath}\n` +
+          `structure.sr expects a file at: ${expectedSrPath}`
+        );
       }
     }
   }
 
   // Check extra items in filesystem not in .sr
   for (const item of actualItems) {
-
-    // skip ignored files/folders
     if (isIgnored(item)) continue;
 
     const existsInSr = root.children.some((c) => c.name === item);
@@ -94,7 +112,10 @@ export function validateFS(
 
       if (allowExtra || allowedExplicitly) continue;
 
-      throw new Error(`Extra file/folder found in filesystem: ${extraPath}`);
+      throw new Error(
+        `Extra file/folder found in filesystem: ${extraPath}\n` +
+        `Not defined in structure.sr at: ${currentPath || "root"}`
+      );
     }
   }
 }

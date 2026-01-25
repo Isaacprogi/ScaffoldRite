@@ -403,6 +403,7 @@ if (command === "merge") {
       console.log("All constraints and filesystem structure are valid");
     } catch (err: any) {
       console.error("Validation failed:", err.message);
+      process.exit(1);
     }
     return;
   }
@@ -520,4 +521,7 @@ if (command === "merge") {
   }
 
   console.error(`Unknown command: ${command}`);
-})();
+})().catch((err) => {
+  console.error("Error:", err.message);
+  process.exit(1);
+});
