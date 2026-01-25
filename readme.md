@@ -23,7 +23,7 @@ Enforce consistent folder rules across multiple packages.
 Enforce a standard architecture and reduce mistakes.
 
 ### Project generators  
-Validate output before publishing.
+Validate structure before publishing.
 
 ---
 

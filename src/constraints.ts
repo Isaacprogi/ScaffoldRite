@@ -147,7 +147,6 @@ export function parseConstraints(input: string): Constraint[] {
       const value = hasPath ? parts[3] : parts[2];
 
       constraints.push({ type: "eachFolderMustContain", path, value, scope });
-      console.log({ type: "eachFolderMustContain", path, value, scope })
       continue;
     }
 
