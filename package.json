@@ -1,6 +1,6 @@
 {
   "name": "scaffoldrite",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A project structure validator and generator CLI tool.",
   "author": "Isaac Anasonye",
   "license": "MIT",
