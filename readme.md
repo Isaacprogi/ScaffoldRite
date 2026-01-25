@@ -388,7 +388,7 @@ mustHaveFile src index.ts
 - `fileNameRegex <path> <regex>`: Ensures all files in folder match regex.
 
 ```bash
-- fileNameRegex src ^[a-z]+\.ts$
+fileNameRegex src ^[a-z]+\.ts$
 ```
 
 
@@ -428,7 +428,7 @@ minFolders src 1
 - `maxDepth <path> <number>`: Limits nesting depth.
 
 ```bash
--maxDepth src 3
+maxDepth src 3
 ```
 
 
