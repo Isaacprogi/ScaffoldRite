@@ -216,12 +216,14 @@ scaffoldrite create src/index.ts file --force
 | Flag    | Description               |
 | ------- | ------------------------- |
 | `--from-fs` | Updates the existing `structure.sr` from the filesystem without deleting constraints. |
+| `--yes` | Skip confirmation prompts |
 
 - `scaffoldrite merge`
 
 | Flag    | Description               |
 | ------- | ------------------------- |
 | `--from-fs` | Merges filesystem snapshot into existing structure.sr without deleting existing nodes or constraints. |
+| `--yes` | Skip confirmation prompts |
 
 ```bash
 scaffoldrite rename src/index.ts main.ts
@@ -358,14 +360,14 @@ scaffoldrite delete src/components
 scaffoldrite rename src/index.ts main.ts
 ```
 
-- `scaffoldrite merge --from-fs [dir]`: Merges filesystem snapshot into existing structure.sr without deleting existing nodes or constraints.
+- `scaffoldrite merge [--from-fs <dir>] [-yes]`: Merges filesystem snapshot into existing structure.sr without deleting existing nodes or constraints.
 
 ```bash
 scaffoldrite merge --from-fs
 ```
 
 
-- `scaffoldrite update --from-fs [dir]`: Updates the existing `structure.sr` from the filesystem without deleting constraints.
+- `scaffoldrite update [--from-fs <dir>] [--yes]`: Updates the existing `structure.sr` from the filesystem without deleting constraints.
 
 ```bash
 scaffoldrite update --from-fs

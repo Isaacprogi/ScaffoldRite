@@ -122,8 +122,8 @@ function printTree(root: FolderNode, indent = "") {
 
 const ALLOWED_FLAGS: Record<string, string[]> = {
   init: ["--force", "--empty", "--from-fs"],
-  update: ["--from-fs"],
-  merge: ["--from-fs"],
+  update: ["--from-fs", "--yes", "-y"],
+  merge: ["--from-fs", "--yes", "-y"],
   validate: ["--allow-extra"],
   generate: ["--yes"],
   create: ["--force", "--if-not-exists", "--yes"],
@@ -278,77 +278,101 @@ const arg5 = args[2];
     return;
   }
 
-  /* ===== UPDATE ===== */
-  if (command === "update") {
-    const fromFs = hasFlag("--from-fs");
+ /* ===== UPDATE ===== */
+if (command === "update") {
+  const fromFs = hasFlag("--from-fs");
 
-    if (!fromFs) {
-      console.error("Usage: scaffoldrite update --from-fs <dir>");
-      process.exit(1);
-    }
+  if (!fromFs) {
+    console.error("Usage: scaffoldrite update --from-fs <dir>");
+    process.exit(1);
+  }
 
-    const targetDir = path.resolve(args[0] ?? process.cwd());
+  //  FAIL if structure.sr does not exist
+  if (!fs.existsSync(structurePath)) {
+    console.error("Error: structure.sr not found. Run `scaffoldrite init` first.");
+    process.exit(1);
+  }
 
-    const ignoreList = getIgnoreList();
-    const ast = buildASTFromFS(targetDir, ignoreList);
+  const targetDir = path.resolve(args[0] ?? process.cwd());
 
-    ensureToolFileInStructure(ast, ".scaffoldignore");
-    ensureToolFileInStructure(ast, "structure.sr");
+  const ignoreList = getIgnoreList();
+  const ast = buildASTFromFS(targetDir, ignoreList);
 
-    const constraints = fs.existsSync(structurePath) ? loadConstraints() : [];
+  ensureToolFileInStructure(ast, ".scaffoldignore");
+  ensureToolFileInStructure(ast, "structure.sr");
 
-    saveStructure(ast, constraints, structurePath);
+  const constraints = loadConstraints();
 
-    console.log(`structure.sr updated from filesystem: ${targetDir}`);
+  // confirmation
+  if (!(await confirmProceed(targetDir))) {
+    console.log("Update cancelled.");
     return;
   }
 
-  /* ===== MERGE ===== */
-  if (command === "merge") {
-    const fromFs = hasFlag("--from-fs");
+  saveStructure(ast, constraints, structurePath);
 
-    if (!fromFs) {
-      console.error("Usage: scaffoldrite merge --from-fs <dir>");
-      process.exit(1);
-    }
+  console.log(`structure.sr updated from filesystem: ${targetDir}`);
+  return;
+}
 
-    const targetDir = path.resolve(args[0] ?? process.cwd());
 
-    const ignoreList = getIgnoreList();
-    const fsAst = buildASTFromFS(targetDir, ignoreList);
-    const structure = loadAST();
+ /* ===== MERGE ===== */
+if (command === "merge") {
+  const fromFs = hasFlag("--from-fs");
 
-    // Merge logic: add FS nodes into existing structure
-    // (Keeps existing nodes + constraints)
+  if (!fromFs) {
+    console.error("Usage: scaffoldrite merge --from-fs <dir>");
+    process.exit(1);
+  }
 
-    const mergeNodes = (existing: FolderNode, incoming: FolderNode) => {
-      for (const child of incoming.children) {
-        if (child.type === "folder") {
-          const found = existing.children.find(
-            (c) => c.type === "folder" && c.name === child.name
-          ) as FolderNode | undefined;
+  // FAIL if structure.sr does not exist
+  if (!fs.existsSync(structurePath)) {
+    console.error("Error: structure.sr not found. Run `scaffoldrite init` first.");
+    process.exit(1);
+  }
 
-          if (found) mergeNodes(found, child);
-          else existing.children.push(child);
-        } else {
-          const exists = existing.children.some(
-            (c) => c.type === "file" && c.name === child.name
-          );
-          if (!exists) existing.children.push(child);
-        }
+  const targetDir = path.resolve(args[0] ?? process.cwd());
+
+  const ignoreList = getIgnoreList();
+  const fsAst = buildASTFromFS(targetDir, ignoreList);
+  const structure = loadAST();
+
+  // Merge logic
+  const mergeNodes = (existing: FolderNode, incoming: FolderNode) => {
+    for (const child of incoming.children) {
+      if (child.type === "folder") {
+        const found = existing.children.find(
+          (c) => c.type === "folder" && c.name === child.name
+        ) as FolderNode | undefined;
+
+        if (found) mergeNodes(found, child);
+        else existing.children.push(child);
+      } else {
+        const exists = existing.children.some(
+          (c) => c.type === "file" && c.name === child.name
+        );
+        if (!exists) existing.children.push(child);
       }
-    };
+    }
+  };
 
-    mergeNodes(structure.root, fsAst);
+  mergeNodes(structure.root, fsAst);
 
-    ensureToolFileInStructure(structure.root, ".scaffoldignore");
-    ensureToolFileInStructure(structure.root, "structure.sr");
+  ensureToolFileInStructure(structure.root, ".scaffoldignore");
+  ensureToolFileInStructure(structure.root, "structure.sr");
 
-    saveStructure(structure.root, structure.rawConstraints, structurePath);
-
-    console.log(`structure.sr merged with filesystem: ${targetDir}`);
+  // confirmation
+  if (!(await confirmProceed(targetDir))) {
+    console.log("Merge cancelled.");
     return;
   }
+
+  saveStructure(structure.root, structure.rawConstraints, structurePath);
+
+  console.log(`structure.sr merged with filesystem: ${targetDir}`);
+  return;
+}
+
 
   /* ===== LIST ===== */
   if (command === "list") {
