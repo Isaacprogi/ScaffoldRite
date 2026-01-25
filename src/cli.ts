@@ -14,9 +14,7 @@ import { DEFAULT_TEMPLATE, DEFAULT_IGNORE_TEMPLATE } from './data/index.js'
 const pkg = require("../package.json");
 import { sortTree } from "./utils/index.js";
 
-
 const structurePath = "./structure.sr";
-
 
 function hasFlag(flag: string) {
   return process.argv.includes(flag);
@@ -35,32 +33,19 @@ function ensureToolFileInStructure(root: FolderNode, filename: string) {
   }
 }
 
-
-function getFlagValue(flagPrefix: string): string[] {
-  return process.argv
-    .filter((arg) => arg.startsWith(flagPrefix))
-    .map((arg) => arg.split("=")[1])
-    .filter(Boolean);
-}
-
-function parseCSVFlag(flagName: string) {
-  return getFlagValue(flagName)
-    .flatMap((v) => v.split(","))
-    .map((v) => v.trim())
-    .filter(Boolean);
+function loadConstraints() {
+  const content = fs.readFileSync(structurePath, "utf-8");
+  const parsed = parseStructure(content);
+  return parsed.rawConstraints;
 }
 
 function getPassedFlags(): string[] {
   return process.argv.filter((arg) => arg.startsWith("--"));
 }
 
-
 /* ===================== HELPERS ===================== */
 
-
-
 function confirmProceed(dir: string): Promise<boolean> {
-  // Skip prompt if user asked for it
   if (hasFlag("--yes") || hasFlag("-y")) return Promise.resolve(true);
 
   if (!fs.existsSync(dir)) return Promise.resolve(true);
@@ -133,11 +118,12 @@ function printTree(root: FolderNode, indent = "") {
   }
 }
 
-
 /* ===================== CLI ===================== */
 
 const ALLOWED_FLAGS: Record<string, string[]> = {
   init: ["--force", "--empty", "--from-fs"],
+  update: ["--from-fs"],
+  merge: ["--from-fs"],
   validate: ["--allow-extra"],
   generate: ["--yes"],
   create: ["--force", "--if-not-exists", "--yes"],
@@ -147,9 +133,7 @@ const ALLOWED_FLAGS: Record<string, string[]> = {
   version: [],
 };
 
-
 const command = process.argv[2];
-
 const passedFlags = getPassedFlags();
 const allowedFlags = ALLOWED_FLAGS[command];
 
@@ -167,15 +151,15 @@ if (invalidFlags.length > 0) {
     `Unknown flag(s) for '${command}': ${invalidFlags.join(", ")}\n` +
     `Run 'scaffoldrite ${command} --help' to see available options.`
   );
-
   process.exit(1);
 }
-
 
 if (!command) {
   console.log(`
 Usage:
   scaffoldrite init [--force] [--empty] [--from-fs <dir>]
+  scaffoldrite update --from-fs <dir>
+  scaffoldrite merge --from-fs <dir>
   scaffoldrite validate [dir] [--allow-extra] [--allow-extra <path1> <path2> ...]
   scaffoldrite generate [dir] [--yes]
   scaffoldrite list
@@ -185,7 +169,6 @@ Usage:
 `);
   process.exit(1);
 }
-
 
 function getFlagValuesAfter(flag: string) {
   const index = process.argv.indexOf(flag);
@@ -199,13 +182,11 @@ function getFlagValuesAfter(flag: string) {
   return values;
 }
 
-
 const force = hasFlag("--force");
 const ifNotExists = hasFlag("--if-not-exists");
 
 const allowExtraPaths = getFlagValuesAfter("--allow-extra");
 const allowExtra = hasFlag("--allow-extra");
-
 
 const args = process.argv.slice(3).filter((a) => !a.startsWith("--"));
 const arg3 = args[0];
@@ -219,7 +200,6 @@ const arg5 = args[2];
     process.exit(0);
   }
 
-
   /* ===== INIT ===== */
   if (command === "init") {
     const empty = hasFlag("--empty");
@@ -229,7 +209,10 @@ const arg5 = args[2];
 
     // Prevent overwriting structure.sr unless --force
     if (fs.existsSync(structurePath) && !force) {
-      console.error("structure.sr already exists. Use --force to overwrite.");
+      console.error(
+        "structure.sr already exists.\n" +
+        "Use --force to overwrite everything."
+      );
       process.exit(1);
     }
 
@@ -246,7 +229,6 @@ const arg5 = args[2];
         children: [],
       };
 
-      // Tool-owned files must be declared
       ensureToolFileInStructure(root, ".scaffoldignore");
       ensureToolFileInStructure(root, "structure.sr");
 
@@ -267,7 +249,6 @@ const arg5 = args[2];
       const ignoreList = getIgnoreList();
       const ast = buildASTFromFS(targetDir, ignoreList);
 
-      // Tool-owned files must be declared
       ensureToolFileInStructure(ast, ".scaffoldignore");
       ensureToolFileInStructure(ast, "structure.sr");
 
@@ -284,7 +265,6 @@ const arg5 = args[2];
     /* ===== DEFAULT INIT ===== */
     const parsed = parseStructure(DEFAULT_TEMPLATE);
 
-    // Tool-owned files must be declared
     ensureToolFileInStructure(parsed.root, ".scaffoldignore");
     ensureToolFileInStructure(parsed.root, "structure.sr");
 
@@ -298,6 +278,77 @@ const arg5 = args[2];
     return;
   }
 
+  /* ===== UPDATE ===== */
+  if (command === "update") {
+    const fromFs = hasFlag("--from-fs");
+
+    if (!fromFs) {
+      console.error("Usage: scaffoldrite update --from-fs <dir>");
+      process.exit(1);
+    }
+
+    const targetDir = path.resolve(args[0] ?? process.cwd());
+
+    const ignoreList = getIgnoreList();
+    const ast = buildASTFromFS(targetDir, ignoreList);
+
+    ensureToolFileInStructure(ast, ".scaffoldignore");
+    ensureToolFileInStructure(ast, "structure.sr");
+
+    const constraints = fs.existsSync(structurePath) ? loadConstraints() : [];
+
+    saveStructure(ast, constraints, structurePath);
+
+    console.log(`structure.sr updated from filesystem: ${targetDir}`);
+    return;
+  }
+
+  /* ===== MERGE ===== */
+  if (command === "merge") {
+    const fromFs = hasFlag("--from-fs");
+
+    if (!fromFs) {
+      console.error("Usage: scaffoldrite merge --from-fs <dir>");
+      process.exit(1);
+    }
+
+    const targetDir = path.resolve(args[0] ?? process.cwd());
+
+    const ignoreList = getIgnoreList();
+    const fsAst = buildASTFromFS(targetDir, ignoreList);
+    const structure = loadAST();
+
+    // Merge logic: add FS nodes into existing structure
+    // (Keeps existing nodes + constraints)
+
+    const mergeNodes = (existing: FolderNode, incoming: FolderNode) => {
+      for (const child of incoming.children) {
+        if (child.type === "folder") {
+          const found = existing.children.find(
+            (c) => c.type === "folder" && c.name === child.name
+          ) as FolderNode | undefined;
+
+          if (found) mergeNodes(found, child);
+          else existing.children.push(child);
+        } else {
+          const exists = existing.children.some(
+            (c) => c.type === "file" && c.name === child.name
+          );
+          if (!exists) existing.children.push(child);
+        }
+      }
+    };
+
+    mergeNodes(structure.root, fsAst);
+
+    ensureToolFileInStructure(structure.root, ".scaffoldignore");
+    ensureToolFileInStructure(structure.root, "structure.sr");
+
+    saveStructure(structure.root, structure.rawConstraints, structurePath);
+
+    console.log(`structure.sr merged with filesystem: ${targetDir}`);
+    return;
+  }
 
   /* ===== LIST ===== */
   if (command === "list") {
@@ -311,12 +362,9 @@ const arg5 = args[2];
   if (command === "validate") {
     const structure = loadAST();
 
-    // Parse allow-extra here only
     const allowExtraPaths = getFlagValuesAfter("--allow-extra");
     const allowExtra = hasFlag("--allow-extra") && allowExtraPaths.length === 0;
 
-
-    // Find real output dir
     const outputDirArg = args.find((a) => {
       if (a.startsWith("--")) return false;
       if (allowExtraPaths.includes(a)) return false;
@@ -335,8 +383,6 @@ const arg5 = args[2];
     return;
   }
 
-
-
   /* ===== GENERATE ===== */
   if (command === "generate") {
     const structure = loadAST();
@@ -354,7 +400,6 @@ const arg5 = args[2];
     return;
   }
 
-  /* ===== CREATE ===== */
   /* ===== CREATE ===== */
   if (command === "create") {
     if (!arg3 || !arg4) {
@@ -381,7 +426,6 @@ const arg5 = args[2];
       return;
     }
 
-    // **DELETE EXISTING FILE/FOLDER ON DISK WHEN --force**
     if (force) {
       const fullPath = path.join(outputDir, arg3);
       if (fs.existsSync(fullPath)) {
@@ -394,7 +438,6 @@ const arg5 = args[2];
     console.log("Created successfully.");
     return;
   }
-
 
   /* ===== DELETE ===== */
   if (command === "delete") {
