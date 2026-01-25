@@ -9,8 +9,10 @@ import { generateFS } from "./generator.js";
 import { FolderNode } from "./ast.js";
 import { addNode, deleteNode, renameNode } from "./structure.js";
 import { validateFS } from "./validateFS.js";
-import { buildASTFromFS, DEFAULT_IGNORES,getIgnoreList } from "./fsToAst.js";
+import { buildASTFromFS, DEFAULT_IGNORES, getIgnoreList } from "./fsToAst.js";
 import { DEFAULT_TEMPLATE, DEFAULT_IGNORE_TEMPLATE } from './data/index.js'
+const pkg = require("../package.json");
+import { sortTree } from "./utils/index.js";
 
 
 const structurePath = "./structure.sr";
@@ -18,6 +20,19 @@ const structurePath = "./structure.sr";
 
 function hasFlag(flag: string) {
   return process.argv.includes(flag);
+}
+
+function ensureToolFileInStructure(root: FolderNode, filename: string) {
+  const exists = root.children.some(
+    (child) => child.type === "file" && child.name === filename
+  );
+
+  if (!exists) {
+    root.children.unshift({
+      type: "file",
+      name: filename,
+    });
+  }
 }
 
 
@@ -73,6 +88,7 @@ function saveStructure(
   rawConstraints: string[],
   filePath: string
 ) {
+  sortTree(root);
   const lines: string[] = [];
 
   function writeFolder(folder: FolderNode, indent = "") {
@@ -128,6 +144,7 @@ const ALLOWED_FLAGS: Record<string, string[]> = {
   delete: ["--yes"],
   rename: ["--yes"],
   list: [],
+  version: [],
 };
 
 
@@ -147,9 +164,9 @@ const invalidFlags = passedFlags.filter(
 
 if (invalidFlags.length > 0) {
   console.error(
-  `Unknown flag(s) for '${command}': ${invalidFlags.join(", ")}\n` +
-  `Run 'scaffoldrite ${command} --help' to see available options.`
-);
+    `Unknown flag(s) for '${command}': ${invalidFlags.join(", ")}\n` +
+    `Run 'scaffoldrite ${command} --help' to see available options.`
+  );
 
   process.exit(1);
 }
@@ -197,63 +214,89 @@ const arg5 = args[2];
 
 (async () => {
 
+  if (command === "version") {
+    console.log(pkg.version);
+    process.exit(0);
+  }
+
+
   /* ===== INIT ===== */
-if (command === "init") {
-  const empty = hasFlag("--empty");
-  const fromFs = hasFlag("--from-fs");
+  if (command === "init") {
+    const empty = hasFlag("--empty");
+    const fromFs = hasFlag("--from-fs");
 
-  const ignorePath = "./.scaffoldignore";
+    const ignorePath = "./.scaffoldignore";
 
-  // Prevent overwriting structure.sr unless --force
-  if (fs.existsSync(structurePath) && !force) {
-    console.error("structure.sr already exists. Use --force to overwrite.");
-    process.exit(1);
-  }
+    // Prevent overwriting structure.sr unless --force
+    if (fs.existsSync(structurePath) && !force) {
+      console.error("structure.sr already exists. Use --force to overwrite.");
+      process.exit(1);
+    }
 
-  // Prevent overwriting scaffoldignore ALWAYS
-  if (fs.existsSync(ignorePath)) {
-    console.log(".scaffoldignore already exists. It will not be overwritten.");
-  }
+    // Never overwrite scaffoldignore
+    if (fs.existsSync(ignorePath)) {
+      console.log(".scaffoldignore already exists. It will not be overwritten.");
+    }
 
-  // 1 Empty init
-  if (empty) {
-    fs.writeFileSync(structurePath, "constraints {\n}\n");
+    /* ===== EMPTY INIT ===== */
+    if (empty) {
+      const root: FolderNode = {
+        type: "folder",
+        name: ".",
+        children: [],
+      };
+
+      // Tool-owned files must be declared
+      ensureToolFileInStructure(root, ".scaffoldignore");
+      ensureToolFileInStructure(root, "structure.sr");
+
+      saveStructure(root, [], structurePath);
+
+      if (!fs.existsSync(ignorePath)) {
+        fs.writeFileSync(ignorePath, DEFAULT_IGNORE_TEMPLATE);
+      }
+
+      console.log("Empty structure.sr created");
+      return;
+    }
+
+    /* ===== INIT FROM FILESYSTEM ===== */
+    if (fromFs) {
+      const targetDir = path.resolve(args[0] ?? process.cwd());
+
+      const ignoreList = getIgnoreList();
+      const ast = buildASTFromFS(targetDir, ignoreList);
+
+      // Tool-owned files must be declared
+      ensureToolFileInStructure(ast, ".scaffoldignore");
+      ensureToolFileInStructure(ast, "structure.sr");
+
+      saveStructure(ast, [], structurePath);
+
+      if (!fs.existsSync(ignorePath)) {
+        fs.writeFileSync(ignorePath, DEFAULT_IGNORE_TEMPLATE);
+      }
+
+      console.log(`structure.sr generated from filesystem: ${targetDir}`);
+      return;
+    }
+
+    /* ===== DEFAULT INIT ===== */
+    const parsed = parseStructure(DEFAULT_TEMPLATE);
+
+    // Tool-owned files must be declared
+    ensureToolFileInStructure(parsed.root, ".scaffoldignore");
+    ensureToolFileInStructure(parsed.root, "structure.sr");
+
+    saveStructure(parsed.root, parsed.rawConstraints, structurePath);
 
     if (!fs.existsSync(ignorePath)) {
       fs.writeFileSync(ignorePath, DEFAULT_IGNORE_TEMPLATE);
     }
 
-    console.log("Empty structure.sr created");
+    console.log("structure.sr created");
     return;
   }
-
-  // 2 Init from filesystem
-  if (fromFs) {
-    const targetDir = path.resolve(args[0] ?? process.cwd());
-
-    const ignoreList = getIgnoreList();
-   const ast = buildASTFromFS(targetDir, ignoreList);
-
-    saveStructure(ast, [], structurePath);
-
-    if (!fs.existsSync(ignorePath)) {
-      fs.writeFileSync(ignorePath, DEFAULT_IGNORE_TEMPLATE);
-    }
-
-    console.log(`structure.sr generated from filesystem: ${targetDir}`);
-    return;
-  }
-
-  // Default init
-  fs.writeFileSync(structurePath, DEFAULT_TEMPLATE);
-
-  if (!fs.existsSync(ignorePath)) {
-    fs.writeFileSync(ignorePath, DEFAULT_IGNORE_TEMPLATE);
-  }
-
-  console.log("structure.sr created");
-  return;
-}
 
 
   /* ===== LIST ===== */
@@ -312,6 +355,7 @@ if (command === "init") {
   }
 
   /* ===== CREATE ===== */
+  /* ===== CREATE ===== */
   if (command === "create") {
     if (!arg3 || !arg4) {
       console.error(
@@ -337,11 +381,20 @@ if (command === "init") {
       return;
     }
 
+    // **DELETE EXISTING FILE/FOLDER ON DISK WHEN --force**
+    if (force) {
+      const fullPath = path.join(outputDir, arg3);
+      if (fs.existsSync(fullPath)) {
+        fs.rmSync(fullPath, { recursive: true, force: true });
+      }
+    }
+
     saveStructure(structure.root, structure.rawConstraints, structurePath);
     generateFS(structure.root, outputDir);
     console.log("Created successfully.");
     return;
   }
+
 
   /* ===== DELETE ===== */
   if (command === "delete") {

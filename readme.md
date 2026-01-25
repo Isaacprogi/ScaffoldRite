@@ -248,7 +248,7 @@ scaffoldrite uses a .scaffoldignore file to ignore folders and files when.
 
 This works similarly to .gitignore.
 
-This will override the default ingores and if deleted falls back to default ignores except flags are used.
+This will override the default ingores and if deleted falls back to default ignores.
 
 ### Notes
 

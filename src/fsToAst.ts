@@ -26,7 +26,6 @@ export function loadIgnoreList(filePath: string): string[] {
 }
 
 
-
   export function getIgnoreList(): string[] {
   return fs.existsSync(ignoreFilePath)
     ? loadIgnoreList(ignoreFilePath)
