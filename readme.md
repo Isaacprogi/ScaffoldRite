@@ -8,6 +8,9 @@ You define your project structure using a simple `structure.sr` format, then run
 
 ---
 
+![Scaffoldrite Banner](https://raw.githubusercontent.com/isaacprogi/scaffoldrite/main/public/scaffoldrite-banner.png)
+
+
 ## 🚀 Who should use it?
 
 ### Framework / Library creators  
