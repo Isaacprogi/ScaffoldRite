@@ -24,8 +24,10 @@
   ],
   "type": "commonjs",
   "bin": {
-    "scaffoldrite": "./dist/cli.js"
-  },
+  "scaffoldrite": "./dist/cli.js",
+  "sr": "./dist/cli.js"
+}
+,
   "files": [
     "dist"
   ],

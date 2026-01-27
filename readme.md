@@ -1,598 +1,469 @@
-# Scaffoldrite
+# Scaffoldrite: Define. Enforce. Generate. 🏗️
 
-**Scaffoldrite** is a **project structure validator & generator**.
-
-You define your project structure using a simple `structure.sr` format, then run commands to validate, generate, or modify the structure.
-
-> **Note:** The `structure.sr` file is the source of truth — **not the directory itself**.
+**Stop guessing. Start structuring.** Your project's organization should be as reliable as your code. With Scaffoldrite, it will be.
 
 ---
 
-![Scaffoldrite Banner](https://raw.githubusercontent.com/isaacprogi/scaffoldrite/main/public/scaffoldrite-banner.png)
+## 🎯 The Problem Every Developer Faces
 
+Remember that time you joined a project and spent days just figuring out where things go? Or when your team's codebase slowly became a jungle of misplaced files? We've all been there.
 
-## 🚀 Who should use it?
+**Projects don't fail because of bad code alone—they fail because of bad structure.**
 
-### Framework / Library creators  
-Enforce strict project structure for generated projects.
-
-### Monorepo maintainers  
-Enforce consistent folder rules across multiple packages.
-
-### Teams & Bootcamps  
-Enforce a standard architecture and reduce mistakes.
-
-### Project generators  
-Validate structure before publishing.
+Scaffoldrite solves this by giving you:
+- A **single source of truth** for your project layout
+- **Enforceable rules** that prevent structural rot
+- **One-command generation** of perfect project skeletons
+- **Confidence** that your structure stays consistent
 
 ---
 
-##  Features
+## 🚀 Your First 60 Seconds with Scaffoldrite
 
-- Define folder + file structure using `structure.sr`
-- Validate structure against rules (constraints)
-- Generate filesystem output
-- Create / delete / rename files & folders
-- Enforce rules like:
-  - required files
-  - max files per folder
-  - regex filename checks
-  - unique filenames
-  - folder depth limit
-  - and more
-
----
-
-##  Supported Actions
-
-- Creating starter templates  
-- Validating folder/file structure  
-- Generating folders and files  
-- Modifying the structure file  
-- Snapshotting an existing filesystem  
-
----
-
-## Source of Truth Flow Diagram
-
-```yaml
-structure.sr
-     |
-     v
-  Validator
-     |
-     v
-Constraints Check
-     |
-     v
-  (Valid?) ---- No ---> Error Report
-     |
-    Yes
-     |
-     v
-  Generator
-     |
-     v
-Filesystem Output
-
-
-```
-
-## Installation
-
+### 1. Install It
 ```bash
 npm install -g scaffoldrite
 ```
 
+### 2. Choose Your Command
+```bash
+sr            # Short and sweet (recommended daily use)
+scaffoldrite  # Full name (great for scripts)
+```
+**Both do the same thing—use whichever you prefer!**
 
-## structure.sr Format
+### 3. Create Your Blueprint
+```bash
+sr init
+```
+This creates `structure.sr`—your project's architectural blueprint.
 
-A typical structure.sr file looks like:
-
+### 4. Define Your Vision
+Edit `structure.sr`:
 ```sr
 folder src {
   folder components {
     file Button.tsx
+    file Header.tsx
+  }
+  folder utils {
+    file helpers.ts
   }
   file index.ts
 }
 
 constraints {
-  eachFolderMustContain ** src index.ts
+  mustContain src index.ts
+  maxFiles src/components 10
 }
 ```
 
-## Command-line rules
-
-Scaffoldrite follows simple CLI rules:
-
-- The command must come first     
-
+### 5. Make It Real
 ```bash
-scaffoldrite <command> [options] [arguments] 
+sr generate
+```
+Boom! Your perfect structure is now reality.
+
+---
+
+## 📖 The structure.sr Language
+
+### Simple. Literal. Powerful.
+
+Your `structure.sr` file describes exactly what should exist. No magic, no wildcards—just clear declaration:
+
+```sr
+# This creates exactly what you see
+folder src {
+  folder pages {
+    file index.tsx           # Creates: src/pages/index.tsx
+    file about.tsx           # Creates: src/pages/about.tsx
+  }
+  folder api {
+    folder users {           # Creates: src/api/users/
+      file GET.ts
+      file POST.ts
+    }
+  }
+}
 ```
 
-- Flags must come after the command.
+**Every name is literal.** `file [...slug].tsx` creates a file literally named `[...slug].tsx`. Perfect for Next.js, SvelteKit, or any framework with special file names.
 
+---
+
+## ⚡ Your Daily Commands
+
+### Initialize & Setup
+| Command | What It Does | When To Use |
+|---------|-------------|-------------|
+| `sr init` | Creates starter `structure.sr` | Starting any new project |
+| `sr init --empty` | Minimal structure with constraints block | When you want complete control |
+| `sr init --from-fs ./project` | Generates `structure.sr` from existing code | Adopting Scaffoldrite in an existing project |
+| `sr init --force` | Overwrites existing `structure.sr` | When you want to start fresh |
+
+**Example:**
 ```bash
-scaffoldrite init --force
-scaffoldrite init --from-fs . --force
+# Start a new React project
+sr init
+# Found an amazing open-source structure? Capture it!
+sr init --from-fs ./awesome-repo --force
 ```
 
-- Flags before the command are not supported
+### Validate & Check
+| Command | What It Does | When To Use |
+|---------|-------------|-------------|
+| `sr validate` | Checks if filesystem matches structure.sr | Before commits, in CI/CD |
+| `sr validate --allow-extra` | Allows extra files not in structure | During migration phases |
+| `sr validate --allow-extra README.md` | Allows specific extra files | When some files are intentionally outside structure |
 
+**Example:**
 ```bash
-scaffoldrite --force init ❌
+# Strict check (CI/CD ready)
+sr validate
+
+# "We're migrating, be gentle"
+sr validate --allow-extra
+
+# "Only these can be extra"
+sr validate --allow-extra README.md .env.example
 ```
 
-- Arguments without -- are positional
+### Generate & Create
+| Command | What It Does | When To Use |
+|---------|-------------|-------------|
+| `sr generate` | Creates entire structure from structure.sr | Initial setup, resetting structure |
+| `sr generate ./output` | Generates to specific directory | Creating templates for others |
+| `sr generate --yes` | Skips confirmation prompts | Automation scripts |
+| `sr generate --dry-run` | Shows what would happen | Preview before making changes |
 
-  - Their meaning depends on order
-
-  - Changing the order changes behavior
-
-
-## Commands
-
-- scaffoldrite init: Creates a starter structure.sr template.
-
+**Example:**
 ```bash
-scaffoldrite init
+# Create the whole structure
+sr generate
+
+# "Show me what you'll do first"
+sr generate --dry-run
+
+# "Just do it, I trust you"
+sr generate --yes
 ```
 
+### Modify & Evolve
+| Command | What It Does | When To Use |
+|---------|-------------|-------------|
+| `sr create src/utils folder` | Adds folder to structure | Adding new feature areas |
+| `sr create src/hooks/useAuth.ts file` | Adds file to structure | Creating new modules |
+| `sr delete src/old-feature` | Removes from structure | Cleaning up tech debt |
+| `sr rename src/index.ts main.ts` | Renames in structure | Refactoring |
+| `sr update --from-fs .` | Updates structure.sr from current files | After manual tweaks |
+| `sr merge --from-fs ./new-features` | Merges new files into structure | Collaborative feature adds |
 
-### Flags by Command (Authoritative Reference)
-
-- `scaffoldrite init`
-
-| Flag        | Description                                                  |
-| ----------- | ------------------------------------------------------------ |
-| `--empty`   | Create an empty `structure.sr` with only a constraints block |
-| `--from-fs` | Generate `structure.sr` from the filesystem                  |
-| `--force`   | Overwrite an existing `structure.sr` file                    |
-
+**Example:**
 ```bash
-scaffoldrite init
-scaffoldrite init --empty
-scaffoldrite init --from-fs
-scaffoldrite init --from-fs ./src --force
+# "We need a utils folder"
+sr create src/utils folder
 
-```
-- `scaffoldrite validate`
+# "Actually, let's call it helpers"
+sr rename src/utils src/helpers
 
-| Flag                      | Description                                             |
-| ------------------------- | ------------------------------------------------------- |
-| `--allow-extra`           | Allow extra files/folders not defined in `structure.sr` |
-| `--allow-extra <path...>` | Allow only specific extra files or folders              |
+# "Add a core utility file"
+sr create src/helpers/format.ts file
 
-```bash
-scaffoldrite validate
-scaffoldrite validate --allow-extra
-scaffoldrite validate --allow-extra index.ts logs
+# "Whoops, remove it"
+sr delete src/helpers/format.ts
 ```
 
-- `scaffoldrite generate`
+### Inspect & Understand
+| Command | What It Does | When To Use |
+|---------|-------------|-------------|
+| `sr list` | Shows structure.sr contents | Quick reference |
+| `sr list --fs` | Shows actual filesystem | Seeing current state |
+| `sr list --diff` | Compares structure.sr vs filesystem | Finding discrepancies |
+| `sr version` | Shows Scaffoldrite version | Debugging, reporting issues |
 
-| Flag    | Description               |
-| ------- | ------------------------- |
-| `--yes` | Skip confirmation prompts |
-
+**Example:**
 ```bash
-scaffoldrite generate
-scaffoldrite generate ./output --yes
+# "What's supposed to be here?"
+sr list
+
+# "What's actually here?"
+sr list --fs
+
+# "What's different?"
+sr list --diff
 ```
 
-- `scaffoldrite create`
-
-| Flag              | Description                              |
-| ----------------- | ---------------------------------------- |
-| `--force`         | Overwrite existing file or folder        |
-| `--if-not-exists` | Skip creation if the path already exists |
-| `--yes`           | Skip confirmation prompts                |
-
-```bash
-scaffoldrite create src/utils folder
-scaffoldrite create src/index.ts file --force
-```
-
-- `scaffoldrite delete`
-
-| Flag    | Description               |
-| ------- | ------------------------- |
-| `--yes` | Skip confirmation prompts |
-
-```bash
- scaffoldrite delete src/utils --yes
-```
-
-- `scaffoldrite rename`
-
-| Flag    | Description               |
-| ------- | ------------------------- |
-| `--yes` | Skip confirmation prompts |
-
-- `scaffoldrite update`
-
-| Flag    | Description               |
-| ------- | ------------------------- |
-| `--from-fs` | Updates the existing `structure.sr` from the filesystem without deleting constraints. |
-| `--yes` | Skip confirmation prompts |
-
-- `scaffoldrite merge`
-
-| Flag    | Description               |
-| ------- | ------------------------- |
-| `--from-fs` | Merges filesystem snapshot into existing structure.sr without deleting existing nodes or constraints. |
-| `--yes` | Skip confirmation prompts |
-
-```bash
-scaffoldrite rename src/index.ts main.ts
-```
-
-- `scaffoldrite list`
-
-No flags supported.
-
-```bash
-scaffoldrite list
-```
-
-
-
-
-## Default Ignore List
-
-These folders are ignored by default when running `scaffoldrite init --from-fs`:
-
-```bash
-  "node_modules",
-  ".git",
-  ".next",
-  "dist",
-  "build",
-  "coverage",
-  ".turbo",
-```
-
-
-## .scaffoldignore
-
-scaffoldrite uses a .scaffoldignore file to ignore folders and files when.
-
-- Snapshotting a filesystem (`scaffoldrite init --from-fs`)
-
-- Validating (`scaffoldrite validate`)
-
-This works similarly to .gitignore.
-
-This will override the default ingores and if deleted falls back to default ignores.
-
-### Notes
-
-- Lines starting with # are treated as comments
-
-- Blank lines are ignored
-
-- `.scaffoldignore` is not merged with the default list — it replaces it
-
-- It is used for validation and init and not with generation.
-
-```bash
-# Ignore build output
-dist
-
-*.js  # Ignore compiled JS
-
-# Ignore logs
-*.log
-
-node_modules
-
-```
-
-
-
-- `scaffoldrite validate`: Validates the structure.sr file against the defined constraints and the actual filesystem.
-This ensures the filesystem matches the structure definition, not just the rules in the .sr file
-
-```bash
-scaffoldrite validate
-```
-
-```bash
-scaffoldrite validate ./output
-```
-
-You can use the --allow-extra flag to ignore if there are files or folders in the filesystem not in the structure.sr
-
-```bash
-scaffoldrite validate --allow-extra 
-```
-
-```bash
-scaffoldrite validate --allow-extra index.ts math
-```
-
-
-
-- `scaffoldrite generate`: Generates the filesystem structure based on structure.sr.
-
-```bash
-scaffoldrite generate
-```
-
-```bash
-scaffoldrite generate ./output
-```
-
-
-
-- `scaffoldrite list`: Lists the current structure defined in structure.sr.
-
-```bash
-scaffoldrite list
-```
-
-
-
-- `scaffoldrite create <path> <file|folder>`: Creates a file or folder inside the structure and regenerates filesystem.
-
-```bash
-scaffoldrite create src/components folder
-```
-
-```bash
-scaffoldrite create src/index.ts file
-```
-
-
-
-- `scaffoldrite delete <path>`: Deletes a file or folder from the structure and regenerates filesystem.
-
-```bash
-scaffoldrite delete src/components
-```
-
-
-- `scaffoldrite rename <path> <newName>`: Renames a file or folder inside the structure and regenerates filesystem.
-
-```bash
-scaffoldrite rename src/index.ts main.ts
-```
-
-- `scaffoldrite merge [--from-fs <dir>] [-yes]`: Merges filesystem snapshot into existing structure.sr without deleting existing nodes or constraints.
-
-```bash
-scaffoldrite merge --from-fs
-```
-
-
-- `scaffoldrite update [--from-fs <dir>] [--yes]`: Updates the existing `structure.sr` from the filesystem without deleting constraints.
-
-```bash
-scaffoldrite update --from-fs
-```
-
-
-## Constraints (Commands)
-
-All constraint rules must be inside the constraints {} block.
-
-
-### Basic Constraints
-
-
-
-- `require <path>`: Ensures the path exists.
-
-```bash
-require src
-```
-
-
-
-- `forbid <path>`: Ensures the path does not exist.
-
-```bash
-forbid src/secret.txt
-```
-
-
-
-- `mustContain <path> <value>`: Ensures folder contains a file/folder.
-
-```bash
-mustContain src index.ts
-```
-
-
-
-- `mustHaveFile <path> <fileName>`: Ensures folder contains a specific file.
-
-```bash
-mustHaveFile src index.ts
-```
-
-
-
-- `fileNameRegex <path> <regex>`: Ensures all files in folder match regex.
-
-```bash
-fileNameRegex src ^[a-z]+\.ts$
-```
-
-
-
-- `maxFiles <path> <number>`: Limits number of files in folder.
-
-```bash
-maxFiles src 3
-```
-
-
-
-- `maxFolders <path> <number>`: Limits number of folders in folder.
-
-```bash
-maxFolders src 2
-```
-
-
-
-- `minFiles <path> <number>`: Requires minimum files.
-
-```bash
-minFiles src 1
-```
-
-
-
-- `minFolders <path> <number>`: Requires minimum folders.
-
-```bash
-minFolders src 1
-```
-
-
-
-- `maxDepth <path> <number>`: Limits nesting depth.
-
-```bash
-maxDepth src 3
-```
-
-
-
-- `maxFilesRecursive <path> <number>`: Limits files recursively.
-
-```bash
-maxFilesRecursive src 10
-```
-
-
-
-- `maxFoldersRecursive <path> <number>`: Limits folders recursively.
-
-```bash
-maxFoldersRecursive src 5
-```
-
-
-
-- `maxFilesByExt <path> <ext> <number>`: Limits files by extension.
-
-```bash
-maxFilesByExt src .ts 3
-```
-
-
-
-- `maxFilesByExtRecursive <path> <ext> <number>`: Limits files by extension recursively.
-
-```bash
-maxFilesByExtRecursive src .ts 5
-```
-
-
-### “Each Folder” Constraints
-
-These constraints apply a rule to every folder in a given scope.
-
-| Scope            | Meaning                                                    |
-| ---------------- | ---------------------------------------------------------- |
-| `*`              | Apply to **every folder in the root** (non-recursive)      |
-| `*` with a path  | Apply to **every folder inside that path** (non-recursive) |
-| `**`             | Apply **recursively** to all nested folders                |
-| `**` with a path | Apply recursively to all nested folders inside that path   |
-
-
-<path> is optional. If omitted, it defaults to the current directory.
-
-- `eachFolderMustContain <scope> <path> <value>`: Ensures every folder in the scope contains a specific file or folder.
-
-```bash
-eachFolderMustContain ** src index.ts
-```
-
-
-- `eachFolderMustContainFile <scope> <path> <fileName>`: Ensures every folder in the scope contains a file.
-
-```bash
-eachFolderMustContainFile * src index.ts
-```
-
-
-- `eachFolderMustContainFolder <scope> <path> <folderName>`: Ensures every folder in the scope contains a folder.
-
-```bash
-eachFolderMustContainFolder * src components
-```
-
-
-- `eachFolderMustHaveExt <scope> <path> <ext>`: Ensures every folder in the scope contains at least one file with the given extension.
-
-```bash
-eachFolderMustHaveExt ** src .ts
-```
-
-
-### Example constraints block
-
-```bash
+---
+
+## 🛡️ Constraints: Your Structure's Rules Engine
+
+Constraints are where Scaffoldrite becomes powerful. They're rules that must always be true about your structure.
+
+### Basic Constraints (Apply to specific paths)
+| Constraint | What It Means | Real-World Use |
+|------------|--------------|----------------|
+| `require src` | `src/` must exist | Ensuring core directories exist |
+| `forbid temp/` | `temp/` must NOT exist | Preventing temporary clutter |
+| `mustContain src index.ts` | `src/` must contain `index.ts` | Entry point validation |
+| `mustHaveFile src/components Button.tsx` | Must have exact file | Critical component checks |
+| `maxFiles src/components 10` | No more than 10 files | Preventing component bloat |
+| `maxDepth src 4` | Maximum 4 nested folders | Controlling complexity |
+| `fileNameRegex src/ ^[a-z-]+\.tsx$` | Files must match pattern | Enforcing naming conventions |
+
+**Example:**
+```sr
 constraints {
   require src
+  forbid .temp
   mustContain src index.ts
-  maxFiles src 5
-  eachFolderMustContain ** src index.ts
+  maxFiles src/components 15
+  fileNameRegex src/components/ ^[A-Z][a-zA-Z]+\.tsx$
 }
 ```
 
-### Notes
+### "Each Folder" Constraints (The * and ** Magic)
 
-- <path>  are relative to the root folder.
+These are your superpowers. They apply rules to multiple folders at once:
 
-- For commands that accept a <path>, the path is optional. If omitted, it defaults to the current directory.
+| Scope | Meaning | Visual Example |
+|-------|---------|----------------|
+| `*` | **Every direct child folder** (non-recursive) | `src/*` = `src/a/`, `src/b/`, but NOT `src/a/nested/` |
+| `**` | **All nested folders** (recursive) | `src/**` = `src/a/`, `src/a/nested/`, `src/b/`, etc. |
 
-- The root folder is treated as a virtual folder (__root__) and is ignored in output.
+#### Available Each-Folder Constraints:
+| Constraint | What It Means |
+|------------|--------------|
+| `eachFolderMustContain * src index.ts` | Every folder in `src/` must contain `index.ts` |
+| `eachFolderMustContainFile ** src README.md` | Every folder (recursive) must have `README.md` |
+| `eachFolderMustContainFolder * src tests` | Every folder must contain `tests/` subfolder |
+| `eachFolderMustHaveExt ** src .ts` | Every folder must have at least one `.ts` file |
 
-- --yes skips all confirmation prompts.
+**Example Scenarios:**
 
+1. **Monorepo Package Consistency:**
+   ```sr
+   constraints {
+     eachFolderMustContainFile * packages package.json
+     eachFolderMustContainFile * packages/package.json
+     eachFolderMustContain ** packages/src index.ts
+   }
+   ```
+   "Every package must have package.json and README, and every src folder must have index.ts"
 
+2. **Next.js API Route Standards:**
+   ```sr
+   constraints {
+     eachFolderMustContainFile ** src/pages _app.tsx
+     eachFolderMustContainFile * src/api GET.ts
+     fileNameRegex src/api/* ^(GET|POST|PUT|DELETE|PATCH)\.ts$
+   }
+   ```
+   "Every page needs _app.tsx, every API route needs GET.ts, and only HTTP methods allowed"
 
-## Contributing
+3. **React Component Organization:**
+   ```sr
+   constraints {
+     eachFolderMustContain * src/features index.ts
+     eachFolderMustContainFolder * src/features components
+     eachFolderMustContainFile * src/features/components index.ts
+     maxDepth src/features 3
+   }
+   ```
+   "Every feature has the same structure: index.ts, components/ folder, and components have their own index.ts"
 
-Found a bug or want to add a feature? Contributions are welcome!
-
-1. 🍴 Fork it
-2. 🌟 Star it (pretty please?)
-3. 🔧 Fix it
-4. 📤 PR it
-5. 🎉 Celebrate!
-
-Please ensure your code follows the existing style and includes clear commit messages.
+### Complete Constraint Reference
+| Constraint | Arguments | Example |
+|------------|-----------|---------|
+| `require` | `<path>` | `require src` |
+| `forbid` | `<path>` | `forbid .temp` |
+| `mustContain` | `<path> <value>` | `mustContain src index.ts` |
+| `mustHaveFile` | `<path> <fileName>` | `mustHaveFile src/components Button.tsx` |
+| `fileNameRegex` | `<path> <regex>` | `fileNameRegex src/ ^[a-z-]+\.tsx$` |
+| `maxFiles` | `<path> <number>` | `maxFiles src/components 10` |
+| `maxFolders` | `<path> <number>` | `maxFolders src 5` |
+| `minFiles` | `<path> <number>` | `minFiles src 1` |
+| `minFolders` | `<path> <number>` | `minFolders src 2` |
+| `maxDepth` | `<path> <number>` | `maxDepth src 4` |
+| `maxFilesRecursive` | `<path> <number>` | `maxFilesRecursive src 100` |
+| `maxFoldersRecursive` | `<path> <number>` | `maxFoldersRecursive src 50` |
+| `maxFilesByExt` | `<path> <ext> <number>` | `maxFilesByExt src .ts 10` |
+| `maxFilesByExtRecursive` | `<path> <ext> <number>` | `maxFilesByExtRecursive src .ts 50` |
+| `eachFolderMustContain` | `<scope> <path> <value>` | `eachFolderMustContain ** src index.ts` |
+| `eachFolderMustContainFile` | `<scope> <path> <fileName>` | `eachFolderMustContainFile * src README.md` |
+| `eachFolderMustContainFolder` | `<scope> <path> <folderName>` | `eachFolderMustContainFolder * src tests` |
+| `eachFolderMustHaveExt` | `<scope> <path> <ext>` | `eachFolderMustHaveExt ** src .ts` |
 
 ---
 
-## License
+## 🚫 Ignoring Files: The .scaffoldignore
 
-This project is licensed under the **MIT License** – see the [LICENSE](LICENSE) file for details.
+Sometimes you need exceptions. That's where `.scaffoldignore` comes in:
+
+```ignore
+# .scaffoldignore - works like .gitignore
+node_modules/      # Ignore dependencies
+*.log             # Ignore log files
+dist/             # Ignore build output
+.temp/            # Ignore temporary files
+
+# But KEEP these in structure
+!dist/README.md   # Except this one file
+```
+
+**Used when:**
+- `sr init --from-fs` (snapshots ignore these)
+- `sr validate` (validation ignores these)
+- `sr list --fs` (listing ignores these)
+
+**Not used when:**
+- `sr generate` (generation respects full structure)
 
 ---
-## Credits
 
-**Scaffoldrite** is built by **Isaac Anasonye** — a developer tool focused on **scaffolding project structures**, **enforcing constraints**, and **keeping codebases clean and predictable**.
+## 🎯 Real-World Workflows
+
+### The Startup: Rapid Prototyping
+```bash
+# Day 1: Vision
+sr init --empty
+# Edit structure.sr with your dream structure
+sr generate
+
+# Day 7: Add constraints as patterns emerge
+# Add to constraints block:
+# eachFolderMustContain * src/features index.ts
+# fileNameRegex src/components/ ^[A-Z][a-zA-Z]+\.tsx$
+
+# Day 30: Scale with confidence
+sr validate  # CI/CD passes every time
+```
+
+### The Enterprise: Governance & Standards
+```bash
+# Template team creates golden structure
+sr init --from-fs ./golden-template
+# Add strict constraints
+# Save to company template repo
+
+# Development teams:
+sr init --from-fs company-templates/react-starter
+sr validate  # Ensures compliance
+# Can't violate standards even if they try
+```
+
+### The Open Source Maintainer: Contributor Onboarding
+```sr
+constraints {
+  eachFolderMustContainFile * examples README.md
+  eachFolderMustContain ** src tests
+  maxFiles src/lib 20
+}
+```
+"Every example has docs, every module has tests, and the core library stays lean."
+
+### The Freelancer: Client Consistency
+```bash
+# Your personal template
+sr init --from-fs ./best-client-project
+
+# New client? Perfection in seconds:
+sr generate ./client-project
+# Every client gets your proven structure
+```
 
 ---
 
-<div align="center">
+## 🔧 Advanced Scenarios
 
-### 🚀 Using Scaffoldrite in your workflow?
+### Handling Dynamic-Looking Names
+```sr
+# These create LITERAL names - perfect for framework conventions
+folder src {
+  folder pages {
+    file [id].tsx        # Creates: src/pages/[id].tsx
+    file [...slug].tsx   # Creates: src/pages/[...slug].tsx
+    file (auth).tsx      # Creates: src/pages/(auth).tsx
+  }
+}
 
-**Support the project & join the community**
+constraints {
+  # Ensure every route group has layout
+  eachFolderMustContainFile * src/pages layout.tsx
+}
+```
 
-[⭐ Star on GitHub](https://github.com/Isaacprogi/scaffoldrite) ·
-[📢 Share on Twitter](https://twitter.com/intent/tweet?text=Check%20out%20Scaffoldrite!) ·
-[💬 Join the Discussion](https://github.com/Isaacprogi/scaffoldrite/discussions) ·
-[🔗 Connect on LinkedIn](https://www.linkedin.com/in/isaacanasonye)
+### Progressive Constraint Adoption
+```bash
+# Phase 1: Document only
+sr validate --allow-extra
 
-</div>
+# Phase 2: Allow known exceptions
+sr validate --allow-extra README.md .env
+
+# Phase 3: Strict compliance
+sr validate  # CI/CD fails on violations
+```
+
+### Structure Migration
+```bash
+# Capture current state
+sr init --from-fs . --force
+
+# Clean up in structure.sr
+# Remove old folders, rename files
+
+# Apply new structure
+sr generate --yes
+
+# Validate no regressions
+sr validate --allow-extra  # Temporary allowance
+```
+
+---
+
+## ❓ FAQ
+
+### "What if I edit files manually?"
+Run `sr validate` to check. Use `sr update --from-fs .` to accept changes, or `sr generate` to revert to structure.
+
+### "Can I have multiple structure files?"
+Not directly, but generate to different directories:
+```bash
+sr generate ./project-a
+sr generate ./project-b
+```
+
+### "Is this like a linter for file structure?"
+Exactly! It's ESLint/Prettier for your project's organization.
+
+### "What about generated files?"
+Add them to `.scaffoldignore` or use `--allow-extra` during validation.
+
+---
+
+## 🤝 Join the Community
+
+**Scaffoldrite** is built by developers for developers. Whether you're:
+- A **solo founder** keeping projects maintainable
+- A **team lead** enforcing standards without micromanaging
+- An **open source maintainer** guiding contributors
+- A **freelancer** delivering consistent quality
+
+You're in the right place.
+
+**[⭐ Star on GitHub](https://github.com/Isaacprogi/scaffoldrite)** · 
+**[🐛 Report Issues](https://github.com/Isaacprogi/scaffoldrite/issues)** · 
+**[💬 Share Ideas](https://github.com/Isaacprogi/scaffoldrite/discussions)**
+
+---
+
+## 📄 License
+
+MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+**Your project's structure is code too. Treat it with the same care. With Scaffoldrite, you will.**
+
+*Happy structuring! 🏗️*
