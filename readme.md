@@ -1,3 +1,6 @@
+I understand! Here's the complete README content formatted as a single text block with all the markdown formatting preserved, including your requested additions:
+
+```
 # Scaffoldrite: Define. Enforce. Generate. 🏗️
 
 **Stop guessing. Start structuring.** Your project's organization should be as reliable as your code. With Scaffoldrite, it will be.
@@ -92,9 +95,98 @@ folder src {
 
 ---
 
-## ⚡ Your Daily Commands
+## ⚡ Command Line Interface
 
-### Initialize & Setup
+### Positional Arguments Reference
+
+Scaffoldrite uses positional arguments where the meaning depends on their position:
+
+| Command  | arg3 stands for             | arg4 stands for | arg5 stands for |
+| -------- | --------------------------- | --------------- | --------------- |
+| `init`     | dir when `--from-fs`        | —               | —               |
+| `update`   | dir to scan                 | —               | —               |
+| `merge`    | dir to merge                | —               | —               |
+| `list`     | dir to list                 | —               | —               |
+| `create`   | path to create              | file/folder     | outputDir       |
+| `delete`   | path to delete              | outputDir       | —               |
+| `rename`   | old path                    | new name        | outputDir       |
+| `generate` | outputDir                   | —               | —               |
+| `validate` | outputDir (after filtering) | —               | —               |
+
+### Flags Reference
+
+Each command supports specific flags:
+
+#### `init` Command Flags
+| Flag | Description | Example |
+|------|-------------|---------|
+| `--force` | Overwrite existing `structure.sr` | `sr init --force` |
+| `--empty` | Create minimal structure with only constraints block | `sr init --empty` |
+| `--from-fs` | Generate from existing filesystem | `sr init --from-fs ./src` |
+
+#### `update` Command Flags
+| Flag | Description | Example |
+|------|-------------|---------|
+| `--from-fs` | Update from filesystem (required) | `sr update --from-fs .` |
+| `--yes` / `-y` | Skip confirmation prompts | `sr update --from-fs . --yes` |
+
+#### `merge` Command Flags
+| Flag | Description | Example |
+|------|-------------|---------|
+| `--from-fs` | Merge from filesystem (required) | `sr merge --from-fs ./features` |
+| `--yes` / `-y` | Skip confirmation prompts | `sr merge --from-fs . --yes` |
+
+#### `validate` Command Flags
+| Flag | Description | Example |
+|------|-------------|---------|
+| `--allow-extra` | Allow extra files not in structure | `sr validate --allow-extra` |
+| `--allow-extra <paths...>` | Allow specific extra files | `sr validate --allow-extra README.md .env` |
+
+#### `generate` Command Flags
+| Flag | Description | Example |
+|------|-------------|---------|
+| `--yes` | Skip confirmation prompts | `sr generate --yes` |
+| `--dry-run` | Show what would happen without making changes | `sr generate --dry-run` |
+| `--verbose` | Show detailed output | `sr generate --verbose` |
+| `--show` | Display operations as they happen | `sr generate --show` |
+
+#### `create` Command Flags
+| Flag | Description | Example |
+|------|-------------|---------|
+| `--force` | Overwrite existing item | `sr create src/index.ts file --force` |
+| `--if-not-exists` | Skip if path already exists | `sr create src/utils folder --if-not-exists` |
+| `--yes` | Skip confirmation prompts | `sr create src/hooks folder --yes` |
+| `--dry-run` | Show what would happen | `sr create src/components folder --dry-run` |
+| `--verbose` | Show detailed output | `sr create src/utils.ts file --verbose` |
+| `--show` | Display operations as they happen | `sr create src/lib folder --show` |
+
+#### `delete` Command Flags
+| Flag | Description | Example |
+|------|-------------|---------|
+| `--yes` | Skip confirmation prompts | `sr delete src/old --yes` |
+| `--dry-run` | Show what would happen | `sr delete src/temp --dry-run` |
+| `--verbose` | Show detailed output | `sr delete src/deprecated --verbose` |
+| `--show` | Display operations as they happen | `sr delete src/legacy --show` |
+
+#### `rename` Command Flags
+| Flag | Description | Example |
+|------|-------------|---------|
+| `--yes` | Skip confirmation prompts | `sr rename src/index.ts main.ts --yes` |
+| `--dry-run` | Show what would happen | `sr rename src/utils helpers --dry-run` |
+| `--verbose` | Show detailed output | `sr rename src/lib library --verbose` |
+| `--show` | Display operations as they happen | `sr rename src/components ui --show` |
+
+#### `list` Command Flags
+| Flag | Description | Example |
+|------|-------------|---------|
+| `--structure` / `--sr` | Show structure.sr contents | `sr list --structure` |
+| `--fs` | Show filesystem structure | `sr list --fs` |
+| `--diff` | Compare structure.sr vs filesystem | `sr list --diff` |
+| `--show` | Display with icons | `sr list --show` |
+
+### Your Daily Commands
+
+#### Initialize & Setup
 | Command | What It Does | When To Use |
 |---------|-------------|-------------|
 | `sr init` | Creates starter `structure.sr` | Starting any new project |
@@ -110,7 +202,7 @@ sr init
 sr init --from-fs ./awesome-repo --force
 ```
 
-### Validate & Check
+#### Validate & Check
 | Command | What It Does | When To Use |
 |---------|-------------|-------------|
 | `sr validate` | Checks if filesystem matches structure.sr | Before commits, in CI/CD |
@@ -129,7 +221,7 @@ sr validate --allow-extra
 sr validate --allow-extra README.md .env.example
 ```
 
-### Generate & Create
+#### Generate & Create
 | Command | What It Does | When To Use |
 |---------|-------------|-------------|
 | `sr generate` | Creates entire structure from structure.sr | Initial setup, resetting structure |
@@ -149,7 +241,7 @@ sr generate --dry-run
 sr generate --yes
 ```
 
-### Modify & Evolve
+#### Modify & Evolve
 | Command | What It Does | When To Use |
 |---------|-------------|-------------|
 | `sr create src/utils folder` | Adds folder to structure | Adding new feature areas |
@@ -174,7 +266,7 @@ sr create src/helpers/format.ts file
 sr delete src/helpers/format.ts
 ```
 
-### Inspect & Understand
+#### Inspect & Understand
 | Command | What It Does | When To Use |
 |---------|-------------|-------------|
 | `sr list` | Shows structure.sr contents | Quick reference |
@@ -467,3 +559,4 @@ MIT License - see the [LICENSE](LICENSE) file for details.
 **Your project's structure is code too. Treat it with the same care. With Scaffoldrite, you will.**
 
 *Happy structuring! 🏗️*
+```

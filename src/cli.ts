@@ -225,7 +225,6 @@ const show = hasFlag("--show");
 
 
 
-
 if (!allowedFlags) {
   console.error(`Unknown command: ${command}`);
   process.exit(1);
@@ -275,7 +274,7 @@ const force = hasFlag("--force");
 const ifNotExists = hasFlag("--if-not-exists");
 
 const allowExtraPaths = getFlagValuesAfter("--allow-extra");
-const allowExtra = hasFlag("--allow-extra");
+const allowExtra = hasFlag("--allow-extra") && allowExtraPaths.length === 0;
 
 const args = process.argv.slice(3).filter((a) => !a.startsWith("--"));
 const arg3 = args[0];
@@ -366,6 +365,7 @@ const arg5 = args[2];
     console.log("structure.sr created");
     return;
   }
+  
 
   /* ===== UPDATE ===== */
   if (command === "update") {
@@ -556,9 +556,6 @@ const arg5 = args[2];
   if (command === "validate") {
     const structure = loadAST();
 
-    const allowExtraPaths = getFlagValuesAfter("--allow-extra");
-    const allowExtra = hasFlag("--allow-extra") && allowExtraPaths.length === 0;
-
     const outputDirArg = args.find((a) => {
       if (a.startsWith("--")) return false;
       if (allowExtraPaths.includes(a)) return false;
@@ -566,7 +563,8 @@ const arg5 = args[2];
     });
 
     const outputDir = path.resolve(outputDirArg ?? process.cwd());
-
+  
+    
     try {
       validateConstraints(structure.root, structure.constraints);
       validateFS(structure.root, outputDir, allowExtra, allowExtraPaths);

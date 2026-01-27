@@ -59,11 +59,24 @@ export function validateFS(
     const expectedSrPath = path.join(currentPath, child.name);
 
     if (!fs.existsSync(expectedPath)) {
-      throw new Error(
-        `Missing in filesystem: ${expectedPath}\n` +
-        `Expected according to structure.sr at: ${expectedSrPath}`
-      );
-    }
+  const allowedExplicitly = allowExtraPaths.some((p) => {
+    const normalized = path.normalize(p);
+    return (
+      expectedSrPath === normalized ||
+      expectedSrPath.endsWith(normalized)
+    );
+  });
+
+  if (allowExtra || allowedExplicitly) {
+    continue; // 🔥 ignore missing
+  }
+
+  throw new Error(
+    `Missing in filesystem: ${expectedPath}\n` +
+    `Expected according to structure.sr at: ${expectedSrPath}`
+  );
+}
+
 
     if (child.type === "folder") {
       if (!fs.statSync(expectedPath).isDirectory()) {
