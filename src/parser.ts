@@ -7,14 +7,17 @@ export type Structure = {
   rawConstraints: string[];
 };
 
-const INVALID_NAME_REGEX = /[^a-zA-Z0-9._-]/;
+// No restrictions on file/folder name characters
+const VALID_NAME_REGEX = /.+/;
 
 function validateName(name: string, line: number) {
   if (name === "__root__") {
     throw new Error(`[Line ${line}] Reserved name "__root__" is not allowed`);
   }
-  if (INVALID_NAME_REGEX.test(name)) {
-    throw new Error(`[Line ${line}] Invalid characters in name: "${name}"`);
+
+  // Only validate that name is not empty
+  if (!VALID_NAME_REGEX.test(name)) {
+    throw new Error(`[Line ${line}] Name cannot be empty`);
   }
 }
 
@@ -33,8 +36,8 @@ export function parseStructure(input: string): Structure {
     const raw = lines[i];
     const line = raw.trim();
 
-      const codeLine = line.split("//")[0].trim();
-      if (codeLine.length === 0) continue;
+    const codeLine = line.split("//")[0].trim();
+    if (codeLine.length === 0) continue;
 
     if (line.length === 0) continue;
 
@@ -62,7 +65,7 @@ export function parseStructure(input: string): Structure {
 
     // Folder logic
     if (line.startsWith("folder ")) {
-      const match = line.match(/^folder\s+(.+)\s+\{$/);
+      const match = raw.match(/^\s*folder\s+(.+?)\s*\{\s*$/);
       if (!match) {
         throw new Error(`[Line ${lineNumber}] Invalid folder syntax: "${line}"`);
       }
@@ -84,7 +87,7 @@ export function parseStructure(input: string): Structure {
 
     // File logic
     if (line.startsWith("file ")) {
-      const match = line.match(/^file\s+(.+)$/);
+      const match = raw.match(/^\s*file\s+(.+?)\s*$/);
       if (!match) {
         throw new Error(`[Line ${lineNumber}] Invalid file syntax: "${line}"`);
       }
