@@ -13,10 +13,11 @@ import { DEFAULT_TEMPLATE, DEFAULT_IGNORE_TEMPLATE } from './data/index.js'
 const pkg = require("../package.json");
 import { getIgnoreList } from "./utils/index.js";
 import { createProgressBar } from "./progress.js";
-import { STRUCTURE_FILE,IGNORE_FILE } from "./utils/index.js";
-import { flattenTree, loadConstraints,hasFlag,getPassedFlags,getFlagValuesAfter,
-  loadAST,confirmProceed,saveStructure,filterTreeByIgnore,printTree,printTreeWithIcons,
-  renameFSItem,ALLOWED_FLAGS,printUsage
+import { STRUCTURE_FILE, IGNORE_FILE } from "./utils/index.js";
+import {
+  flattenTree, loadConstraints, hasFlag, getPassedFlags, getFlagValuesAfter,
+  loadAST, confirmProceed, saveStructure, filterTreeByIgnore, printTree, printTreeWithIcons,
+  renameFSItem, ALLOWED_FLAGS, printUsage
 } from "./utils/index.js";
 
 
@@ -129,11 +130,8 @@ if (invalidFlags.length > 0) {
   if (command === "init") {
     const shouldOverwrite = force;
 
-    const tDir = arg3
-  ? path.resolve(baseDir, arg3)
-  : baseDir;
 
-    const sDir = path.join(tDir, ".scaffoldrite");
+    const sDir = path.join(baseDir, ".scaffoldrite");
 
     // Create folder if missing
     if (!fs.existsSync(sDir)) {
@@ -144,22 +142,18 @@ if (invalidFlags.length > 0) {
     /* ===============================
      * OVERWRITE GUARDS
      * =============================== */
-    if (!shouldOverwrite) {
-      if (fs.existsSync(STRUCTURE_PATH)) {
-        console.error(
-          "structure.sr already exists.\n" +
-          "Use --force to overwrite everything."
-        );
-        process.exit(1);
-      }
+    const existingConfigs = [];
 
-      if (fs.existsSync(IGNORE_PATH)) {
-        console.error(
-          ".scaffoldignore already exists.\n" +
-          "Use --force to overwrite everything."
-        );
-        process.exit(1);
-      }
+    if (fs.existsSync(STRUCTURE_PATH)) existingConfigs.push("structure.sr");
+    if (fs.existsSync(IGNORE_PATH)) existingConfigs.push(".scaffoldignore");
+
+    if (!shouldOverwrite && existingConfigs.length > 0) {
+      console.error(
+        `The following files already exist:\n` +
+        existingConfigs.map(f => `- ${f}`).join("\n") +
+        `\n\nUse --force to overwrite everything.`
+      );
+      process.exit(1);
     }
 
     /* ===============================
@@ -188,9 +182,10 @@ if (invalidFlags.length > 0) {
       saveStructure(root, parsed.rawConstraints, STRUCTURE_PATH);
 
       if (shouldOverwrite || !fs.existsSync(IGNORE_PATH)) {
-        if (shouldOverwrite && fs.existsSync(IGNORE_PATH)) {
-          console.warn("Overwriting existing .scaffoldignore due to --force");
+        if (shouldOverwrite && (fs.existsSync(IGNORE_PATH) || fs.existsSync(STRUCTURE_PATH))) {
+          console.warn("Overwriting existing due to --force");
         }
+
         fs.writeFileSync(IGNORE_PATH, DEFAULT_IGNORE_TEMPLATE);
       }
 
@@ -211,9 +206,10 @@ if (invalidFlags.length > 0) {
       saveStructure(ast, parsed.rawConstraints, STRUCTURE_PATH);
 
       if (shouldOverwrite || !fs.existsSync(IGNORE_PATH)) {
-        if (shouldOverwrite && fs.existsSync(IGNORE_PATH)) {
-          console.warn("Overwriting existing .scaffoldignore due to --force");
+        if (shouldOverwrite && (fs.existsSync(IGNORE_PATH) || fs.existsSync(STRUCTURE_PATH))) {
+          console.warn("Overwriting existing due to --force");
         }
+
         fs.writeFileSync(IGNORE_PATH, DEFAULT_IGNORE_TEMPLATE);
       }
 
@@ -228,9 +224,10 @@ if (invalidFlags.length > 0) {
     saveStructure(parsed.root, parsed.rawConstraints, STRUCTURE_PATH);
 
     if (shouldOverwrite || !fs.existsSync(IGNORE_PATH)) {
-      if (shouldOverwrite && fs.existsSync(IGNORE_PATH)) {
-        console.warn("Overwriting existing .scaffoldignore due to --force");
+      if (shouldOverwrite && (fs.existsSync(IGNORE_PATH) || fs.existsSync(STRUCTURE_PATH))) {
+        console.warn("Overwriting existing due to --force");
       }
+
       fs.writeFileSync(IGNORE_PATH, DEFAULT_IGNORE_TEMPLATE);
     }
 
@@ -277,7 +274,7 @@ if (invalidFlags.length > 0) {
 
   /* ===== MERGE ===== */
   if (command === "merge") {
-     
+
     const fromFs = hasFlag("--from-fs");
 
     if (!fromFs || !arg3) {
@@ -291,9 +288,9 @@ if (invalidFlags.length > 0) {
       console.error("Error: structure.sr not found. Run `scaffoldrite init` first.");
       process.exit(1);
     }
-   
+
     const targetDir = path.resolve(arg3 ?? baseDir);
-    
+
     const ignoreList = getIgnoreList(targetDir);
     const fsAst = buildASTFromFS(targetDir, ignoreList);
     const structure = loadAST();
@@ -337,7 +334,7 @@ if (invalidFlags.length > 0) {
     const isDefault = !isFS && !isDiff && !isStructure;
 
     const targetDir = path.resolve(baseDir);
-   
+
 
     /* ================= DEFAULT (NO IGNORE) ================= */
     if (isDefault) {
@@ -547,6 +544,18 @@ if (invalidFlags.length > 0) {
       );
       process.exit(1);
     }
+
+    if (force && ifNotExists) {
+  console.error(
+    "Mutually exclusive flags: --force and --if-not-exists cannot be used together.\n" +
+    "Use either:\n" +
+    "  --force           Overwrite existing files/folders if they exist\n" +
+    "  --if-not-exists   Only create files/folders if they do not already exist"
+  );
+  process.exit(1);
+}
+
+
     if (!arg3 || !arg4) {
       printUsage("create");
       process.exit(1);

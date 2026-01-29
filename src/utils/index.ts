@@ -51,7 +51,7 @@ export function getIgnoreList(baseDir: string): string[] {
     SCAFFOLDRITE_DIR,
     IGNORE_FILE
   );
-  console.log(ignoreFilePath,'jajajajja')
+  console.log(ignoreFilePath, 'jajajajja')
 
   return fs.existsSync(ignoreFilePath)
     ? loadIgnoreList(ignoreFilePath)
@@ -234,7 +234,7 @@ export function getFlagValuesAfter(flag: string) {
 
 
 export const ALLOWED_FLAGS: Record<string, string[]> = {
-  init: ["--force", "--empty", "--from-fs",],
+  init: ["--force", "--empty", "--from-fs"],
   update: ["--from-fs", "--yes", "-y"],
   merge: ["--from-fs", "--yes", "-y"],
   validate: ["--allow-extra"],
@@ -250,26 +250,26 @@ export const ALLOWED_FLAGS: Record<string, string[]> = {
   create: ["--force", "--if-not-exists", "--yes", "--dry-run", "--verbose", "--summary"],
   delete: ["--yes", "--dry-run", "--verbose", "--summary"],
   rename: ["--yes", "--dry-run", "--verbose", "--summary"],
-  list: ["--structure", "--sr", "--fs", "--diff", "--summary", "--with-icon"],
+  list: ["--structure", "--sr", "--fs", "--diff", "--with-icon"],
   version: [],
 };
-
 
 export function printUsage(cmd?: string) {
   if (cmd && ALLOWED_FLAGS[cmd]) {
     const flags = ALLOWED_FLAGS[cmd].length
       ? `[${ALLOWED_FLAGS[cmd].join("] [")}]`
       : "";
+
     const argsMap: Record<string, string> = {
-      init: "[dir]",
-      update: "<dir>",
-      merge: "<dir>",
-      validate: "[dir] [--allow-extra <path1> <path2> ...]",
-      generate: "[dir]",
-      list: "[dir]",
-      create: "<path> <file|folder> [dir]",
-      delete: "<path> [dir]",
-      rename: "<path> <newName> [dir]",
+      init: "[--empty | --from-fs [dir]] [--force] [--yes | -y]",
+      update: "[--from-fs [dir]] [--yes | -y]",
+      merge: "[--from-fs [dir]] [--yes | -y]",
+      validate: "[--allow-extra] [--allow-extra <path1> <path2> ...]",
+      generate: "[dir] [--yes | -y] [--dry-run] [--verbose | --summary] [[--include-sr] [--include-ignore] | [--include-tooling]]",
+      list: "[[--structure | --sr] | --fs | --diff] [--with-icon]",
+      create: "<path> <file|folder> [--force | --if-not-exists] [--yes | -y] [--dry-run] [--verbose | --summary]",
+      delete: "<path> [--yes | -y] [--dry-run] [--verbose | --summary]",
+      rename: "<path> <newName> [--yes | -y] [--dry-run] [--verbose | --summary]",
       version: "",
     };
 
@@ -282,15 +282,15 @@ export function printUsage(cmd?: string) {
   } else {
     console.log(`
 Usage:
-  scaffoldrite init [dir] [--force] [--empty] [--from-fs] [--yes] [-y]
-  scaffoldrite update <dir> [--from-fs] [--yes] [-y]
-  scaffoldrite merge <dir> [--from-fs] [--yes] [-y]
-  scaffoldrite validate [dir] [--allow-extra] [--allow-extra <path1> <path2> ...]
-  scaffoldrite generate [dir] [--yes] [-y] [--dry-run] [--verbose] [--summary] [--include-sr] [--include-ignore] [--include-tooling]
-  scaffoldrite list [dir] [--structure] [--sr] [--fs] [--diff] [--summary] [--with-icon]
-  scaffoldrite create <path> <file|folder>  [--force] [--if-not-exists] [--yes] [-y] [--dry-run] [--verbose] [--summary]
-  scaffoldrite delete <path>  [--yes] [-y] [--dry-run] [--verbose] [--summary]
-  scaffoldrite rename <path> <newName> [--yes] [-y] [--dry-run] [--verbose] [--summary]
+  scaffoldrite init [--empty | --from-fs [dir]] [--force] [--yes | -y]
+  scaffoldrite update [--from-fs [dir]] [--yes | -y]
+  scaffoldrite merge [--from-fs [dir]] [--yes | -y]
+  scaffoldrite validate [--allow-extra] [--allow-extra <path1> <path2> ...]
+  scaffoldrite generate [dir] [--yes | -y] [--dry-run] [--verbose | --summary] [[--include-sr] [--include-ignore] | [--include-tooling]]
+  scaffoldrite list [[--structure | --sr] | --fs | --diff] [--with-icon]
+  scaffoldrite create <path> <file|folder> [--force | --if-not-exists] [--yes | -y] [--dry-run] [--verbose | --summary]
+  scaffoldrite delete <path> [--yes | -y] [--dry-run] [--verbose | --summary]
+  scaffoldrite rename <path> <newName> [--yes | -y] [--dry-run] [--verbose | --summary]
   scaffoldrite version
   scaffoldrite --help | -h   Show this message
 `);
