@@ -4,31 +4,28 @@
 
 ---
 
-# ⚠️ Filesystem Changes & Recovery Policy
+![ScaffoldRite Screenshot](https://raw.githubusercontent.com/isaacprogi/scaffoldrite/main/public/scaffoldrite-banner.png)
 
-## Drift Detection
-Manually deleted files or folders are treated as **filesystem drift**.  
-Changes made **outside Scaffoldrite** (using `rm`, file explorers, or other scripts) are **not recorded** in history.
+## ⚠️ Filesystem Changes
 
-## Regeneration Behavior
-`scaffoldrite generate` **restores structure, not file contents**.  
+### Drift Detection
+Manually deleted files or folders are considered **filesystem drift**.  
+Changes made outside Scaffoldrite (e.g., via `rm`, file explorers, or other scripts) are **not tracked**. Scaffoldrite does **not record history** of such changes.
+
+### Regeneration Behavior
+`scaffoldrite generate` **enforces the expected structure**, but does **not preserve or restore file contents**.  
 When it recreates a manually deleted file:
-- The file will be **empty**, OR
+
+- The file will be **empty**, or  
 - Created from a **template** if one is defined
 
-## No Content Backup
-**File contents are never backed up by Scaffoldrite**.  
-Scaffoldrite tracks **structural intent only**. Use **Git** or another version control system to recover lost file contents.
+### No Content Backup
+Scaffoldrite tracks **structural intent only** — it does **not back up file contents**. Use **Git** or another version control system to recover lost content.
 
-## Recoverable Operations
-**Exception** — Scaffoldrite-managed operations **are** recoverable.  
-Files or folders modified using Scaffoldrite commands (`create`, `delete`, `rename`, `merge`, or `generate` when history is enabled) are recorded as **operation-level history** and can be inspected or recovered from `.scaffoldrite/history`.
-
-> **“Scaffoldrite deleted my files 😡”**
->
-> This usually means files were deleted **manually outside Scaffoldrite** and later recreated by `scaffoldrite generate`.
-> Scaffoldrite did **not** delete file contents — it only restored the expected structure.
-> File contents are not tracked or backed up and must be recovered using Git or another version control system.
+> **“Scaffoldrite deleted my file content 😡”**  
+> This usually happens when files were removed manually outside Scaffoldrite and then regenerated.  
+> Scaffoldrite does **not** delete or overwrite file contents arbitrarily — it only restores the **expected structure**.  
+> Always use Git or another VCS to protect and recover file contents.
 
 
 ## 🎯 The Problem Every Developer Faces
@@ -135,9 +132,16 @@ Scaffoldrite uses positional arguments where the meaning depends on their positi
 | `delete`   | path to delete                |                 |
 | `rename`   | old path                      | new name        |
 | `generate` | outputDir                     | —               |
-| `validate` | outputDir (after filtering)   | —               | 
+| `validate` | —                             | —               | 
+
+
+## ⚡ Structure Image
+
+![ScaffoldRite Screenshot](https://raw.githubusercontent.com/isaacprogi/scaffoldrite/main/public/structure.png)
+
 
 ### Flags Reference
+
 
 Each command supports specific flags:
 
@@ -537,55 +541,49 @@ sr validate --allow-extra  # Temporary allowance
 ```
 
 ---
+## 🛠️ Structure Validation & Regeneration
 
-
-
-## 🕰️ Structure History & Redo
-
-Scaffoldrite **tracks structural operations** so you can safely revert changes to your project layout **without touching file content**.
+Scaffoldrite focuses on **ensuring your project follows the expected folder and file layout**.  
+It does **not track history or file content** — Git or another version control system should be used for that.
 
 ### What It Solves
 
-* **Recover from accidental folder deletion or moves**
-  `sr restore <id> --before/after --fs/sr` restores your project’s structure to a previous state while keeping all file contents untouched.
-* **Undo structural mistakes without losing work**
-  Accidentally created folders, moved files, or renamed directories? Restore the correct layout without overwriting ongoing work.
-* **Reset for scaffolding**
-  When generating a new structure, you can start from a known-good layout, avoiding conflicts with extra or misplaced folders.
+* **Detect drift in your project structure**  
+  Scaffoldrite identifies missing or extra folders/files compared to your defined `structure.sr`.
+
+* **Restore the intended folder hierarchy**  
+  `scaffoldrite generate` recreates missing folders or files according to the structure, without touching existing file contents.
+
+* **Prepare for scaffolding or code generation**  
+  Ensures your project has a clean, consistent layout before generating new files or scaffolds.
+
+* **Enforce consistency across teams**  
+  Keep the official folder structure consistent, even if developers create extra folders or misplace files. File content remains untouched.
 
 ### Real-World Examples
 
-1️⃣ **Cleaning up experimental folders**
-**Situation:** You’ve been trying out new features and created temporary folders like `src/experimental/` or `test/` that you now don’t want in the project.
-**Benefit:** Restore the structure to the intended state, removing only extra folders, but keep your edited files like `App.jsx` intact.
+1️⃣ **Cleaning up experimental folders**  
+**Situation:** You created temporary folders like `src/experimental/` that are no longer needed.  
+**Benefit:** `scaffoldrite generate` restores the intended structure, removing extra folders while leaving real code intact.
 
-2️⃣ **Undoing accidental moves or renames**
-**Situation:** You accidentally moved `components/Header.jsx` to the wrong folder.
-**Benefit:** Restore the correct folder layout while keeping the file content unchanged. No need to overwrite your work, just fix the structure.
+2️⃣ **Fixing missing folders**  
+**Situation:** A required folder like `components/` was accidentally deleted.  
+**Benefit:** Regeneration creates it automatically, ensuring the project structure is complete without affecting file contents.
 
-3️⃣ **Reverting after bad merges**
-**Situation:** You merged someone else’s branch and it added or removed folders/files that don’t match your structure rules.
-**Benefit:** Restore your intended folder hierarchy without discarding local content changes.
+3️⃣ **Preparing for scaffolding**  
+**Situation:** You want to run `scaffoldrite generate` safely without conflicts from misplaced folders.  
+**Benefit:** The tool enforces the correct structure first, reducing scaffolding errors.
 
-4️⃣ **Preparing for code generation or scaffolding**
-**Situation:** You want to run `scaffoldrite generate` safely without accidentally overwriting content or creating misplaced folders.
-**Benefit:** Restore the structure first, so scaffolding happens on a clean, known-good layout, reducing the chance of conflicts.
-
-5️⃣ **Keeping projects consistent across teams**
-**Situation:** In a team, different developers create new folders inconsistently.
-**Benefit:** Restore the official folder structure for the project while letting each developer keep their own file content. Great for syncing structure without touching work-in-progress files.
-
-6️⃣ **Cleaning old, unused boilerplate**
-**Situation:** Over time, your project accumulates old template files, nested folders, or scaffolded test directories.
-**Benefit:** Restore only the current intended structure, removing obsolete folders but leaving the real code untouched.
+4️⃣ **Keeping projects consistent across teams**  
+**Situation:** Team members create inconsistent folder layouts.  
+**Benefit:** Scaffoldrite ensures the official structure is maintained while allowing individual work to remain untouched.
 
 ### What It Does **Not** Solve
 
-* Scaffoldrite **does not backup file contents**. If a file was overwritten or manually deleted outside Scaffoldrite, history cannot restore its contents. Use **Git or another VCS** for content recovery.
+* Scaffoldrite **does not back up file contents**.  
+* Changes or deletions made outside Scaffoldrite are **not recoverable** by the tool. Use **Git or another VCS** for content versioning and recovery.
 
-> **Tip:** Think of `history restore` as a **structure-only undo/redo**. File content is never overwritten, making it ideal for cleaning, reorganizing, or prepping scaffolds without risk to your work.
-
----
+> **Tip:** Think of `scaffoldrite generate` as a **structure-only enforcement tool**. It ensures your project layout matches the defined structure without overwriting any existing file content.
 
 
 ## ❓ FAQ

@@ -21,9 +21,9 @@ import {
   renameFSItem, ALLOWED_FLAGS, printUsage
 } from "./utils/index.js";
 import { HistoryEntry } from "./types/index.js";
-import { structureToSRString } from "./utils/index.js";
-import { v4 as uuidv4 } from "uuid";
-import chalk from "chalk";
+// import { structureToSRString } from "./utils/index.js";
+// import { v4 as uuidv4 } from "uuid";
+// import chalk from "chalk";
 
 
 
@@ -148,36 +148,36 @@ if (invalidFlags.length > 0) {
   /* ===== HISTORY ===== */
 
 
-if (command === "history") {
-  if (!fs.existsSync(HISTORY_DIR)) {
-    console.log(chalk.red("❌ No history found."));
-    process.exit(0);
-  }
+// if (command === "history") {
+//   if (!fs.existsSync(HISTORY_DIR)) {
+//     console.log(chalk.red("❌ No history found."));
+//     process.exit(0);
+//   }
 
-  const files = fs.readdirSync(HISTORY_DIR).filter(f => f.endsWith(".json"));
+//   const files = fs.readdirSync(HISTORY_DIR).filter(f => f.endsWith(".json"));
 
-  if (files.length === 0) {
-    console.log(chalk.yellow("⚠️  No history entries found."));
-    process.exit(0);
-  }
+//   if (files.length === 0) {
+//     console.log(chalk.yellow("⚠️  No history entries found."));
+//     process.exit(0);
+//   }
 
-  console.log(chalk.cyanBright.bold("📜 Scaffoldrite History Entries:\n"));
+//   console.log(chalk.cyanBright.bold("📜 Scaffoldrite History Entries:\n"));
 
-  for (const file of files.sort()) {
-    const fullPath = path.join(HISTORY_DIR, file);
-    const entry: HistoryEntry = JSON.parse(fs.readFileSync(fullPath, "utf-8"));
+//   for (const file of files.sort()) {
+//     const fullPath = path.join(HISTORY_DIR, file);
+//     const entry: HistoryEntry = JSON.parse(fs.readFileSync(fullPath, "utf-8"));
 
-    console.log(`${chalk.green("ID:")} ${chalk.whiteBright(entry.id)}`);
-    console.log(`${chalk.green("Command:")} ${chalk.blueBright(entry.command)}`);
-    console.log(`${chalk.green("Args:")} ${chalk.magenta(entry.args.join(" "))}`);
-    console.log(`${chalk.green("Flags:")} ${chalk.yellow(entry.flags.join(", "))}`);
-    console.log(`${chalk.green("Timestamp:")} ${chalk.gray(new Date(entry.timestamp).toLocaleString())}`);
-    console.log(chalk.gray("-".repeat(40)));
-  }
+//     console.log(`${chalk.green("ID:")} ${chalk.whiteBright(entry.id)}`);
+//     console.log(`${chalk.green("Command:")} ${chalk.blueBright(entry.command)}`);
+//     console.log(`${chalk.green("Args:")} ${chalk.magenta(entry.args.join(" "))}`);
+//     console.log(`${chalk.green("Flags:")} ${chalk.yellow(entry.flags.join(", "))}`);
+//     console.log(`${chalk.green("Timestamp:")} ${chalk.gray(new Date(entry.timestamp).toLocaleString())}`);
+//     console.log(chalk.gray("-".repeat(40)));
+//   }
 
-  console.log(chalk.cyanBright.bold(`Total entries: ${files.length}`));
-  return;
-}
+//   console.log(chalk.cyanBright.bold(`Total entries: ${files.length}`));
+//   return;
+// }
 
 
 
@@ -601,13 +601,13 @@ if (command === "history") {
   if (command === "create") {
     const structure = loadAST();
     const outputDir = path.resolve(baseDir);
-    const beforeStructureSR = structureToSRString(structure.root, structure.rawConstraints);
+    // const beforeStructureSR = structureToSRString(structure.root, structure.rawConstraints);
     const ignoreList = getIgnoreList(outputDir);
 
 
-    const beforeFSSnapshotSR = structureToSRString(buildASTFromFS(outputDir, ignoreList), []);
+    // const beforeFSSnapshotSR = structureToSRString(buildASTFromFS(outputDir, ignoreList), []);
 
-    const operations: Operation[] = [];
+    // const operations: Operation[] = [];
 
     validateConstraints(structure.root, structure.constraints);
 
@@ -615,26 +615,26 @@ if (command === "history") {
 
 
     // If force and the path exists, stash it first
-    if (force && fs.existsSync(fullPath)) {
-      const backupPath = path.join(SCAFFOLDRITE_DIR, 'history', crypto.randomUUID());
-      fs.cpSync(fullPath, backupPath, { recursive: true });
-      operations.push({
-        type: 'delete',
-        path: arg3,
-        backupPath
-      });
-      fs.rmSync(fullPath, { recursive: true, force: true });
-    }
+    // if (force && fs.existsSync(fullPath)) {
+    //   const backupPath = path.join(SCAFFOLDRITE_DIR, 'history', crypto.randomUUID());
+    //   fs.cpSync(fullPath, backupPath, { recursive: true });
+    //   operations.push({
+    //     type: 'delete',
+    //     path: arg3,
+    //     backupPath
+    //   });
+    //   fs.rmSync(fullPath, { recursive: true, force: true });
+    // }
 
     // Add node to structure
     addNode(structure.root, arg3, arg4 as "file" | "folder", { force, ifNotExists });
 
     // Record create operation AFTER handling force
-    operations.push({
-      type: "create",
-      path: arg3,
-      nodeType: arg4 as "file" | "folder",
-    });
+    // operations.push({
+    //   type: "create",
+    //   path: arg3,
+    //   nodeType: arg4 as "file" | "folder",
+    // });
 
     validateConstraints(structure.root, structure.constraints);
 
@@ -661,32 +661,32 @@ if (command === "history") {
       for (const line of logLines.filter(l => !l.startsWith("SKIP"))) console.log(line);
     }
 
-    const afterStructureSR = structureToSRString(structure.root, structure.rawConstraints);
-    const afterFSSnapshotSR = structureToSRString(buildASTFromFS(outputDir, ignoreList), []);
+    // const afterStructureSR = structureToSRString(structure.root, structure.rawConstraints);
+    // const afterFSSnapshotSR = structureToSRString(buildASTFromFS(outputDir, ignoreList), []);
 
 
 
 
     // Write history
-    if (!dryRun) {
-      writeHistory({
-        id: uuidv4(),
-        command,
-        args: process.argv.slice(3),
-        flags: passedFlags,
-        timestamp: Date.now(),
-        operations,
-        before: {
-          structure: beforeStructureSR,
-          fsSnapshot: beforeFSSnapshotSR
-        },
-        after: {
-          structure: afterStructureSR,
-          fsSnapshot: afterFSSnapshotSR
-        },
-      });
+    // if (!dryRun) {
+    //   writeHistory({
+    //     id: uuidv4(),
+    //     command,
+    //     args: process.argv.slice(3),
+    //     flags: passedFlags,
+    //     timestamp: Date.now(),
+    //     operations,
+    //     before: {
+    //       structure: beforeStructureSR,
+    //       fsSnapshot: beforeFSSnapshotSR
+    //     },
+    //     after: {
+    //       structure: afterStructureSR,
+    //       fsSnapshot: afterFSSnapshotSR
+    //     },
+    //   });
 
-    }
+    // }
 
     process.stdout.write("\n");
     console.log("Created successfully.");
