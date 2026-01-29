@@ -65,7 +65,7 @@ export async function generateFS(
 
   try {
     await scan(root);
-  } catch {}
+  } catch { }
 
   /* 3️⃣ PLAN ops (NO FS MUTATION) */
   for (const [p, type] of expected.entries()) {
@@ -82,6 +82,7 @@ export async function generateFS(
 
   const extras = [...actual]
     .filter((p) => !expected.has(p))
+    .filter((p) => !p.startsWith(path.join(root, ".scaffoldrite/history")))
     .sort((a, b) => b.length - a.length);
 
   for (const p of extras) {
@@ -102,9 +103,10 @@ export async function generateFS(
       } else if (op.type === "file") {
         await fs.mkdir(path.dirname(op.path), { recursive: true });
         await fs.writeFile(op.path, "");
-      } else if (op.type === "delete") {
-        await fs.rm(op.path, { recursive: true, force: true });
       }
+    } else if (op.type === "delete") {
+      if (op.path.startsWith(path.join(root, ".scaffoldrite/history"))) continue;
+      await fs.rm(op.path, { recursive: true, force: true });
     }
 
     options?.onProgress?.({

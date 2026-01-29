@@ -26,6 +26,9 @@ export function buildASTFromFS(
       if (ignoreList.includes(item)) continue;
 
       const itemPath = path.join(folderPath, item);
+      
+      if (itemPath.startsWith(path.join(dir, ".scaffoldrite/history"))) continue;
+
       const stat = fs.statSync(itemPath);
 
       if (stat.isDirectory()) {

@@ -23,6 +23,7 @@ import {
 import { HistoryEntry } from "./types/index.js";
 import { structureToSRString } from "./utils/index.js";
 import { v4 as uuidv4 } from "uuid";
+import chalk from "chalk";
 
 
 
@@ -143,6 +144,42 @@ if (invalidFlags.length > 0) {
     console.log(pkg.version);
     process.exit(0);
   }
+
+  /* ===== HISTORY ===== */
+
+
+if (command === "history") {
+  if (!fs.existsSync(HISTORY_DIR)) {
+    console.log(chalk.red("❌ No history found."));
+    process.exit(0);
+  }
+
+  const files = fs.readdirSync(HISTORY_DIR).filter(f => f.endsWith(".json"));
+
+  if (files.length === 0) {
+    console.log(chalk.yellow("⚠️  No history entries found."));
+    process.exit(0);
+  }
+
+  console.log(chalk.cyanBright.bold("📜 Scaffoldrite History Entries:\n"));
+
+  for (const file of files.sort()) {
+    const fullPath = path.join(HISTORY_DIR, file);
+    const entry: HistoryEntry = JSON.parse(fs.readFileSync(fullPath, "utf-8"));
+
+    console.log(`${chalk.green("ID:")} ${chalk.whiteBright(entry.id)}`);
+    console.log(`${chalk.green("Command:")} ${chalk.blueBright(entry.command)}`);
+    console.log(`${chalk.green("Args:")} ${chalk.magenta(entry.args.join(" "))}`);
+    console.log(`${chalk.green("Flags:")} ${chalk.yellow(entry.flags.join(", "))}`);
+    console.log(`${chalk.green("Timestamp:")} ${chalk.gray(new Date(entry.timestamp).toLocaleString())}`);
+    console.log(chalk.gray("-".repeat(40)));
+  }
+
+  console.log(chalk.cyanBright.bold(`Total entries: ${files.length}`));
+  return;
+}
+
+
 
   /* ===== INIT ===== */
   if (command === "init") {
@@ -515,31 +552,31 @@ if (invalidFlags.length > 0) {
     const ignoreOutput = path.join(outputDir, '.scaffoldrite', ".scaffoldignore");
     const scaffoldOutput = path.join(outputDir, '.scaffoldrite')
 
-  console.log(STRUCTURE_PATH)
+    console.log(STRUCTURE_PATH)
 
 
     if (!dryRun) {
       if (ignoreTooling) {
         // DELETE the .scaffoldrite directory
-         if (fs.existsSync(scaffoldOutput)) {
+        if (fs.existsSync(scaffoldOutput)) {
           fs.rmSync(scaffoldOutput, {
             recursive: true,
             force: true,
           });
         }
-        
+
       } else {
-      
+
         const structureSrc = path.join(process.cwd(), ".scaffoldrite", "structure.sr");
-const ignoreSrc = path.join(process.cwd(), ".scaffoldrite", ".scaffoldignore");
+        const ignoreSrc = path.join(process.cwd(), ".scaffoldrite", ".scaffoldignore");
 
-// Destination folder (inside outputDir)
-const scaffoldDir = path.join(outputDir, ".scaffoldrite");
-if (!fs.existsSync(scaffoldDir)) fs.mkdirSync(scaffoldDir, { recursive: true });
+        // Destination folder (inside outputDir)
+        const scaffoldDir = path.join(outputDir, ".scaffoldrite");
+        if (!fs.existsSync(scaffoldDir)) fs.mkdirSync(scaffoldDir, { recursive: true });
 
-// Copy
-fs.copyFileSync(structureSrc, path.join(scaffoldDir, "structure.sr"));
-fs.copyFileSync(ignoreSrc, path.join(scaffoldDir, ".scaffoldignore"));
+        // Copy
+        fs.copyFileSync(structureSrc, path.join(scaffoldDir, "structure.sr"));
+        fs.copyFileSync(ignoreSrc, path.join(scaffoldDir, ".scaffoldignore"));
 
       }
     }
@@ -567,8 +604,7 @@ fs.copyFileSync(ignoreSrc, path.join(scaffoldDir, ".scaffoldignore"));
     const beforeStructureSR = structureToSRString(structure.root, structure.rawConstraints);
     const ignoreList = getIgnoreList(outputDir);
 
-    console.log(ignoreList)
-  
+
     const beforeFSSnapshotSR = structureToSRString(buildASTFromFS(outputDir, ignoreList), []);
 
     const operations: Operation[] = [];
@@ -626,8 +662,8 @@ fs.copyFileSync(ignoreSrc, path.join(scaffoldDir, ".scaffoldignore"));
     }
 
     const afterStructureSR = structureToSRString(structure.root, structure.rawConstraints);
-    const afterFSSnapshotSR = structureToSRString(buildASTFromFS(outputDir, ignoreList.filter(f=>f !== '.scaffoldrite')), []);
-    
+    const afterFSSnapshotSR = structureToSRString(buildASTFromFS(outputDir, ignoreList), []);
+
 
 
 

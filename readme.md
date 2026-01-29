@@ -125,17 +125,17 @@ folder src {
 
 Scaffoldrite uses positional arguments where the meaning depends on their position:
 
-| Command  | arg3 stands for             | arg4 stands for |
-| -------- | --------------------------- | --------------- | 
-| `init`     | dir when `--from-fs`        | —               | 
-| `update`   | dir to scan                 | —               | 
-| `merge`    | dir to merge                | —               | 
-| `list`     | dir to list                 | —               |
-| `create`   | path to create              | file/folder     |
-| `delete`   | path to delete              | outputDir       |
-| `rename`   | old path                    | new name        |
-| `generate` | outputDir                   | —               |
-| `validate` | outputDir (after filtering) | —               | 
+| Command    | arg3 stands for               | arg4 stands for |
+| --------   | ---------------------------   | --------------- | 
+| `init`     | dir when `--from-fs`          | —               | 
+| `update`   | dir to scan                   | —               | 
+| `merge`    | dir to merge                  | —               | 
+| `list`     | dir to list                   | —               |
+| `create`   | path to create                | file/folder     |
+| `delete`   | path to delete                |                 |
+| `rename`   | old path                      | new name        |
+| `generate` | outputDir                     | —               |
+| `validate` | outputDir (after filtering)   | —               | 
 
 ### Flags Reference
 
@@ -537,6 +537,60 @@ sr validate --allow-extra  # Temporary allowance
 ```
 
 ---
+
+
+
+## 🕰️ Structure History & Redo
+
+Scaffoldrite **tracks structural operations** so you can safely revert changes to your project layout **without touching file content**.
+
+### What It Solves
+
+* **Recover from accidental folder deletion or moves**
+  `sr restore <id> --before/after --fs/sr` restores your project’s structure to a previous state while keeping all file contents untouched.
+* **Undo structural mistakes without losing work**
+  Accidentally created folders, moved files, or renamed directories? Restore the correct layout without overwriting ongoing work.
+* **Reset for scaffolding**
+  When generating a new structure, you can start from a known-good layout, avoiding conflicts with extra or misplaced folders.
+
+### Real-World Examples
+
+1️⃣ **Cleaning up experimental folders**
+**Situation:** You’ve been trying out new features and created temporary folders like `src/experimental/` or `test/` that you now don’t want in the project.
+**Benefit:** Restore the structure to the intended state, removing only extra folders, but keep your edited files like `App.jsx` intact.
+
+2️⃣ **Undoing accidental moves or renames**
+**Situation:** You accidentally moved `components/Header.jsx` to the wrong folder.
+**Benefit:** Restore the correct folder layout while keeping the file content unchanged. No need to overwrite your work, just fix the structure.
+
+3️⃣ **Reverting after bad merges**
+**Situation:** You merged someone else’s branch and it added or removed folders/files that don’t match your structure rules.
+**Benefit:** Restore your intended folder hierarchy without discarding local content changes.
+
+4️⃣ **Preparing for code generation or scaffolding**
+**Situation:** You want to run `scaffoldrite generate` safely without accidentally overwriting content or creating misplaced folders.
+**Benefit:** Restore the structure first, so scaffolding happens on a clean, known-good layout, reducing the chance of conflicts.
+
+5️⃣ **Keeping projects consistent across teams**
+**Situation:** In a team, different developers create new folders inconsistently.
+**Benefit:** Restore the official folder structure for the project while letting each developer keep their own file content. Great for syncing structure without touching work-in-progress files.
+
+6️⃣ **Cleaning old, unused boilerplate**
+**Situation:** Over time, your project accumulates old template files, nested folders, or scaffolded test directories.
+**Benefit:** Restore only the current intended structure, removing obsolete folders but leaving the real code untouched.
+
+### What It Does **Not** Solve
+
+* Scaffoldrite **does not backup file contents**. If a file was overwritten or manually deleted outside Scaffoldrite, history cannot restore its contents. Use **Git or another VCS** for content recovery.
+
+> **Tip:** Think of `history restore` as a **structure-only undo/redo**. File content is never overwritten, making it ideal for cleaning, reorganizing, or prepping scaffolds without risk to your work.
+
+---
+
+If you want, I can **merge this directly into your full README** in the correct spot (probably after “Advanced Scenarios”) so the section flows naturally with the rest of your doc.
+
+Do you want me to do that?
+
 
 ## ❓ FAQ
 
