@@ -125,17 +125,17 @@ folder src {
 
 Scaffoldrite uses positional arguments where the meaning depends on their position:
 
-| Command  | arg3 stands for             | arg4 stands for | arg5 stands for |
-| -------- | --------------------------- | --------------- | --------------- |
-| `init`     | dir when `--from-fs`        | —               | —               |
-| `update`   | dir to scan                 | —               | —               |
-| `merge`    | dir to merge                | —               | —               |
-| `list`     | dir to list                 | —               | —               |
-| `create`   | path to create              | file/folder     | outputDir       |
-| `delete`   | path to delete              | outputDir       | —               |
-| `rename`   | old path                    | new name        | outputDir       |
-| `generate` | outputDir                   | —               | —               |
-| `validate` | outputDir (after filtering) | —               | —               |
+| Command  | arg3 stands for             | arg4 stands for |
+| -------- | --------------------------- | --------------- | 
+| `init`     | dir when `--from-fs`        | —               | 
+| `update`   | dir to scan                 | —               | 
+| `merge`    | dir to merge                | —               | 
+| `list`     | dir to list                 | —               |
+| `create`   | path to create              | file/folder     |
+| `delete`   | path to delete              | outputDir       |
+| `rename`   | old path                    | new name        |
+| `generate` | outputDir                   | —               |
+| `validate` | outputDir (after filtering) | —               | 
 
 ### Flags Reference
 
