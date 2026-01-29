@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { FolderNode } from "./ast";
-import { isIgnored } from "./utils";
+import { isIgnored } from "./utils/index.js";
 
 export function validateFS(
   root: FolderNode,

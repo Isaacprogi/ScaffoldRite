@@ -60,7 +60,7 @@ export function addNode(
     if (options.ifNotExists) return; // do nothing
     if (!options.force) {
       throw new Error(
-        `Cannot create ${type}: '${pathStr}' already exists in the structure.`
+        `Cannot create ${type}: '${pathStr}' already exists in the structure.sr file`
       );
     }
 

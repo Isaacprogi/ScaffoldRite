@@ -4,6 +4,33 @@
 
 ---
 
+# ⚠️ Filesystem Changes & Recovery Policy
+
+## Drift Detection
+Manually deleted files or folders are treated as **filesystem drift**.  
+Changes made **outside Scaffoldrite** (using `rm`, file explorers, or other scripts) are **not recorded** in history.
+
+## Regeneration Behavior
+`scaffoldrite generate` **restores structure, not file contents**.  
+When it recreates a manually deleted file:
+- The file will be **empty**, OR
+- Created from a **template** if one is defined
+
+## No Content Backup
+**File contents are never backed up by Scaffoldrite**.  
+Scaffoldrite tracks **structural intent only**. Use **Git** or another version control system to recover lost file contents.
+
+## Recoverable Operations
+**Exception** — Scaffoldrite-managed operations **are** recoverable.  
+Files or folders modified using Scaffoldrite commands (`create`, `delete`, `rename`, `merge`, or `generate` when history is enabled) are recorded as **operation-level history** and can be inspected or recovered from `.scaffoldrite/history`.
+
+> **“Scaffoldrite deleted my files 😡”**
+>
+> This usually means files were deleted **manually outside Scaffoldrite** and later recreated by `scaffoldrite generate`.
+> Scaffoldrite did **not** delete file contents — it only restored the expected structure.
+> File contents are not tracked or backed up and must be recovered using Git or another version control system.
+
+
 ## 🎯 The Problem Every Developer Faces
 
 Remember that time you joined a project and spent days just figuring out where things go? Or when your team's codebase slowly became a jungle of misplaced files? We've all been there.

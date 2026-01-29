@@ -243,9 +243,7 @@ export const ALLOWED_FLAGS: Record<string, string[]> = {
     "--dry-run",
     "--verbose",
     "--summary",
-    "--include-sr",
-    "--include-ignore",
-    "--include-tooling",
+    "--ignore-tooling",
   ],
   create: ["--force", "--if-not-exists", "--yes", "--dry-run", "--verbose", "--summary"],
   delete: ["--yes", "--dry-run", "--verbose", "--summary"],
@@ -265,7 +263,7 @@ export function printUsage(cmd?: string) {
       update: "[--from-fs [dir]] [--yes | -y]",
       merge: "[--from-fs [dir]] [--yes | -y]",
       validate: "[--allow-extra] [--allow-extra <path1> <path2> ...]",
-      generate: "[dir] [--yes | -y] [--dry-run] [--verbose | --summary] [[--include-sr] [--include-ignore] | [--include-tooling]]",
+      generate: "[dir] [--yes | -y] [--dry-run] [--verbose | --summary] [--ignore-tooling]",
       list: "[[--structure | --sr] | --fs | --diff] [--with-icon]",
       create: "<path> <file|folder> [--force | --if-not-exists] [--yes | -y] [--dry-run] [--verbose | --summary]",
       delete: "<path> [--yes | -y] [--dry-run] [--verbose | --summary]",
@@ -286,7 +284,7 @@ Usage:
   scaffoldrite update [--from-fs [dir]] [--yes | -y]
   scaffoldrite merge [--from-fs [dir]] [--yes | -y]
   scaffoldrite validate [--allow-extra] [--allow-extra <path1> <path2> ...]
-  scaffoldrite generate [dir] [--yes | -y] [--dry-run] [--verbose | --summary] [[--include-sr] [--include-ignore] | [--include-tooling]]
+  scaffoldrite generate [dir] [--yes | -y] [--dry-run] [--verbose | --summary]  [--ignore-tooling]
   scaffoldrite list [[--structure | --sr] | --fs | --diff] [--with-icon]
   scaffoldrite create <path> <file|folder> [--force | --if-not-exists] [--yes | -y] [--dry-run] [--verbose | --summary]
   scaffoldrite delete <path> [--yes | -y] [--dry-run] [--verbose | --summary]
@@ -295,4 +293,36 @@ Usage:
   scaffoldrite --help | -h   Show this message
 `);
   }
+}
+
+
+
+export function structureToSRString(root: FolderNode, rawConstraints: string[]): string {
+  sortTree(root);
+  const lines: string[] = [];
+
+  function writeFolder(folder: FolderNode, indent = "") {
+    lines.push(`${indent}folder ${folder.name} {`);
+    for (const child of folder.children) {
+      if (child.type === "folder") writeFolder(child, indent + "  ");
+      else lines.push(`${indent}  file ${child.name}`);
+    }
+    lines.push(`${indent}}`);
+  }
+
+  for (const child of root.children) {
+    if (child.type === "folder") writeFolder(child);
+    else lines.push(`file ${child.name}`);
+  }
+
+  if (rawConstraints.length > 0) {
+    lines.push("");
+    lines.push("constraints {");
+    for (const c of rawConstraints) {
+      lines.push(`  ${c}`);
+    }
+    lines.push("}");
+  }
+
+  return lines.join("\n");
 }

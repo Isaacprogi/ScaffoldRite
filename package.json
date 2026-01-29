@@ -24,10 +24,9 @@
   ],
   "type": "commonjs",
   "bin": {
-  "scaffoldrite": "./dist/cli.js",
-  "sr": "./dist/cli.js"
-}
-,
+    "scaffoldrite": "./dist/cli.js",
+    "sr": "./dist/cli.js"
+  },
   "files": [
     "dist"
   ],
@@ -47,7 +46,8 @@
     "jest": "^30.2.0",
     "ts-jest": "^29.4.6",
     "tsx": "^4.21.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "uuid": "^13.0.0"
   },
   "engines": {
     "node": ">=17"

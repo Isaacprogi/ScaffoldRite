@@ -14,11 +14,16 @@ const pkg = require("../package.json");
 import { getIgnoreList } from "./utils/index.js";
 import { createProgressBar } from "./progress.js";
 import { STRUCTURE_FILE, IGNORE_FILE } from "./utils/index.js";
+import { Operation } from "./types/index.js";
 import {
   flattenTree, loadConstraints, hasFlag, getPassedFlags, getFlagValuesAfter,
   loadAST, confirmProceed, saveStructure, filterTreeByIgnore, printTree, printTreeWithIcons,
   renameFSItem, ALLOWED_FLAGS, printUsage
 } from "./utils/index.js";
+import { HistoryEntry } from "./types/index.js";
+import { structureToSRString } from "./utils/index.js";
+import { v4 as uuidv4 } from "uuid";
+
 
 
 const baseDir = process.cwd()
@@ -27,7 +32,7 @@ const arg3 = args[0];
 const arg4 = args[1];
 
 
-const SCAFFOLDRITE_DIR = path.join(baseDir, ".scaffoldrite");
+export const SCAFFOLDRITE_DIR = path.join(baseDir, ".scaffoldrite");
 
 export const STRUCTURE_PATH = path.join(
   SCAFFOLDRITE_DIR,
@@ -38,6 +43,23 @@ const IGNORE_PATH = path.join(
   SCAFFOLDRITE_DIR,
   IGNORE_FILE
 );
+
+const HISTORY_DIR = path.join(SCAFFOLDRITE_DIR, "history");
+
+export function ensureHistoryDir() {
+  if (!fs.existsSync(HISTORY_DIR)) {
+    fs.mkdirSync(HISTORY_DIR, { recursive: true });
+  }
+}
+
+export function writeHistory(entry: HistoryEntry) {
+  ensureHistoryDir();
+  const filename = `${entry.id}-${entry.command}.json`;
+  fs.writeFileSync(
+    path.join(HISTORY_DIR, filename),
+    JSON.stringify(entry, null, 2)
+  );
+}
 
 
 /* ===================== CLI ===================== */
@@ -51,9 +73,7 @@ const bar = createProgressBar();
 const verbose = hasFlag("--verbose");
 const summary = hasFlag("--summary");
 
-const includeSR = hasFlag("--include-sr");
-const includeIgnore = hasFlag("--include-ignore");
-const includeTooling = hasFlag("--include-tooling");
+const ignoreTooling = hasFlag("--ignore-tooling");
 
 
 // ===================== INIT CHECK =====================
@@ -70,8 +90,6 @@ if (requiresInit.includes(command)) {
 }
 
 
-const shouldIncludeSR = includeSR && !includeTooling;
-const shouldIncludeIgnore = includeIgnore && !includeTooling;
 
 
 const isStructure = hasFlag("--structure") || hasFlag("--sr");
@@ -240,10 +258,11 @@ if (invalidFlags.length > 0) {
   if (command === "update") {
     const fromFs = hasFlag("--from-fs");
 
-    if (!fromFs) {
+    if (!fromFs || !arg3) {
       printUsage("update");
       process.exit(1);
     }
+
 
     //  FAIL if structure.sr does not exist
     if (!fs.existsSync(STRUCTURE_PATH)) {
@@ -468,7 +487,6 @@ if (invalidFlags.length > 0) {
     }
 
     const ignoreList = getIgnoreList(bDir);
-    ignoreList.push(".scaffoldrite");
 
 
     const logLines: string[] = [];
@@ -495,28 +513,38 @@ if (invalidFlags.length > 0) {
     bar.stop();
     const structureOutput = path.join(outputDir, '.scaffoldrite', "structure.sr");
     const ignoreOutput = path.join(outputDir, '.scaffoldrite', ".scaffoldignore");
+    const scaffoldOutput = path.join(outputDir, '.scaffoldrite')
 
+  console.log(STRUCTURE_PATH)
 
 
     if (!dryRun) {
-      if (includeTooling) {
-        // Tooling copies structure + ignore + any tooling stuff
-        if (fs.existsSync(STRUCTURE_PATH)) {
-          fs.copyFileSync(STRUCTURE_PATH, structureOutput);
+      if (ignoreTooling) {
+        // DELETE the .scaffoldrite directory
+         if (fs.existsSync(scaffoldOutput)) {
+          fs.rmSync(scaffoldOutput, {
+            recursive: true,
+            force: true,
+          });
         }
-        if (fs.existsSync(IGNORE_PATH)) {
-          fs.copyFileSync(IGNORE_PATH, ignoreOutput);
-        }
+        
       } else {
-        // Only copy if flags are set
-        if (shouldIncludeSR && fs.existsSync(STRUCTURE_PATH)) {
-          fs.copyFileSync(STRUCTURE_PATH, structureOutput);
-        }
-        if (shouldIncludeIgnore && fs.existsSync(IGNORE_PATH)) {
-          fs.copyFileSync(IGNORE_PATH, ignoreOutput);
-        }
+      
+        const structureSrc = path.join(process.cwd(), ".scaffoldrite", "structure.sr");
+const ignoreSrc = path.join(process.cwd(), ".scaffoldrite", ".scaffoldignore");
+
+// Destination folder (inside outputDir)
+const scaffoldDir = path.join(outputDir, ".scaffoldrite");
+if (!fs.existsSync(scaffoldDir)) fs.mkdirSync(scaffoldDir, { recursive: true });
+
+// Copy
+fs.copyFileSync(structureSrc, path.join(scaffoldDir, "structure.sr"));
+fs.copyFileSync(ignoreSrc, path.join(scaffoldDir, ".scaffoldignore"));
+
       }
     }
+
+
 
 
     if (verbose) {
@@ -532,64 +560,56 @@ if (invalidFlags.length > 0) {
     return;
   }
 
-
   /* ===== CREATE ===== */
   if (command === "create") {
-    if (summary && verbose) {
-      console.error(
-        "Mutually exclusive flags: --summary and --verbose cannot be used together.\n" +
-        "Use either:\n" +
-        "  --summary    Show only a summary of operations\n" +
-        "  --verbose    Show all operations including skipped items"
-      );
-      process.exit(1);
-    }
-
-    if (force && ifNotExists) {
-  console.error(
-    "Mutually exclusive flags: --force and --if-not-exists cannot be used together.\n" +
-    "Use either:\n" +
-    "  --force           Overwrite existing files/folders if they exist\n" +
-    "  --if-not-exists   Only create files/folders if they do not already exist"
-  );
-  process.exit(1);
-}
-
-
-    if (!arg3 || !arg4) {
-      printUsage("create");
-      process.exit(1);
-    }
-
-
     const structure = loadAST();
+    const outputDir = path.resolve(baseDir);
+    const beforeStructureSR = structureToSRString(structure.root, structure.rawConstraints);
+    const ignoreList = getIgnoreList(outputDir);
+
+    console.log(ignoreList)
+  
+    const beforeFSSnapshotSR = structureToSRString(buildASTFromFS(outputDir, ignoreList), []);
+
+    const operations: Operation[] = [];
+
     validateConstraints(structure.root, structure.constraints);
 
-    addNode(structure.root, arg3, arg4 as "file" | "folder", {
-      force,
-      ifNotExists,
+    const fullPath = path.join(outputDir, arg3);
+
+
+    // If force and the path exists, stash it first
+    if (force && fs.existsSync(fullPath)) {
+      const backupPath = path.join(SCAFFOLDRITE_DIR, 'history', crypto.randomUUID());
+      fs.cpSync(fullPath, backupPath, { recursive: true });
+      operations.push({
+        type: 'delete',
+        path: arg3,
+        backupPath
+      });
+      fs.rmSync(fullPath, { recursive: true, force: true });
+    }
+
+    // Add node to structure
+    addNode(structure.root, arg3, arg4 as "file" | "folder", { force, ifNotExists });
+
+    // Record create operation AFTER handling force
+    operations.push({
+      type: "create",
+      path: arg3,
+      nodeType: arg4 as "file" | "folder",
     });
 
     validateConstraints(structure.root, structure.constraints);
-
-    const outputDir = path.resolve(baseDir);
 
     if (!(await confirmProceed(outputDir))) {
       console.log("Creation cancelled.");
       return;
     }
 
-    if (force) {
-      const fullPath = path.join(outputDir, arg3);
-      if (fs.existsSync(fullPath)) {
-        fs.rmSync(fullPath, { recursive: true, force: true });
-      }
-    }
-
     saveStructure(structure.root, structure.rawConstraints, STRUCTURE_PATH);
 
     const logLines: string[] = [];
-    const ignoreList = getIgnoreList(outputDir);
 
     await generateFS(structure.root, outputDir, {
       dryRun,
@@ -600,21 +620,43 @@ if (invalidFlags.length > 0) {
     });
 
     if (verbose) {
-      for (const line of logLines) {
-        console.log(line);
-      }
+      for (const line of logLines) console.log(line);
     } else if (summary) {
-      for (const line of logLines.filter(l => !l.startsWith("SKIP"))) {
-        console.log(line);
-      }
+      for (const line of logLines.filter(l => !l.startsWith("SKIP"))) console.log(line);
     }
 
+    const afterStructureSR = structureToSRString(structure.root, structure.rawConstraints);
+    const afterFSSnapshotSR = structureToSRString(buildASTFromFS(outputDir, ignoreList.filter(f=>f !== '.scaffoldrite')), []);
+    
 
+
+
+    // Write history
+    if (!dryRun) {
+      writeHistory({
+        id: uuidv4(),
+        command,
+        args: process.argv.slice(3),
+        flags: passedFlags,
+        timestamp: Date.now(),
+        operations,
+        before: {
+          structure: beforeStructureSR,
+          fsSnapshot: beforeFSSnapshotSR
+        },
+        after: {
+          structure: afterStructureSR,
+          fsSnapshot: afterFSSnapshotSR
+        },
+      });
+
+    }
 
     process.stdout.write("\n");
     console.log("Created successfully.");
     return;
   }
+
 
   /* ===== DELETE ===== */
   if (command === "delete") {
