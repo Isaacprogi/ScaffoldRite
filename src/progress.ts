@@ -11,7 +11,7 @@ interface ProgressBarControls {
   update: (e: ProgressUpdate) => void;
   stop: () => void;
 }
-
+ 
 export function createProgressBar(): ProgressBarControls {
   const bar = new cliProgress.SingleBar(
     {
@@ -34,7 +34,7 @@ export function createProgressBar(): ProgressBarControls {
     update(e: ProgressUpdate) {
       // If this is the final update, remove type/path from format
       if (e.count >= totalOps) {
-        (bar as any).options.format = "{bar} {value}/{total} ops";
+        (bar as any).options.format = "{bar} {value}/{total} operations";
       }
 
       bar.update(e.count, {

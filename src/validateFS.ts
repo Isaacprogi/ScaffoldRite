@@ -1,47 +1,25 @@
 import fs from "fs";
 import path from "path";
 import { FolderNode } from "./ast";
-
-const ignoreFilePath = "./.scaffoldignore";
-
-export const DEFAULT_IGNORES = [
-  "node_modules",
-  ".git",
-  ".next",
-  "dist",
-  "build",
-  "coverage",
-  ".turbo",
-];
-
-export function loadIgnoreList(filePath: string): string[] {
-  if (!fs.existsSync(filePath)) return [];
-
-  const content = fs.readFileSync(filePath, "utf-8");
-  return content
-    .split("\n")
-    .map((x) => x.trim())
-    .map((x) => x.split("#")[0].trim())
-    .filter(Boolean);
-}
-
-function getIgnoreList(): string[] {
-  return fs.existsSync(ignoreFilePath)
-    ? loadIgnoreList(ignoreFilePath)
-    : DEFAULT_IGNORES;
-}
-
-function isIgnored(itemName: string) {
-  return getIgnoreList().includes(itemName);
-}
+import { isIgnored } from "./utils";
 
 export function validateFS(
   root: FolderNode,
   dir: string,
-  allowExtra = false,
-  allowExtraPaths: string[] = [],
-  currentPath = ""
+  options: {
+    ignoreList?: string[];
+    allowExtra?: boolean;
+    allowExtraPaths?: string[];
+    currentPath?: string;
+  } = {}
 ) {
+  const {
+    ignoreList = [],
+    allowExtra = false,
+    allowExtraPaths = [],
+    currentPath = "",
+  } = options;
+
   if (!fs.existsSync(dir)) {
     throw new Error(
       `Folder does not exist: ${dir}\n` +
@@ -53,30 +31,27 @@ export function validateFS(
 
   // Check missing items in filesystem
   for (const child of root.children) {
-    if (isIgnored(child.name)) continue;
+    if (isIgnored(child.name, ignoreList)) continue;
 
     const expectedPath = path.join(dir, child.name);
     const expectedSrPath = path.join(currentPath, child.name);
 
     if (!fs.existsSync(expectedPath)) {
-  const allowedExplicitly = allowExtraPaths.some((p) => {
-    const normalized = path.normalize(p);
-    return (
-      expectedSrPath === normalized ||
-      expectedSrPath.endsWith(normalized)
-    );
-  });
+      const allowedExplicitly = allowExtraPaths.some((p) => {
+        const normalized = path.normalize(p);
+        return (
+          expectedSrPath === normalized ||
+          expectedSrPath.endsWith(normalized)
+        );
+      });
 
-  if (allowExtra || allowedExplicitly) {
-    continue; // 🔥 ignore missing
-  }
+      if (allowExtra || allowedExplicitly) continue;
 
-  throw new Error(
-    `Missing in filesystem: ${expectedPath}\n` +
-    `Expected according to structure.sr at: ${expectedSrPath}`
-  );
-}
-
+      throw new Error(
+        `Missing in filesystem: ${expectedPath}\n` +
+        `Expected according to structure.sr at: ${expectedSrPath}`
+      );
+    }
 
     if (child.type === "folder") {
       if (!fs.statSync(expectedPath).isDirectory()) {
@@ -86,13 +61,12 @@ export function validateFS(
         );
       }
 
-      validateFS(
-        child,
-        expectedPath,
+      validateFS(child, expectedPath, {
+        ignoreList,
         allowExtra,
         allowExtraPaths,
-        expectedSrPath
-      );
+        currentPath: expectedSrPath,
+      });
     } else {
       if (!fs.statSync(expectedPath).isFile()) {
         throw new Error(
@@ -105,7 +79,7 @@ export function validateFS(
 
   // Check extra items in filesystem not in .sr
   for (const item of actualItems) {
-    if (isIgnored(item)) continue;
+    if (isIgnored(item, ignoreList)) continue;
 
     const existsInSr = root.children.some((c) => c.name === item);
     if (!existsInSr) {
