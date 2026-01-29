@@ -587,10 +587,6 @@ Scaffoldrite **tracks structural operations** so you can safely revert changes t
 
 ---
 
-If you want, I can **merge this directly into your full README** in the correct spot (probably after “Advanced Scenarios”) so the section flows naturally with the rest of your doc.
-
-Do you want me to do that?
-
 
 ## ❓ FAQ
 
