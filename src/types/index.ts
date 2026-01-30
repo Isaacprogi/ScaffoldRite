@@ -8,8 +8,8 @@ export type HistoryEntry = {
   operations: Operation[];
 
   before: {
-    structure: string;     // structure.sr
-    fsSnapshot?: string;   // filesystem snapshot serialized as structure.sr
+    structure: string;  
+    fsSnapshot?: string;
   };
 
   after?: {
@@ -28,7 +28,7 @@ export type Operation =
   | {
       type: "delete";
       path: string;
-      backupPath?: string; // where deleted content was stored
+      backupPath?: string; 
     }
   | {
       type: "rename";
@@ -37,11 +37,29 @@ export type Operation =
     };
 
 
-  // Add to types/index.js or similar
-export interface GenerateOptions {
-  dryRun: boolean;
-  ignoreList: string[];
-  onProgress?: (event: ProgressEvent) => void;
-  onStart?: (total: number) => void;
-  copyContents?: boolean; // Add this
-}
+export type RequirementContext = {
+  command: string;
+  arg3?: string;
+  arg4?: string;
+  fromFs: boolean;
+  printUsage: (cmd?: string) => void;
+};
+
+
+export type MutuallyExclusiveContext = {
+  command: string;
+  summary: boolean;
+  verbose: boolean;
+  empty: boolean;
+  fromFs: boolean;
+  ignoreTooling: boolean;
+  copyContents: boolean;
+  isFS: boolean;
+  isStructure: boolean;
+  isDiff: boolean;
+  theme: any; 
+  icons: any;
+};
+
+
+export type CommandHandler = () => Promise<void> | void;

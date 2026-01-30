@@ -275,6 +275,7 @@ Each Scaffoldrite command supports various flags for control and customization.
 | `--structure` / `--sr` | Show `structure.sr` contents | `sr list --structure` |
 | `--fs` | Show filesystem structure | `sr list --fs` |
 | `--diff` | Compare `structure.sr` vs filesystem | `sr list --diff` |
+| `--with` | prints with icon | `sr list --sr/fs --with-icon` |
 
 ### Your Daily Commands
 

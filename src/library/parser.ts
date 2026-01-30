@@ -1,4 +1,5 @@
-import { FolderNode, FileNode } from "./ast.js";
+import { theme,icons } from "../data";
+import { FolderNode, FileNode } from "./ast";
 import { parseConstraints, Constraint } from "./constraints";
 
 export type Structure = {
@@ -12,12 +13,16 @@ const VALID_NAME_REGEX = /.+/;
 
 function validateName(name: string, line: number) {
   if (name === "__root__") {
-    throw new Error(`[Line ${line}] Reserved name "__root__" is not allowed`);
+    throw new Error(
+      `${icons.error} ${theme.error('[Line ' + line + ']')} Reserved name ${theme.highlight('"__root__"')} is not allowed`
+    );
   }
 
   // Only validate that name is not empty
   if (!VALID_NAME_REGEX.test(name)) {
-    throw new Error(`[Line ${line}] Name cannot be empty`);
+    throw new Error(
+      `${icons.error} ${theme.error('[Line ' + line + ']')} Name cannot be empty`
+    );
   }
 }
 
@@ -67,7 +72,9 @@ export function parseStructure(input: string): Structure {
     if (line.startsWith("folder ")) {
       const match = raw.match(/^\s*folder\s+(.+?)\s*\{\s*$/);
       if (!match) {
-        throw new Error(`[Line ${lineNumber}] Invalid folder syntax: "${line}"`);
+        throw new Error(
+          `${icons.error} ${theme.error('[Line ' + lineNumber + ']')} Invalid folder syntax: ${theme.muted('"' + line + '"')}`
+        );
       }
 
       const name = match[1];
@@ -76,7 +83,9 @@ export function parseStructure(input: string): Structure {
       const parent = stack[stack.length - 1];
 
       if (parent.children.some(c => c.type === "folder" && c.name === name)) {
-        throw new Error(`[Line ${lineNumber}] Duplicate folder name "${name}" in the same scope`);
+        throw new Error(
+          `${icons.error} ${theme.error('[Line ' + lineNumber + ']')} Duplicate folder name ${theme.highlight('"' + name + '"')} in the same scope`
+        );
       }
 
       const folder: FolderNode = { type: "folder", name, children: [] };
@@ -89,7 +98,9 @@ export function parseStructure(input: string): Structure {
     if (line.startsWith("file ")) {
       const match = raw.match(/^\s*file\s+(.+?)\s*$/);
       if (!match) {
-        throw new Error(`[Line ${lineNumber}] Invalid file syntax: "${line}"`);
+        throw new Error(
+          `${icons.error} ${theme.error('[Line ' + lineNumber + ']')} Invalid file syntax: ${theme.muted('"' + line + '"')}`
+        );
       }
 
       const name = match[1];
@@ -98,7 +109,9 @@ export function parseStructure(input: string): Structure {
       const parent = stack[stack.length - 1];
 
       if (parent.children.some(c => c.type === "file" && c.name === name)) {
-        throw new Error(`[Line ${lineNumber}] Duplicate file name "${name}" in the same scope`);
+        throw new Error(
+          `${icons.error} ${theme.error('[Line ' + lineNumber + ']')} Duplicate file name ${theme.highlight('"' + name + '"')} in the same scope`
+        );
       }
 
       const file: FileNode = { type: "file", name };
@@ -109,17 +122,23 @@ export function parseStructure(input: string): Structure {
     // Close folder
     if (line === "}") {
       if (stack.length === 1) {
-        throw new Error(`[Line ${lineNumber}] Unexpected "}"`);
+        throw new Error(
+          `${icons.error} ${theme.error('[Line ' + lineNumber + ']')} Unexpected ${theme.highlight('"}"')}`
+        );
       }
       stack.pop();
       continue;
     }
 
-    throw new Error(`[Line ${lineNumber}] Unknown statement: "${line}"`);
+    throw new Error(
+      `${icons.error} ${theme.error('[Line ' + lineNumber + ']')} Unknown statement: ${theme.muted('"' + line + '"')}`
+    );
   }
 
   if (stack.length !== 1) {
-    throw new Error(`Unclosed folder block`);
+    throw new Error(
+      `${icons.error} ${theme.error('Unclosed folder block')}`
+    );
   }
 
   return {

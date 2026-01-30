@@ -1,7 +1,8 @@
 import fs from "fs";
 import path from "path";
 import { FolderNode } from "./ast";
-import { isIgnored } from "./utils/index.js";
+import { isIgnored } from "../utils/index";
+import { theme, icons } from "../data/index";
 
 export function validateFS(
   root: FolderNode,
@@ -22,8 +23,8 @@ export function validateFS(
 
   if (!fs.existsSync(dir)) {
     throw new Error(
-      `Folder does not exist: ${dir}\n` +
-      `Expected folder according to structure.sr at: ${currentPath || "root"}`
+      `${icons.error} ${theme.error('Folder does not exist:')} ${theme.highlight(dir)}\n` +
+      `${theme.muted('Expected folder according to')} ${theme.secondary('structure.sr')} ${theme.muted('at:')} ${theme.primary(currentPath || "root")}`
     );
   }
 
@@ -48,16 +49,18 @@ export function validateFS(
       if (allowExtra || allowedExplicitly) continue;
 
       throw new Error(
-        `Missing in filesystem: ${expectedPath}\n` +
-        `Expected according to structure.sr at: ${expectedSrPath}`
+        `${icons.error} ${theme.error('Missing in filesystem:')} ${theme.highlight(expectedPath)}\n` +
+        `${theme.muted('Expected according to')} ${theme.secondary('structure.sr')} ${theme.muted('at:')} ${theme.primary(expectedSrPath)}\n` +
+        `${theme.info('Fix:')} Run ${theme.primary('scaffoldrite generate')} to recreate missing files. This does not restore file contents.`
       );
     }
 
     if (child.type === "folder") {
       if (!fs.statSync(expectedPath).isDirectory()) {
         throw new Error(
-          `Expected folder but found file: ${expectedPath}\n` +
-          `structure.sr expects a folder at: ${expectedSrPath}`
+          `${icons.error} ${theme.error('Type mismatch:')} Expected ${theme.success('folder')} but found ${theme.warning('file')}\n` +
+          `${theme.muted('Path:')} ${theme.highlight(expectedPath)}\n` +
+          `${theme.secondary('structure.sr')} expects a folder at: ${theme.primary(expectedSrPath)}`
         );
       }
 
@@ -70,8 +73,9 @@ export function validateFS(
     } else {
       if (!fs.statSync(expectedPath).isFile()) {
         throw new Error(
-          `Expected file but found folder: ${expectedPath}\n` +
-          `structure.sr expects a file at: ${expectedSrPath}`
+          `${icons.error} ${theme.error('Type mismatch:')} Expected ${theme.success('file')} but found ${theme.warning('folder')}\n` +
+          `${theme.muted('Path:')} ${theme.highlight(expectedPath)}\n` +
+          `${theme.secondary('structure.sr')} expects a file at: ${theme.primary(expectedSrPath)}`
         );
       }
     }
@@ -100,8 +104,12 @@ export function validateFS(
       if (allowExtra || allowedExplicitly) continue;
 
       throw new Error(
-        `Extra file/folder found in filesystem: ${extraPath}\n` +
-        `Not defined in structure.sr at: ${currentPath || "root"}`
+        `${icons.error} ${theme.error('Extra file/folder found in filesystem:')} ${theme.highlight(extraPath)}\n` +
+        `${theme.muted('Not defined in')} ${theme.secondary('structure.sr')} ${theme.muted('at:')} ${theme.primary(currentPath || "root")}\n` +
+        `${theme.info('Options:')}\n` +
+        `  • ${theme.primary('--allow-extra')} to allow all extra files\n` +
+        `  • ${theme.primary('--allow-extra ' + path.relative(process.cwd(), extraPath))} to allow this specific file\n` +
+        `  • Delete or move the file to resolve`
       );
     }
   }

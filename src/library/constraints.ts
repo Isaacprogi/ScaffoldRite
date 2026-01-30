@@ -1,3 +1,5 @@
+import { theme,icons } from "../data";
+
 export type Constraint =
   | { type: "require"; path: string }
   | { type: "forbid"; path: string }
@@ -233,7 +235,9 @@ export function parseConstraints(input: string): Constraint[] {
       continue;
     }
 
-    throw new Error(`Unknown constraint: ${line}`);
+    throw new Error(
+  `${icons.error} ${theme.error('Unknown constraint:')} ${theme.muted(line)}`
+);
   }
 
   return constraints;

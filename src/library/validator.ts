@@ -1,5 +1,6 @@
 import { Node, FolderNode, FileNode } from "./ast";
 import { Constraint } from "./constraints";
+import { theme, icons } from "../data/index.js"; // Import your theme
 
 function normalizePath(path?: string) {
   if (!path || path.trim() === "") return "__root__";
@@ -97,7 +98,9 @@ function getFoldersByScope(root: FolderNode, path: string, scope: "*" | "**") {
 }
 
 function formatConstraintError(message: string, hint?: string) {
-  return `Constraint failed:\n  ${message}${hint ? `\nHint: ${hint}` : ""}`;
+  return `${icons.error} ${theme.error('Constraint failed:')}\n` +
+         `  ${theme.warning('✗')} ${theme.muted(message)}` +
+         (hint ? `\n  ${theme.info('Hint:')} ${theme.light(hint)}` : "");
 }
 
 export function validateConstraints(root: FolderNode, constraints: Constraint[]) {
@@ -111,8 +114,8 @@ export function validateConstraints(root: FolderNode, constraints: Constraint[])
       (!c.path || c.path.trim() === "")
     ) {
       throw new Error(formatConstraintError(
-        `Path missing for constraint type "${c.type}"`,
-        `Add a valid path like: constraints { ${c.type} src/index.ts }`
+        `Path missing for constraint type ${theme.highlight(c.type)}`,
+        `Add a valid path like: ${theme.primary('constraints { ' + c.type + ' src/index.ts }')}`
       ));
     }
 
@@ -120,8 +123,8 @@ export function validateConstraints(root: FolderNode, constraints: Constraint[])
       const node = findNodeByPath(root, c.path);
       if (!node) {
         throw new Error(formatConstraintError(
-          `Required path not found: ${c.path}`,
-          `Add this path to your structure.sr or remove this constraint`
+          `Required path not found: ${theme.highlight(c.path)}`,
+          `Add this path to your ${theme.secondary('structure.sr')} or remove this constraint`
         ));
       }
     }
@@ -130,8 +133,8 @@ export function validateConstraints(root: FolderNode, constraints: Constraint[])
       const node = findNodeByPath(root, c.path);
       if (node) {
         throw new Error(formatConstraintError(
-          `Forbidden path exists: ${c.path}`,
-          `Remove this path from your structure.sr or delete this constraint`
+          `Forbidden path exists: ${theme.highlight(c.path)}`,
+          `Remove this path from your ${theme.secondary('structure.sr')} or delete this constraint`
         ));
       }
     }
@@ -143,8 +146,8 @@ export function validateConstraints(root: FolderNode, constraints: Constraint[])
       const fileCount = countFiles(folder);
       if (fileCount > c.value)
         throw new Error(formatConstraintError(
-          `${c.path} has ${fileCount} files (max allowed ${c.value})`,
-          `Remove extra files or increase maxFiles`
+          `${theme.highlight(c.path)} has ${theme.warning(fileCount)} files ${theme.muted('(max allowed ' + c.value + ')')}`,
+          `Remove extra files or increase ${theme.primary('maxFiles')}`
         ));
     }
 
@@ -155,8 +158,8 @@ export function validateConstraints(root: FolderNode, constraints: Constraint[])
       const fileCount = countFilesRecursive(folder);
       if (fileCount > c.value)
         throw new Error(formatConstraintError(
-          `${c.path} has ${fileCount} files recursively (max allowed ${c.value})`,
-          `Remove extra files or increase maxFilesRecursive`
+          `${theme.highlight(c.path)} has ${theme.warning(fileCount)} files recursively ${theme.muted('(max allowed ' + c.value + ')')}`,
+          `Remove extra files or increase ${theme.primary('maxFilesRecursive')}`
         ));
     }
 
@@ -170,8 +173,8 @@ export function validateConstraints(root: FolderNode, constraints: Constraint[])
 
       if (fileCount > c.value)
         throw new Error(formatConstraintError(
-          `${c.path} has ${fileCount} files with extension "${c.ext}" (max allowed ${c.value})`,
-          `Remove extra ${c.ext} files or increase maxFilesByExt`
+          `${theme.highlight(c.path)} has ${theme.warning(fileCount)} files with extension ${theme.secondary('"' + c.ext + '"')} ${theme.muted('(max allowed ' + c.value + ')')}`,
+          `Remove extra ${theme.secondary(c.ext)} files or increase ${theme.primary('maxFilesByExt')}`
         ));
     }
 
@@ -182,8 +185,8 @@ export function validateConstraints(root: FolderNode, constraints: Constraint[])
       const extCount = countFilesRecursive(folder, c.ext);
       if (extCount > c.value)
         throw new Error(formatConstraintError(
-          `${c.path} has ${extCount} files with extension "${c.ext}" recursively (max allowed ${c.value})`,
-          `Remove extra ${c.ext} files or increase maxFilesByExtRecursive`
+          `${theme.highlight(c.path)} has ${theme.warning(extCount)} files with extension ${theme.secondary('"' + c.ext + '"')} recursively ${theme.muted('(max allowed ' + c.value + ')')}`,
+          `Remove extra ${theme.secondary(c.ext)} files or increase ${theme.primary('maxFilesByExtRecursive')}`
         ));
     }
 
@@ -194,8 +197,8 @@ export function validateConstraints(root: FolderNode, constraints: Constraint[])
       const folderCount = countFolders(folder);
       if (folderCount > c.value)
         throw new Error(formatConstraintError(
-          `${c.path} has ${folderCount} folders (max allowed ${c.value})`,
-          `Remove extra folders or increase maxFolders`
+          `${theme.highlight(c.path)} has ${theme.warning(folderCount)} folders ${theme.muted('(max allowed ' + c.value + ')')}`,
+          `Remove extra folders or increase ${theme.primary('maxFolders')}`
         ));
     }
 
@@ -206,8 +209,8 @@ export function validateConstraints(root: FolderNode, constraints: Constraint[])
       const folderCount = countFoldersRecursive(folder);
       if (folderCount > c.value)
         throw new Error(formatConstraintError(
-          `${c.path} has ${folderCount} folders recursively (max allowed ${c.value})`,
-          `Remove extra folders or increase maxFoldersRecursive`
+          `${theme.highlight(c.path)} has ${theme.warning(folderCount)} folders recursively ${theme.muted('(max allowed ' + c.value + ')')}`,
+          `Remove extra folders or increase ${theme.primary('maxFoldersRecursive')}`
         ));
     }
 
@@ -218,7 +221,7 @@ export function validateConstraints(root: FolderNode, constraints: Constraint[])
       const fileCount = countFiles(folder);
       if (fileCount < c.value)
         throw new Error(formatConstraintError(
-          `${c.path} has ${fileCount} files (min required ${c.value})`,
+          `${theme.highlight(c.path)} has ${theme.warning(fileCount)} files ${theme.muted('(min required ' + c.value + ')')}`,
           `Add more files to this folder`
         ));
     }
@@ -230,7 +233,7 @@ export function validateConstraints(root: FolderNode, constraints: Constraint[])
       const folderCount = countFolders(folder);
       if (folderCount < c.value)
         throw new Error(formatConstraintError(
-          `${c.path} has ${folderCount} folders (min required ${c.value})`,
+          `${theme.highlight(c.path)} has ${theme.warning(folderCount)} folders ${theme.muted('(min required ' + c.value + ')')}`,
           `Add more folders to this path`
         ));
     }
@@ -242,8 +245,8 @@ export function validateConstraints(root: FolderNode, constraints: Constraint[])
       const exists = folder.children.some((x) => x.name === c.value);
       if (!exists)
         throw new Error(formatConstraintError(
-          `${c.path} must contain "${c.value}"`,
-          `Add ${c.value} inside ${c.path}`
+          `${theme.highlight(c.path)} must contain ${theme.secondary('"' + c.value + '"')}`,
+          `Add ${theme.secondary(c.value)} inside ${theme.primary(c.path)}`
         ));
     }
 
@@ -255,7 +258,7 @@ export function validateConstraints(root: FolderNode, constraints: Constraint[])
       for (const child of folder.children) {
         if (child.type === "file" && !regex.test(child.name)) {
           throw new Error(formatConstraintError(
-            `${child.name} in ${c.path} does not match regex "${c.regex}"`,
+            `${theme.highlight(child.name)} in ${theme.primary(c.path)} does not match regex ${theme.secondary('"' + c.regex + '"')}`,
             `Rename the file or update the regex constraint`
           ));
         }
@@ -269,8 +272,8 @@ export function validateConstraints(root: FolderNode, constraints: Constraint[])
       const depth = maxDepth(folder);
       if (depth > c.value)
         throw new Error(formatConstraintError(
-          `${c.path} exceeds max depth of ${c.value} (current depth ${depth})`,
-          `Remove nested folders or increase maxDepth`
+          `${theme.highlight(c.path)} exceeds max depth of ${theme.secondary(c.value)} ${theme.muted('(current depth ' + depth + ')')}`,
+          `Remove nested folders or increase ${theme.primary('maxDepth')}`
         ));
     }
 
@@ -283,8 +286,8 @@ export function validateConstraints(root: FolderNode, constraints: Constraint[])
       );
       if (!exists)
         throw new Error(formatConstraintError(
-          `${c.path} must have file "${c.value}"`,
-          `Add ${c.value} inside ${c.path}`
+          `${theme.highlight(c.path)} must have file ${theme.secondary('"' + c.value + '"')}`,
+          `Add ${theme.secondary(c.value)} inside ${theme.primary(c.path)}`
         ));
     }
 
@@ -295,8 +298,8 @@ export function validateConstraints(root: FolderNode, constraints: Constraint[])
         const exists = folder.children.some((x) => x.name === c.value);
         if (!exists) {
           throw new Error(formatConstraintError(
-            `${folder.name} must contain "${c.value}"`,
-            `Add ${c.value} to ${folder.name}`
+            `${theme.highlight(folder.name)} must contain ${theme.secondary('"' + c.value + '"')}`,
+            `Add ${theme.secondary(c.value)} to ${theme.primary(folder.name)}`
           ));
         }
       }
@@ -309,8 +312,8 @@ export function validateConstraints(root: FolderNode, constraints: Constraint[])
         const exists = folder.children.some((x) => x.type === "file" && x.name === c.value);
         if (!exists) {
           throw new Error(formatConstraintError(
-            `${folder.name} must contain file "${c.value}"`,
-            `Add ${c.value} inside ${folder.name}`
+            `${theme.highlight(folder.name)} must contain file ${theme.secondary('"' + c.value + '"')}`,
+            `Add ${theme.secondary(c.value)} inside ${theme.primary(folder.name)}`
           ));
         }
       }
@@ -323,8 +326,8 @@ export function validateConstraints(root: FolderNode, constraints: Constraint[])
         const exists = folder.children.some((x) => x.type === "folder" && x.name === c.value);
         if (!exists) {
           throw new Error(formatConstraintError(
-            `${folder.name} must contain folder "${c.value}"`,
-            `Add folder ${c.value} inside ${folder.name}`
+            `${theme.highlight(folder.name)} must contain folder ${theme.secondary('"' + c.value + '"')}`,
+            `Add folder ${theme.secondary(c.value)} inside ${theme.primary(folder.name)}`
           ));
         }
       }
@@ -337,8 +340,8 @@ export function validateConstraints(root: FolderNode, constraints: Constraint[])
         const exists = folder.children.some((x) => x.type === "file" && x.name.endsWith(c.ext));
         if (!exists) {
           throw new Error(formatConstraintError(
-            `${folder.name} must contain a file with extension "${c.ext}"`,
-            `Add a ${c.ext} file inside ${folder.name}`
+            `${theme.highlight(folder.name)} must contain a file with extension ${theme.secondary('"' + c.ext + '"')}`,
+            `Add a ${theme.secondary(c.ext)} file inside ${theme.primary(folder.name)}`
           ));
         }
       }

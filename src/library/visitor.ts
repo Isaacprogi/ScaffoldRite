@@ -1,4 +1,4 @@
-import { FolderNode, FileNode } from "./ast.js";
+import { FolderNode, FileNode } from "./ast";
 
 type Visitor = {
   folder?: (node: FolderNode, path: string) => Promise<void> | void;

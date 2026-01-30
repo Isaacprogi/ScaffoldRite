@@ -1,4 +1,5 @@
 import { FolderNode, Node } from "./ast.js";
+import { theme, icons } from "../data/index.js";
 
 type AddOptions = {
   force?: boolean;
@@ -35,7 +36,8 @@ export function addNode(
 
   if (!name) {
     throw new Error(
-      "Invalid path: path is empty. Example: src/components/Button.ts"
+      `${icons.error} ${theme.error('Invalid path:')} path is empty.\n` +
+      `${theme.info('Example:')} ${theme.primary('src/components/Button.ts')}`
     );
   }
 
@@ -60,7 +62,8 @@ export function addNode(
     if (options.ifNotExists) return; // do nothing
     if (!options.force) {
       throw new Error(
-        `Cannot create ${type}: '${pathStr}' already exists in the structure.sr file`
+        `${icons.error} ${theme.error('Cannot create ' + type + ':')} ${theme.highlight("'" + pathStr + "'")} already exists in the ${theme.muted('structure.sr')} file\n` +
+        `${theme.info('Use:')} ${theme.primary('--force')} to overwrite or ${theme.primary('--if-not-exists')} to skip`
       );
     }
 
@@ -75,7 +78,7 @@ export function addNode(
       : { type: "file", name };
 
   current.children.push(newNode);
-  return current
+  return current;
 }
 
 export function deleteNode(root: FolderNode, pathStr: string) {
@@ -84,7 +87,8 @@ export function deleteNode(root: FolderNode, pathStr: string) {
 
   if (!name) {
     throw new Error(
-      "Invalid path: path is empty. Example: src/components/Button.ts"
+      `${icons.error} ${theme.error('Invalid path:')} path is empty.\n` +
+      `${theme.info('Example:')} ${theme.primary('src/components/Button.ts')}`
     );
   }
 
@@ -97,7 +101,7 @@ export function deleteNode(root: FolderNode, pathStr: string) {
 
     if (!child) {
       throw new Error(
-        `Path not found: '${parts.join("/")}' does not exist in the structure.`
+        `${icons.error} ${theme.error('Path not found:')} ${theme.highlight("'" + parts.join("/") + "'")} does not exist in the structure.`
       );
     }
 
@@ -107,7 +111,7 @@ export function deleteNode(root: FolderNode, pathStr: string) {
   const index = current.children.findIndex(c => c.name === name);
   if (index === -1) {
     throw new Error(
-      `Node not found: '${pathStr}' does not exist in the structure.`
+      `${icons.error} ${theme.error('Node not found:')} ${theme.highlight("'" + pathStr + "'")} does not exist in the structure.`
     );
   }
 
@@ -118,11 +122,15 @@ export function renameNode(root: FolderNode, pathStr: string, newName: string) {
   const node = findNode(root, pathStr);
 
   if (!node) {
-    throw new Error(`Node not found: '${pathStr}' does not exist.`);
+    throw new Error(
+      `${icons.error} ${theme.error('Node not found:')} ${theme.highlight("'" + pathStr + "'")} does not exist.`
+    );
   }
 
   if (!newName || newName.trim().length === 0) {
-    throw new Error("Invalid new name: name cannot be empty.");
+    throw new Error(
+      `${icons.error} ${theme.error('Invalid new name:')} name cannot be empty.`
+    );
   }
 
   node.name = newName;

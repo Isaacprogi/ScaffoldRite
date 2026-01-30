@@ -1,7 +1,8 @@
 import fs from "fs/promises";
 import path from "path";
-import { visit } from "./visitor.js";
-import { FolderNode } from "./ast.js";
+import { visit } from "./visitor";
+import { FolderNode } from "./ast";
+import { theme, icons } from "../data";
 
 export type ProgressEvent = {
   type: "folder" | "file" | "copy" | "delete" | "skip";
@@ -36,6 +37,14 @@ export async function generateFS(
   const ignoreList = options?.ignoreList ?? [];
   const copyContents = options?.copyContents ?? false;
 
+
+  const isScaffoldriteInternal = (p: string) => {
+    const rel = path.relative(root, p);
+    return rel === ".scaffoldrite" || rel.startsWith(".scaffoldrite" + path.sep);
+  };
+
+  const isIgnoredOrInternal = (p: string) => isIgnored(p) || isScaffoldriteInternal(p);
+
   // ✅ store type info
   const expected = new Map<string, { type: "folder" | "file"; sourcePath?: string }>();
   const actual = new Set<string>();
@@ -52,38 +61,29 @@ export async function generateFS(
 
   // Track source paths for files when copyContents is enabled
   const fileSourcePaths = new Map<string, string>();
-  
+
   await visit(ast, {
     folder: async (_, nodePath) => {
       const fullPath = path.join(root, nodePath);
-      if (!isIgnored(fullPath)) {
-        expected.set(fullPath, { type: "folder" });
-      }
+      if (!isIgnoredOrInternal(fullPath)) expected.set(fullPath, { type: "folder" });
     },
     file: async (_, nodePath) => {
       const fullPath = path.join(root, nodePath);
-      if (!isIgnored(fullPath)) {
-        // Store source path for potential copying
+      if (!isIgnoredOrInternal(fullPath)) {
         const sourcePath = path.join(sourceRoot, nodePath);
-        expected.set(fullPath, { 
-          type: "file",
-          sourcePath: sourcePath 
-        });
+        expected.set(fullPath, { type: "file", sourcePath });
         fileSourcePaths.set(fullPath, sourcePath);
       }
     },
   });
 
-  /* 2️⃣ ACTUAL */
   async function scan(dir: string) {
-    if (isIgnored(dir)) return;
-
+    if (isIgnoredOrInternal(dir)) return;
     actual.add(dir);
     const entries = await fs.readdir(dir, { withFileTypes: true });
     for (const e of entries) {
       const full = path.join(dir, e.name);
-      if (isIgnored(full)) continue;
-
+      if (isIgnoredOrInternal(full)) continue;
       actual.add(full);
       if (e.isDirectory()) await scan(full);
     }
@@ -100,7 +100,7 @@ export async function generateFS(
     } else {
       // Determine operation type
       let operationType: "folder" | "file" | "copy" = info.type;
-      
+
       // Check if we should copy contents for this file
       if (info.type === "file" && copyContents && info.sourcePath) {
         const sourceExists = await fileExists(info.sourcePath);
@@ -108,7 +108,7 @@ export async function generateFS(
           operationType = "copy";
         }
       }
-      
+
       ops.push({
         type: operationType,
         path: p,
@@ -149,7 +149,12 @@ export async function generateFS(
             await fs.copyFile(info.sourcePath, op.path);
           } catch (error) {
             // If copy fails, fall back to empty file
-            console.warn(`Warning: Could not copy ${info.sourcePath} to ${op.path}, creating empty file instead`);
+            console.warn(
+              `${icons.warning} ${theme.warning('Warning:')} ` +
+              `${theme.muted('Could not copy')} ${theme.highlight(path.basename(info.sourcePath))} ` +
+              `${theme.muted('to')} ${theme.highlight(path.basename(op.path))}, ` +
+              `${theme.info('creating empty file instead')}`
+            );
             await fs.writeFile(op.path, "");
           }
         } else {

@@ -1,11 +1,30 @@
-const ignoreFilePath = "./.scaffoldignore";
-import { FolderNode } from "../ast";
+import { FolderNode } from "../library/ast";
 import fs from "fs";
 import path from "path";
-import { parseStructure } from "../parser";
+import { parseStructure } from "../library/parser";
 import readline from "readline";
-import { STRUCTURE_PATH } from "../cli";
+import { icons, theme } from "../data";
+import { RequirementContext,MutuallyExclusiveContext } from "../types";
 
+export const command = process.argv[2];
+
+export const baseDir = process.cwd()
+
+const SCAFFOLDRITE_DIR_TEXT = ".scaffoldrite";
+const IGNORE_FILE_TEXT = ".scaffoldignore"
+const STRUCTURE_FILE_TEXT = "structure.sr";
+
+export const SCAFFOLDRITE_DIR = path.join(baseDir, SCAFFOLDRITE_DIR_TEXT);
+
+export const STRUCTURE_PATH = path.join(
+    SCAFFOLDRITE_DIR,
+    STRUCTURE_FILE_TEXT
+);
+
+export const IGNORE_PATH = path.join(
+    SCAFFOLDRITE_DIR,
+    IGNORE_FILE_TEXT
+);
 
 export function sortTree(node: FolderNode): void {
   node.children.sort((a, b) => {
@@ -19,9 +38,6 @@ export function sortTree(node: FolderNode): void {
   }
 }
 
-const SCAFFOLDRITE_DIR = ".scaffoldrite";
-export const IGNORE_FILE = ".scaffoldignore";
-export const STRUCTURE_FILE = "structure.sr";
 
 
 export const DEFAULT_IGNORES = [
@@ -45,32 +61,26 @@ export function loadIgnoreList(filePath: string): string[] {
     .filter(Boolean);
 }
 
-export function getIgnoreList(baseDir: string): string[] {
-  const ignoreFilePath = path.join(
-    baseDir,
-    SCAFFOLDRITE_DIR,
-    IGNORE_FILE
-  );
-  console.log(ignoreFilePath, 'jajajajja')
+export function getIgnoreList(): string[] {
+  const exists = fs.existsSync(IGNORE_PATH);
 
-  return fs.existsSync(ignoreFilePath)
-    ? loadIgnoreList(ignoreFilePath)
+  if (process.env.DEBUG) {
+    console.log(exists, IGNORE_PATH);
+  }
+
+  return exists
+    ? loadIgnoreList(IGNORE_PATH)
     : DEFAULT_IGNORES;
 }
+
 
 export function isIgnored(itemName: string, ignoreList: string[]) {
   return ignoreList.includes(itemName);
 }
 
-
-
-
-
 export function hasFlag(flag: string) {
   return process.argv.includes(flag);
 }
-
-
 
 export function loadConstraints() {
   const content = fs.readFileSync(STRUCTURE_PATH, "utf-8");
@@ -90,7 +100,7 @@ export function confirmProceed(dir: string): Promise<boolean> {
   if (!fs.existsSync(dir)) return Promise.resolve(true);
   if (fs.readdirSync(dir).length === 0) return Promise.resolve(true);
 
-  console.warn("Output directory is not empty:", dir);
+  console.warn(theme.warning("Output directory is not empty:"), theme.light(dir));
 
   const rl = readline.createInterface({
     input: process.stdin,
@@ -98,7 +108,7 @@ export function confirmProceed(dir: string): Promise<boolean> {
   });
 
   return new Promise((resolve) => {
-    rl.question("Proceed and apply changes? (y/N): ", (answer) => {
+    rl.question(theme.accent("Proceed and apply changes? (y/N): "), (answer) => {
       rl.close();
       resolve(answer.toLowerCase() === "y" || answer.toLowerCase() === "yes");
     });
@@ -146,28 +156,52 @@ export function loadAST() {
   return parseStructure(content);
 }
 
+export function printTree(
+  node: FolderNode,
+  prefix = "",
+  isLast = true
+) {
+  const connector = isLast ? "└── " : "├── ";
+  const nextPrefix = prefix + (isLast ? "    " : "│   ");
 
-export function printTree(root: FolderNode, indent = "") {
-  for (const child of root.children) {
+  node.children.forEach((child, index) => {
+    const last = index === node.children.length - 1;
+
     if (child.type === "folder") {
-      console.log(`${indent} ${child.name}`);
-      printTree(child, indent + "  ");
+      console.log(
+        `${prefix}${connector}${theme.secondary(child.name)}`
+      );
+      printTree(child, nextPrefix, last);
     } else {
-      console.log(`${indent} ${child.name}`);
+      console.log(
+        `${prefix}${connector}${theme.light(child.name)}`
+      );
     }
-  }
+  });
 }
 
+export function printTreeWithIcons(
+  node: FolderNode,
+  prefix = "",
+  isLast = true
+) {
+  const connector = isLast ? "└── " : "├── ";
+  const nextPrefix = prefix + (isLast ? "    " : "│   ");
 
-export function printTreeWithIcons(node: FolderNode, indent = "") {
-  for (const child of node.children) {
+  node.children.forEach((child, index) => {
+    const last = index === node.children.length - 1;
+
     if (child.type === "folder") {
-      console.log(`${indent}📁 ${child.name}`);
-      printTreeWithIcons(child, indent + "  ");
+      console.log(
+        `${prefix}${connector}${icons.folder} ${theme.secondary(child.name)}`
+      );
+      printTreeWithIcons(child, nextPrefix, last);
     } else {
-      console.log(`${indent}📄 ${child.name}`);
+      console.log(
+        `${prefix}${connector}${icons.file} ${theme.light(child.name)}`
+      );
     }
-  }
+  });
 }
 
 
@@ -180,7 +214,6 @@ export function renameFSItem(oldPath: string, newPath: string) {
   fs.renameSync(oldPath, newPath);
   return true;
 }
-
 
 export function filterTreeByIgnore(
   node: FolderNode,
@@ -197,7 +230,6 @@ export function filterTreeByIgnore(
       ),
   };
 }
-
 
 export function flattenTree(
   node: FolderNode,
@@ -219,7 +251,6 @@ export function flattenTree(
   return map;
 }
 
-
 export function getFlagValuesAfter(flag: string) {
   const index = process.argv.indexOf(flag);
   if (index === -1) return [];
@@ -231,7 +262,6 @@ export function getFlagValuesAfter(flag: string) {
   }
   return values;
 }
-
 
 export const ALLOWED_FLAGS: Record<string, string[]> = {
   init: ["--force", "--empty", "--from-fs"],
@@ -255,8 +285,6 @@ export const ALLOWED_FLAGS: Record<string, string[]> = {
 
 export function printUsage(cmd?: string) {
   if (cmd && ALLOWED_FLAGS[cmd]) {
-
-
     const argsMap: Record<string, string> = {
       init: "[--empty | --from-fs [dir]] [--force] [--yes | -y]",
       update: "[--from-fs [dir]] [--yes | -y]",
@@ -272,12 +300,17 @@ export function printUsage(cmd?: string) {
 
     const args = argsMap[cmd] ? ` ${argsMap[cmd]}` : "";
 
-    console.log(`Usage for '${cmd}':\n  scaffoldrite ${cmd}${args}`);
+    console.log(
+      theme.primary.bold(`Usage for '${cmd}':`) + 
+      theme.light(`\n  scaffoldrite ${cmd}${args}`)
+    );
   } else if (cmd) {
-    console.log(`Unknown command '${cmd}'. Showing general usage:\n`);
+    console.log(
+      theme.error.bold(`Unknown command '${cmd}'. Showing general usage:\n`)
+    );
     printUsage();
   } else {
-    console.log(`
+    console.log(theme.primary.bold(`
 Usage:
   scaffoldrite init [--empty | --from-fs [dir]] [--force] [--yes | -y]
   scaffoldrite update [--from-fs [dir]] [--yes | -y]
@@ -290,11 +323,9 @@ Usage:
   scaffoldrite rename <path> <newName> [--yes | -y] [--dry-run] [--verbose | --summary]
   scaffoldrite version
   scaffoldrite --help | -h   Show this message
-`);
+`));
   }
 }
-
-
 
 export function structureToSRString(root: FolderNode, rawConstraints: string[]): string {
   sortTree(root);
@@ -324,4 +355,107 @@ export function structureToSRString(root: FolderNode, rawConstraints: string[]):
   }
 
   return lines.join("\n");
+}
+
+
+
+export function runRequirements(ctx: RequirementContext) {
+  const { command, arg3, arg4, fromFs, printUsage } = ctx;
+
+  const fail = (cmd: string): never => {
+    printUsage(cmd);
+    process.exit(1);
+  };
+
+  const requirements: Record<string, () => void> = {
+    update() {
+      if (!fromFs || !arg3) fail("update");
+    },
+
+    merge() {
+      if (!fromFs || !arg3) fail("merge");
+    },
+
+    create() {
+      if (!arg3 || !arg4) fail("create");
+    },
+
+    delete() {
+      if (!arg3) fail("delete");
+    },
+
+    rename() {
+      if (!arg3 || !arg4) fail("rename");
+    },
+  };
+
+  requirements[command]?.();
+}
+
+
+
+export function checkMutuallyExclusiveFlags(ctx: MutuallyExclusiveContext) {
+  const { 
+    command, summary, verbose, empty, fromFs, 
+    ignoreTooling, copyContents, isFS, isStructure, isDiff,
+    theme, icons
+  } = ctx;
+
+  const fail = (message: string) => {
+    console.error(message);
+    process.exit(1);
+  };
+
+  // 1️⃣ Summary vs Verbose
+  if (["generate", "create", "delete", "rename"].includes(command)) {
+    if (summary && verbose) {
+      fail(
+        theme.error.bold(`${icons.error} Mutually exclusive flags: --summary and --verbose cannot be used together.\n`) +
+        theme.primary(`Use either:\n`) +
+        theme.accent(`  --summary    `) + theme.light(`Show only a summary of operations\n`) +
+        theme.accent(`  --verbose    `) + theme.light(`Show all operations including skipped items`)
+      );
+    }
+  }
+
+  // 2️⃣ Init flags
+  if (command === "init") {
+    if (empty && fromFs) {
+      fail(
+        theme.error.bold(`${icons.error} Mutually exclusive flags: --empty and --from-fs cannot be used together.\n`) +
+        theme.primary(`Use:\n`) +
+        theme.accent(`  --empty    `) + theme.light(`Initialize an empty structure\n`) +
+        theme.accent(`  --from-fs  `) + theme.light(`Initialize structure from the filesystem`)
+      );
+    }
+  }
+
+  // 3️⃣ Generate flags
+  if (command === "generate") {
+    if (ignoreTooling && copyContents) {
+      fail(
+        theme.error.bold(`${icons.error} Mutually exclusive flags: --ignore-tooling and --copy cannot be used together.\n`) +
+        theme.primary(`Use either:\n`) +
+        theme.accent(`  --ignore-tooling    `) + theme.light(`Don't copy .scaffoldrite config to output\n`) +
+        theme.accent(`  --copy              `) + theme.light(`Copy file contents from source to output`)
+      );
+    }
+  }
+
+  // 4️⃣ List modes
+  const listModes = [isFS, isStructure, isDiff].filter(Boolean);
+  if (command === "list" && listModes.length > 1) {
+    fail(
+      theme.error.bold(`${icons.error} Mutually exclusive flags for 'list':\n`) +
+      theme.accent(`  --fs\n`) +
+      theme.accent(`  --structure | --sr\n`) +
+      theme.accent(`  --diff\n`) +
+      theme.muted(`\nUse only one at a time.`)
+    );
+  }
+}
+
+
+export function exit(code: number = 0) {
+  process.exit(code);
 }

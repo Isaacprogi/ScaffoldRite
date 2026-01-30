@@ -1,5 +1,5 @@
-import { HistoryEntry } from "./types";
-import { SCAFFOLDRITE_DIR } from "./cli";
+import { HistoryEntry } from "../types";
+import { SCAFFOLDRITE_DIR } from "../utils";
 import path from "node:path";
 import fs from "fs";
 
@@ -10,6 +10,7 @@ export function ensureHistoryDir() {
     fs.mkdirSync(HISTORY_DIR, { recursive: true });
   }
 }
+
 
 export function writeHistory(entry: HistoryEntry) {
   ensureHistoryDir();

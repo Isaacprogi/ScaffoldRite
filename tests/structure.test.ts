@@ -1,5 +1,5 @@
-import { FolderNode } from "../src/ast";
-import { addNode } from "../src/structure";
+import { FolderNode } from "../src/library/ast";
+import { addNode } from "../src/library/structure";
 
 describe("structure.addNode", () => {
     it("should create a nested folder structure", () => {
