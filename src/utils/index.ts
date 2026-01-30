@@ -387,6 +387,12 @@ export function runRequirements(ctx: RequirementContext) {
     rename() {
       if (!arg3 || !arg4) fail("rename");
     },
+    generate() {
+      if (!arg3) fail("generate");
+    },
+    init() {
+      if (fromFs && !arg3) fail("init");
+    },
   };
 
   requirements[command]?.();
@@ -459,3 +465,66 @@ export function checkMutuallyExclusiveFlags(ctx: MutuallyExclusiveContext) {
 export function exit(code: number = 0) {
   process.exit(code);
 }
+
+export function warnCopyWithoutOutput(copy: boolean, outputDir?: string) {
+  if (!copy) return;
+
+  // No output dir OR output dir is same as cwd
+  if (!outputDir || path.resolve(outputDir) === path.resolve(baseDir)) {
+    console.log(
+      theme.warning(
+        `${icons.warning} --copy is not used on the root . ` +
+        `.`
+      )
+    );
+    exit(1)
+  }
+}
+
+
+
+export function confirmPrompt(message: string): Promise<boolean> {
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+
+  return new Promise((resolve) => {
+    rl.question(theme.accent(message), (answer) => {
+      rl.close();
+      resolve(
+        answer.trim().toLowerCase() === "y" ||
+        answer.trim().toLowerCase() === "yes"
+      );
+    });
+  });
+}
+
+
+
+export async function warnIgnoreToolingUsage(
+  ignoreTooling: boolean,
+  baseDir: string,
+  outputDir?: string,
+): Promise<boolean> {
+  if (!ignoreTooling) return true;
+
+  if (!outputDir || path.resolve(outputDir) === path.resolve(baseDir)) {
+    console.log(
+      theme.warning(
+        `${icons.warning} You are using ignore tooling. ⚠️ ` +
+        `If you generate in the root folder, you may lose your config.`
+      )
+    );
+  } else {
+    console.log(
+      theme.warning(
+        `${icons.warning} You are using ignore tooling. ⚠️ ` +
+        `Your output folder (${outputDir}) won't include the config.`
+      )
+    );
+  }
+
+  return await confirmPrompt("Proceed and apply changes? (y/N): ");
+}
+

@@ -94,7 +94,7 @@ constraints {
 
 ### 5. Make It Real
 ```bash
-sr generate
+sr generate .
 ```
 Boom! Your perfect structure is now reality.
 
@@ -143,7 +143,7 @@ Scaffoldrite uses positional arguments where the meaning depends on their positi
 | `create` | (command itself) | Path to create | `file` or `folder` | — |
 | `delete` | (command itself) | Path to delete | — | — |
 | `rename` | (command itself) | Old path | New name/path | — |
-| `generate` | (command itself) | Output directory (optional) | — | — |
+| `generate` | (command itself) | Output directory (required) | — | — |
 | `validate` | (command itself) | — | — | — |
 
 ### How Arguments Are Processed
@@ -159,6 +159,13 @@ When Scaffoldrite parses commands:
 # init with --from-fs
 sr init --from-fs ./src
 #            arg3: ./src (--from-fs doesn't count as arg2)
+
+# generate with output directory (required)
+sr generate .
+#           arg2: . (current directory)
+
+sr generate ./output
+#           arg2: ./output
 
 # create with flags and arguments
 sr create src/components/ui button.ts file --force --verbose
@@ -184,6 +191,10 @@ sr generate ./template --copy --summary
 sr create --force src/components/ui button.ts file
 #                                    ↑
 #                         src/components/ui is now arg3, causing confusion
+
+# This would be INVALID - generate requires output directory
+sr generate --dry-run
+# Error: generate requires output directory argument
 ```
 
 ### Best Practices
@@ -192,7 +203,7 @@ sr create --force src/components/ui button.ts file
 - **Flag order doesn't matter** - `sr create path file --force --verbose` is the same as `sr create path file --verbose --force`
 - **Flag values** like `--from-fs ./src` stay together as a pair
 
-**Note:** For `generate`, the output directory argument is optional. When omitted, the command uses the current directory.
+**Important:** For `generate`, the output directory argument is **required**. You must provide either `.` (current directory) or a specific path.
 
 ---
 
@@ -213,35 +224,35 @@ Each Scaffoldrite command supports various flags for control and customization.
 |------|-------------|---------|
 | `--force` | Overwrite existing `structure.sr` file | `sr init --force` |
 | `--empty` | Create minimal structure with only constraints block | `sr init --empty` |
-| `--from-fs` | Generate from existing filesystem | `sr init --from-fs ./src` |
+| `--from-fs <directory>` | Generate from existing filesystem (must provide directory or `.`) | `sr init --from-fs ./src` or `sr init --from-fs .` |
 
 ### `update` Command Flags
 | Flag | Description | Example |
 |------|-------------|---------|
-| `--from-fs` | Update from filesystem (required) | `sr update --from-fs .` |
+| `--from-fs <directory>` | Update from filesystem (must provide directory or `.`) | `sr update --from-fs .` or `sr update --from-fs ./src` |
 | `--yes` / `-y` | Skip confirmation prompts | `sr update --from-fs . --yes` |
 
 ### `merge` Command Flags
 | Flag | Description | Example |
 |------|-------------|---------|
-| `--from-fs` | Merge from filesystem (required) | `sr merge --from-fs ./features` |
+| `--from-fs <directory>` | Merge from filesystem (must provide directory or `.`) | `sr merge --from-fs ./features` or `sr merge --from-fs .` |
 | `--yes` / `-y` | Skip confirmation prompts | `sr merge --from-fs . --yes` |
+
+### `generate` Command Flags
+| Flag | Description | Example |
+|------|-------------|---------|
+| `--yes` | Skip confirmation prompts | `sr generate . --yes` |
+| `--dry-run` | Show what would happen without making changes | `sr generate . --dry-run` |
+| `--verbose` | Show detailed output | `sr generate . --verbose` |
+| `--ignore-tooling` | Generates without the scaffold config | `sr generate . --ignore-tooling` |
+| `--summary` | Display operations as they happen | `sr generate . --summary` |
+| `--copy` | Copy file contents from source to output directory | `sr generate ./output --copy` |
 
 ### `validate` Command Flags
 | Flag | Description | Example |
 |------|-------------|---------|
 | `--allow-extra` | Allow extra files not in structure | `sr validate --allow-extra` |
 | `--allow-extra <paths...>` | Allow specific extra files | `sr validate --allow-extra README.md .env` |
-
-### `generate` Command Flags
-| Flag | Description | Example |
-|------|-------------|---------|
-| `--yes` | Skip confirmation prompts | `sr generate --yes` |
-| `--dry-run` | Show what would happen without making changes | `sr generate --dry-run` |
-| `--verbose` | Show detailed output | `sr generate --verbose` |
-| `--ignore-tooling` | Generates without the scaffold config | `sr generate --ignore-tooling` |
-| `--summary` | Display operations as they happen | `sr generate --summary` |
-| `--copy` | Copy file contents from source to output directory | `sr generate ./output --copy` |
 
 ### `create` Command Flags
 | Flag | Description | Example |
@@ -287,19 +298,42 @@ These commands help you create or prepare a `structure.sr` file for your project
 |---------|-------------|-------------|
 | `sr init` | Creates a starter `structure.sr` file. | Starting any new project. |
 | `sr init --empty` | Creates a minimal `structure.sr` with only a constraints block. | When you want complete control over the structure. |
-| `sr init --from-fs ./project` | Generates a `structure.sr` from an existing project folder. | Adopting Scaffoldrite in an existing codebase. |
-| `sr update --from-fs .` | Updates the existing `structure.sr` based on current project files. | Sync your structure file with changes in an existing project (`.` refers to the project root). |
-| `sr merge --from-fs ./project` | Merges an existing folder's structure into your `structure.sr`. | Merging another project's layout into your current structure file. |
+| `sr init --from-fs <directory>` | Generates a `structure.sr` from an existing project folder (must provide directory or `.`). | Adopting Scaffoldrite in an existing codebase. |
+| `sr update --from-fs <directory>` | Updates the existing `structure.sr` based on filesystem (must provide directory or `.`). | Sync your structure file with changes in an existing project. |
+| `sr merge --from-fs <directory>` | Merges an existing folder's structure into your `structure.sr` (must provide directory or `.`). | Merging another project's layout into your current structure file. |
 | `sr init --force` | Overwrites an existing `structure.sr` file. | When you want to start fresh and replace the current structure. |
 
-**Note:** In `sr update --from-fs .` and `sr merge --from-fs ./project`, the path (`.` or `./project`) refers to the root or target project directory you want to read from.
+**Important:** For `generate`, `update --from-fs`, `merge --from-fs`, and `init --from-fs` commands, you **must always provide a directory path** or `.` (dot) to represent the current directory.
 
-**Example:**
+**Examples:**
 ```bash
+# Generate to current directory
+sr generate .
+
+# Generate to specific directory
+sr generate ./output
+
+# Generate from current directory
+sr init --from-fs .
+
+# Generate from specific directory
+sr init --from-fs ./src
+
+# Update from current directory
+sr update --from-fs .
+
+# Update from specific directory  
+sr update --from-fs ./components
+
+# Merge from current directory
+sr merge --from-fs .
+
+# Merge from specific directory
+sr merge --from-fs ./features
+
 # Start a new React project
 sr init
-# Found an amazing open-source structure? Capture it!
-sr init --from-fs ./awesome-repo --force
+sr generate .  # Apply structure to current directory
 ```
 
 #### Validate & Check
@@ -324,18 +358,21 @@ sr validate --allow-extra README.md .env.example
 #### Generate & Create
 | Command | What It Does | When To Use |
 |---------|-------------|-------------|
-| `sr generate` | Creates entire structure from structure.sr | Initial setup, resetting structure |
+| `sr generate <directory>` | Creates entire structure from structure.sr (must provide directory or `.`) | Initial setup, resetting structure |
 | `sr generate ./output` | Generates to specific directory | Creating templates for others |
-| `sr generate --yes` | Skips confirmation prompts | Automation scripts |
-| `sr generate --dry-run` | Shows what would happen | Preview before making changes |
+| `sr generate . --yes` | Skips confirmation prompts | Automation scripts |
+| `sr generate . --dry-run` | Shows what would happen | Preview before making changes |
 | `sr generate ./output --copy` | Copies structure with file contents | Creating complete project templates |
 | `sr generate ./output --copy --summary` | Copies with summary only | Quick template generation |
 | `sr generate ./output --copy --dry-run` | Preview what would be copied | Safe preview before copying |
 
 **Example:**
 ```bash
-# Create the whole structure (empty files)
-sr generate
+# Create the whole structure in current directory (empty files)
+sr generate .
+
+# Create the whole structure in specific directory
+sr generate ./my-project
 
 # Copy structure AND file contents to output directory
 sr generate ./project-template --copy
@@ -347,10 +384,10 @@ sr generate ./dist --copy --dry-run
 sr generate ./client-project --copy --summary
 
 # "Show me what you'll do first"
-sr generate --dry-run
+sr generate . --dry-run
 
 # "Just do it, I trust you"
-sr generate --yes
+sr generate . --yes
 ```
 
 #### Modify & Evolve
@@ -376,6 +413,12 @@ sr create src/helpers/format.ts file
 
 # "Whoops, remove it"
 sr delete src/helpers/format.ts
+
+# "Update from current directory"
+sr update --from-fs .
+
+# "Merge features from a folder"
+sr merge --from-fs ./new-features
 ```
 
 #### Inspect & Understand
@@ -574,7 +617,7 @@ sr generate ./output --copy --summary
 # Day 1: Vision
 sr init --empty
 # Edit structure.sr with your dream structure
-sr generate
+sr generate .
 
 # Day 7: Add constraints as patterns emerge
 # Add to constraints block:
@@ -594,6 +637,7 @@ sr init --from-fs ./golden-template
 
 # Development teams:
 sr init --from-fs company-templates/react-starter
+sr generate .
 sr validate  # Ensures compliance
 # Can't violate standards even if they try
 ```
@@ -676,7 +720,7 @@ sr init --from-fs . --force
 # Remove old folders, rename files
 
 # Apply new structure
-sr generate --yes
+sr generate . --yes
 
 # Validate no regressions
 sr validate --allow-extra  # Temporary allowance
@@ -749,8 +793,8 @@ sr generate ./output --copy
 
 ## ❓ FAQ
 
-### "What if I edit files manually?"
-Run `sr validate` to check. Use `sr update --from-fs .` to accept changes, or `sr generate` to revert to structure.
+### "What if I edit filesystem manually?"
+Run `sr validate` to check. Use `sr update --from-fs .` to accept changes, or `sr generate .` to revert to structure.
 
 ### "Can I have multiple structure files?"
 Not directly, but generate to different directories:
@@ -779,6 +823,12 @@ No, these flags are mutually exclusive. Choose:
 
 ### "Does --copy work when generating in the same directory?"
 No, `--copy` only works when generating to a different output directory than your source.
+
+### "Why do I need to provide a directory for generate?"
+For clarity and safety, `sr generate` requires you to explicitly specify where to generate the structure:
+- Use `.` for current directory
+- Use `./output` for a specific directory
+This prevents accidental overwrites and makes commands more explicit.
 
 ---
 

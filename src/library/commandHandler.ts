@@ -10,7 +10,7 @@ import { validateFS } from "./validateFS";
 import { buildASTFromFS } from "./fsToAst";
 import { DEFAULT_TEMPLATE, DEFAULT_IGNORE_TEMPLATE } from '../data/index'
 const pkg = require("../../package.json");
-import { getIgnoreList } from "../utils/index";
+import { getIgnoreList, warnIgnoreToolingUsage } from "../utils/index";
 import { createProgressBar } from "./progress";
 // import { Operation } from "../types/index";
 import {
@@ -25,11 +25,12 @@ import { HistoryEntry } from "../types/index";
 import { icons, theme } from "../data/index";
 import chalk from 'chalk'
 import { runRequirements, checkMutuallyExclusiveFlags } from "../utils/index";
-import { SCAFFOLDRITE_DIR,STRUCTURE_PATH,IGNORE_PATH } from "../utils/index";
+import { SCAFFOLDRITE_DIR, STRUCTURE_PATH, IGNORE_PATH } from "../utils/index";
 import { baseDir } from "../utils/index";
 import { exit } from "../utils/index";
 import { CommandHandler } from "../types/index";
 import { command } from "../utils/index";
+import { warnCopyWithoutOutput } from "../utils/index";
 
 
 
@@ -197,7 +198,7 @@ export const commandHandlers: Record<string, CommandHandler> = {
          * =============================== */
         const existingConfigs = [];
 
-        const structureExists =  fs.existsSync(STRUCTURE_PATH)
+        const structureExists = fs.existsSync(STRUCTURE_PATH)
         const ignoreExists = fs.existsSync(IGNORE_PATH)
 
         if (structureExists) existingConfigs.push("structure.sr");
@@ -484,12 +485,26 @@ export const commandHandlers: Record<string, CommandHandler> = {
 
 
         const outputDir = path.resolve(arg3 ?? baseDir);
-       
+
+        const warnoutDir = path.resolve(arg3);
+
+        warnCopyWithoutOutput(hasFlag('--copy'), warnoutDir);
+
+
+        const proceed = await warnIgnoreToolingUsage(ignoreTooling, outputDir, baseDir);
+
+        if (!proceed) {
+            console.log(theme.info("Operation cancelled."));
+            process.exit(0);
+        }
+
 
         if (!(await confirmProceed(outputDir))) {
             console.log(theme.muted(`${icons.info} Generation cancelled.`));
             return;
         }
+
+
 
         const ignoreList = getIgnoreList();
 
