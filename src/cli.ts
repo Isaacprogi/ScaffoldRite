@@ -110,6 +110,8 @@ const allowExtra = hasFlag("--allow-extra") && allowExtraPaths.length === 0;
 
 const parsed = parseStructure(DEFAULT_TEMPLATE);
 
+const copyContents = hasFlag("--copy");
+
 
 // Show usage if no command or help requested
 if (!command || command === "--help" || command === "-h") {
@@ -502,15 +504,26 @@ if (invalidFlags.length > 0) {
   }
 
   if (command === "generate") {
-    if (summary && verbose) {
-      console.error(
-        "Mutually exclusive flags: --summary and --verbose cannot be used together.\n" +
-        "Use either:\n" +
-        "  --summary    Show only a summary of operations\n" +
-        "  --verbose    Show all operations including skipped items"
-      );
-      process.exit(1);
-    }
+     if (summary && verbose) {
+    console.error(
+      "Mutually exclusive flags: --summary and --verbose cannot be used together.\n" +
+      "Use either:\n" +
+      "  --summary    Show only a summary of operations\n" +
+      "  --verbose    Show all operations including skipped items"
+    );
+    process.exit(1);
+  }
+  
+  // Check for mutually exclusive flags with --copy
+  if (ignoreTooling && copyContents) {
+    console.error(
+      "Mutually exclusive flags: --ignore-tooling and --copy cannot be used together.\n" +
+      "Use either:\n" +
+      "  --ignore-tooling    Don't copy .scaffoldrite config to output\n" +
+      "  --copy              Copy file contents from source to output"
+    );
+    process.exit(1);
+  }
     const structure = loadAST();
     validateConstraints(structure.root, structure.constraints);
 
@@ -532,6 +545,7 @@ if (invalidFlags.length > 0) {
     await generateFS(structure.root, outputDir, {
       dryRun,
       ignoreList,
+      copyContents, 
       onStart(total) {
         totalOps = total;
         bar.start(total);
@@ -548,11 +562,9 @@ if (invalidFlags.length > 0) {
     });
 
     bar.stop();
-    const structureOutput = path.join(outputDir, '.scaffoldrite', "structure.sr");
-    const ignoreOutput = path.join(outputDir, '.scaffoldrite', ".scaffoldignore");
     const scaffoldOutput = path.join(outputDir, '.scaffoldrite')
 
-    console.log(STRUCTURE_PATH)
+  
 
 
     if (!dryRun) {

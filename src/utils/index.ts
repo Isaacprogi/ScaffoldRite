@@ -244,6 +244,7 @@ export const ALLOWED_FLAGS: Record<string, string[]> = {
     "--verbose",
     "--summary",
     "--ignore-tooling",
+     "--copy"
   ],
   create: ["--force", "--if-not-exists", "--yes", "--dry-run", "--verbose", "--summary"],
   delete: ["--yes", "--dry-run", "--verbose", "--summary"],

@@ -1,5 +1,7 @@
 # Scaffoldrite: Define. Enforce. Generate. 🏗️
 
+> _structure the right way_
+
 **Stop guessing. Start structuring.** Your project's organization should be as reliable as your code. With Scaffoldrite, it will be.
 
 ---
@@ -13,20 +15,28 @@ Manually deleted files or folders are considered **filesystem drift**.
 Changes made outside Scaffoldrite (e.g., via `rm`, file explorers, or other scripts) are **not tracked**. Scaffoldrite does **not record history** of such changes.
 
 ### Regeneration Behavior
-`scaffoldrite generate` **enforces the expected structure**, but does **not preserve or restore file contents**.  
+`scaffoldrite generate` **enforces the expected structure**, but does **not preserve or restore file contents** (unless using `--copy` flag).  
 When it recreates a manually deleted file:
 
 - The file will be **empty**, or  
-- Created from a **template** if one is defined
+- Created from a **template** if one is defined, or
+- **Copied from source** if using `--copy` flag and file exists in source
+
+### Copy Flag Behavior
+`scaffoldrite generate --copy` **copies file contents** from source to output directory. This is useful for:
+- Creating project templates with actual file content
+- Generating complete project structures from existing codebases
+- Preserving file contents when generating to output directories
+
+**Note:** The `--copy` flag only works when generating to a different output directory, not when regenerating in-place.
 
 ### No Content Backup
 Scaffoldrite tracks **structural intent only** — it does **not back up file contents**. Use **Git** or another version control system to recover lost content.
 
-> **“Scaffoldrite deleted my file content 😡”**  
+> **"Scaffoldrite deleted my file content 😡"**  
 > This usually happens when files were removed manually outside Scaffoldrite and then regenerated.  
 > Scaffoldrite does **not** delete or overwrite file contents arbitrarily — it only restores the **expected structure**.  
 > Always use Git or another VCS to protect and recover file contents.
-
 
 ## 🎯 The Problem Every Developer Faces
 
@@ -118,67 +128,122 @@ folder src {
 
 ## ⚡ Command Line Interface
 
-### Positional Arguments Reference
+## Positional Arguments Reference
 
-Scaffoldrite uses positional arguments where the meaning depends on their position:
+Scaffoldrite uses positional arguments where the meaning depends on their position in the command sequence. **Flags (options starting with `--` or `-`) are extracted and do not count as positional arguments.**
 
-| Command    | arg3 stands for               | arg4 stands for |
-| --------   | ---------------------------   | --------------- | 
-| `init`     | dir when `--from-fs`          | —               | 
-| `update`   | dir to scan                   | —               | 
-| `merge`    | dir to merge                  | —               | 
-| `list`     | dir to list                   | —               |
-| `create`   | path to create                | file/folder     |
-| `delete`   | path to delete                |                 |
-| `rename`   | old path                      | new name        |
-| `generate` | outputDir                     | —               |
-| `validate` | —                             | —               | 
+### Argument Position Mapping
 
+| Command | Position 1 (arg1) | Position 2 (arg2) | Position 3 (arg3) | Position 4 (arg4) |
+|---------|-------------------|-------------------|-------------------|-------------------|
+| `init` | (command itself) | — | Directory path (when used with `--from-fs`) | — |
+| `update` | (command itself) | — | Directory to scan (when used with `--from-fs`) | — |
+| `merge` | (command itself) | — | Directory to merge (when used with `--from-fs`) | — |
+| `list` | (command itself) | — | — | — |
+| `create` | (command itself) | Path to create | `file` or `folder` | — |
+| `delete` | (command itself) | Path to delete | — | — |
+| `rename` | (command itself) | Old path | New name/path | — |
+| `generate` | (command itself) | Output directory (optional) | — | — |
+| `validate` | (command itself) | — | — | — |
+
+### How Arguments Are Processed
+
+When Scaffoldrite parses commands:
+1. **Flags are extracted first** - All `--flag` and `-f` options are removed from the argument list
+2. **Remaining arguments are treated as positional** - Their meaning depends on their position
+3. **Flag values are handled separately** - Values following flags like `--from-fs ./src` are paired with their flags
+
+### Usage Examples
+
+```bash
+# init with --from-fs
+sr init --from-fs ./src
+#            arg3: ./src (--from-fs doesn't count as arg2)
+
+# create with flags and arguments
+sr create src/components/ui button.ts file --force --verbose
+#           arg2: src/components/ui  arg3: button.ts  arg4: file
+#           --force and --verbose are extracted as flags, not counted as arguments
+
+# rename with confirmation skipping
+sr rename src/oldfile.txt newfile.txt --yes
+#           arg2: src/oldfile.txt  arg3: newfile.txt
+#           --yes is extracted as a flag
+
+# generate with output directory and dry-run
+sr generate ./dist --dry-run
+#           arg2: ./dist
+#           --dry-run is extracted as a flag
+
+# generate with copy flag
+sr generate ./template --copy --summary
+#           arg2: ./template
+#           --copy and --summary are extracted as flags
+
+# This would be INVALID - flags must come after positional args
+sr create --force src/components/ui button.ts file
+#                                    ↑
+#                         src/components/ui is now arg3, causing confusion
+```
+
+### Best Practices
+- **Place flags after positional arguments** for clarity
+- **Flags can appear anywhere** but are recommended at the end
+- **Flag order doesn't matter** - `sr create path file --force --verbose` is the same as `sr create path file --verbose --force`
+- **Flag values** like `--from-fs ./src` stay together as a pair
+
+**Note:** For `generate`, the output directory argument is optional. When omitted, the command uses the current directory.
+
+---
 
 ## ⚡ Structure Image
 
 ![ScaffoldRite Screenshot](https://raw.githubusercontent.com/isaacprogi/scaffoldrite/main/public/structure.png)
 
-
 ### Flags Reference
-
 
 Each command supports specific flags:
 
-#### `init` Command Flags
+## Command Flags Reference
+
+Each Scaffoldrite command supports various flags for control and customization.
+
+### `init` Command Flags
 | Flag | Description | Example |
 |------|-------------|---------|
-| `--force` | Overwrite existing `structure.sr` | `sr init --force` |
+| `--force` | Overwrite existing `structure.sr` file | `sr init --force` |
 | `--empty` | Create minimal structure with only constraints block | `sr init --empty` |
 | `--from-fs` | Generate from existing filesystem | `sr init --from-fs ./src` |
 
-#### `update` Command Flags
+### `update` Command Flags
 | Flag | Description | Example |
 |------|-------------|---------|
 | `--from-fs` | Update from filesystem (required) | `sr update --from-fs .` |
 | `--yes` / `-y` | Skip confirmation prompts | `sr update --from-fs . --yes` |
 
-#### `merge` Command Flags
+### `merge` Command Flags
 | Flag | Description | Example |
 |------|-------------|---------|
 | `--from-fs` | Merge from filesystem (required) | `sr merge --from-fs ./features` |
 | `--yes` / `-y` | Skip confirmation prompts | `sr merge --from-fs . --yes` |
 
-#### `validate` Command Flags
+### `validate` Command Flags
 | Flag | Description | Example |
 |------|-------------|---------|
 | `--allow-extra` | Allow extra files not in structure | `sr validate --allow-extra` |
 | `--allow-extra <paths...>` | Allow specific extra files | `sr validate --allow-extra README.md .env` |
 
-#### `generate` Command Flags
+### `generate` Command Flags
 | Flag | Description | Example |
 |------|-------------|---------|
 | `--yes` | Skip confirmation prompts | `sr generate --yes` |
 | `--dry-run` | Show what would happen without making changes | `sr generate --dry-run` |
 | `--verbose` | Show detailed output | `sr generate --verbose` |
-| `--show` | Display operations as they happen | `sr generate --show` |
+| `--ignore-tooling` | Generates without the scaffold config | `sr generate --ignore-tooling` |
+| `--summary` | Display operations as they happen | `sr generate --summary` |
+| `--copy` | Copy file contents from source to output directory | `sr generate ./output --copy` |
 
-#### `create` Command Flags
+### `create` Command Flags
 | Flag | Description | Example |
 |------|-------------|---------|
 | `--force` | Overwrite existing item | `sr create src/index.ts file --force` |
@@ -186,41 +251,47 @@ Each command supports specific flags:
 | `--yes` | Skip confirmation prompts | `sr create src/hooks folder --yes` |
 | `--dry-run` | Show what would happen | `sr create src/components folder --dry-run` |
 | `--verbose` | Show detailed output | `sr create src/utils.ts file --verbose` |
-| `--show` | Display operations as they happen | `sr create src/lib folder --show` |
+| `--summary` | Display operations as they happen | `sr create src/lib folder --summary` |
 
-#### `delete` Command Flags
+### `delete` Command Flags
 | Flag | Description | Example |
 |------|-------------|---------|
 | `--yes` | Skip confirmation prompts | `sr delete src/old --yes` |
 | `--dry-run` | Show what would happen | `sr delete src/temp --dry-run` |
 | `--verbose` | Show detailed output | `sr delete src/deprecated --verbose` |
-| `--show` | Display operations as they happen | `sr delete src/legacy --show` |
+| `--summary` | Display operations as they happen | `sr delete src/legacy --summary` |
 
-#### `rename` Command Flags
+### `rename` Command Flags
 | Flag | Description | Example |
 |------|-------------|---------|
 | `--yes` | Skip confirmation prompts | `sr rename src/index.ts main.ts --yes` |
 | `--dry-run` | Show what would happen | `sr rename src/utils helpers --dry-run` |
 | `--verbose` | Show detailed output | `sr rename src/lib library --verbose` |
-| `--show` | Display operations as they happen | `sr rename src/components ui --show` |
+| `--summary` | Display operations as they happen | `sr rename src/components ui --summary` |
 
-#### `list` Command Flags
+### `list` Command Flags
 | Flag | Description | Example |
 |------|-------------|---------|
-| `--structure` / `--sr` | Show structure.sr contents | `sr list --structure` |
+| `--structure` / `--sr` | Show `structure.sr` contents | `sr list --structure` |
 | `--fs` | Show filesystem structure | `sr list --fs` |
-| `--diff` | Compare structure.sr vs filesystem | `sr list --diff` |
-| `--show` | Display with icons | `sr list --show` |
+| `--diff` | Compare `structure.sr` vs filesystem | `sr list --diff` |
 
 ### Your Daily Commands
 
-#### Initialize & Setup
+## Initialize & Setup
+
+These commands help you create or prepare a `structure.sr` file for your project.
+
 | Command | What It Does | When To Use |
 |---------|-------------|-------------|
-| `sr init` | Creates starter `structure.sr` | Starting any new project |
-| `sr init --empty` | Minimal structure with constraints block | When you want complete control |
-| `sr init --from-fs ./project` | Generates `structure.sr` from existing code | Adopting Scaffoldrite in an existing project |
-| `sr init --force` | Overwrites existing `structure.sr` | When you want to start fresh |
+| `sr init` | Creates a starter `structure.sr` file. | Starting any new project. |
+| `sr init --empty` | Creates a minimal `structure.sr` with only a constraints block. | When you want complete control over the structure. |
+| `sr init --from-fs ./project` | Generates a `structure.sr` from an existing project folder. | Adopting Scaffoldrite in an existing codebase. |
+| `sr update --from-fs .` | Updates the existing `structure.sr` based on current project files. | Sync your structure file with changes in an existing project (`.` refers to the project root). |
+| `sr merge --from-fs ./project` | Merges an existing folder's structure into your `structure.sr`. | Merging another project's layout into your current structure file. |
+| `sr init --force` | Overwrites an existing `structure.sr` file. | When you want to start fresh and replace the current structure. |
+
+**Note:** In `sr update --from-fs .` and `sr merge --from-fs ./project`, the path (`.` or `./project`) refers to the root or target project directory you want to read from.
 
 **Example:**
 ```bash
@@ -256,11 +327,23 @@ sr validate --allow-extra README.md .env.example
 | `sr generate ./output` | Generates to specific directory | Creating templates for others |
 | `sr generate --yes` | Skips confirmation prompts | Automation scripts |
 | `sr generate --dry-run` | Shows what would happen | Preview before making changes |
+| `sr generate ./output --copy` | Copies structure with file contents | Creating complete project templates |
+| `sr generate ./output --copy --summary` | Copies with summary only | Quick template generation |
+| `sr generate ./output --copy --dry-run` | Preview what would be copied | Safe preview before copying |
 
 **Example:**
 ```bash
-# Create the whole structure
+# Create the whole structure (empty files)
 sr generate
+
+# Copy structure AND file contents to output directory
+sr generate ./project-template --copy
+
+# Preview what would be copied
+sr generate ./dist --copy --dry-run
+
+# Copy with summary only
+sr generate ./client-project --copy --summary
 
 # "Show me what you'll do first"
 sr generate --dry-run
@@ -277,7 +360,7 @@ sr generate --yes
 | `sr delete src/old-feature` | Removes from structure | Cleaning up tech debt |
 | `sr rename src/index.ts main.ts` | Renames in structure | Refactoring |
 | `sr update --from-fs .` | Updates structure.sr from current files | After manual tweaks |
-| `sr merge --from-fs ./new-features` | Merges new files into structure | Collaborative feature adds |
+| `sr merge --from-fs ./new-features` | Merges new files from file system into structure.sr | Collaborative feature adds |
 
 **Example:**
 ```bash
@@ -297,9 +380,10 @@ sr delete src/helpers/format.ts
 #### Inspect & Understand
 | Command | What It Does | When To Use |
 |---------|-------------|-------------|
-| `sr list` | Shows structure.sr contents | Quick reference |
-| `sr list --fs` | Shows actual filesystem | Seeing current state |
-| `sr list --diff` | Compares structure.sr vs filesystem | Finding discrepancies |
+| `sr list` | Shows all structure.sr contents without respecting ignore list | Quick reference |
+| `sr list  --structure` | Shows all structure.sr contents, respecting ignore list | Quick reference |
+| `sr list --fs` | Shows actual filesystem. Respects ignore list | Seeing current state |
+| `sr list --diff` | Compares structure.sr vs filesystem. Respects ignore list | Finding discrepancies |
 | `sr version` | Shows Scaffoldrite version | Debugging, reporting issues |
 
 **Example:**
@@ -356,7 +440,7 @@ These are your superpowers. They apply rules to multiple folders at once:
 |------------|--------------|
 | `eachFolderMustContain * src index.ts` | Every folder in `src/` must contain `index.ts` |
 | `eachFolderMustContainFile ** src README.md` | Every folder (recursive) must have `README.md` |
-| `eachFolderMustContainFolder * src tests` | Every folder must contain `tests/` subfolder |
+| `eachFolderMustContainFolder * src tests` | Every folder must contain `tests/` subfolder.This is not always used as it never ends. |
 | `eachFolderMustHaveExt ** src .ts` | Every folder must have at least one `.ts` file |
 
 **Example Scenarios:**
@@ -435,11 +519,52 @@ dist/             # Ignore build output
 - `sr init --from-fs` (snapshots ignore these)
 - `sr validate` (validation ignores these)
 - `sr list --fs` (listing ignores these)
+- `sr generate` (generation)
 
-**Not used when:**
-- `sr generate` (generation respects full structure)
+## 📋 Copy Flag Examples
 
----
+### Creating Project Templates
+```bash
+# From your well-structured project
+sr init --from-fs ./my-awesome-app
+
+# Create a complete template
+sr generate ./my-template --copy
+
+# Result: ./my-template has exact structure AND file content
+```
+
+### Distributing Starter Kits
+```bash
+# Create a clean starter kit
+sr generate ./react-starter --copy --summary
+
+# Package and share
+tar -czf react-starter.tar.gz ./react-starter
+```
+
+### Batch Project Generation
+```bash
+# Generate multiple projects from template
+sr generate ./client-a --copy --yes
+sr generate ./client-b --copy --yes
+sr generate ./client-c --copy --yes
+# Each gets identical structure AND content
+```
+
+### Dry Run to Preview Copy Operations
+```bash
+# See what files would be copied
+sr generate ./new-project --copy --dry-run --verbose
+# Output shows: COPY src/index.ts, COPY src/components/Button.tsx, etc.
+```
+
+### Copy with Summary Only
+```bash
+# Get clean output showing only copy operations
+sr generate ./output --copy --summary
+# Output: COPY (10 files), FOLDER (5 folders), SKIP (2 existing)
+```
 
 ## 🎯 Real-World Workflows
 
@@ -488,8 +613,24 @@ constraints {
 sr init --from-fs ./best-client-project
 
 # New client? Perfection in seconds:
-sr generate ./client-project
-# Every client gets your proven structure
+sr generate ./client-project --copy
+# Every client gets your proven structure AND code
+```
+
+### The Template Creator: Complete Project Templates
+```bash
+# Create a template from your best project
+sr init --from-fs ./best-project
+
+# Generate complete templates with all file content
+sr generate ./project-template --copy
+
+# Share the template with your team
+# They get structure AND content!
+
+# Alternative: Create clean starter kits
+sr generate ./starter-kit --copy --ignore-tooling
+# Creates a clean starter kit without .scaffoldrite config
 ```
 
 ---
@@ -560,6 +701,26 @@ It does **not track history or file content** — Git or another version control
 * **Enforce consistency across teams**  
   Keep the official folder structure consistent, even if developers create extra folders or misplace files. File content remains untouched.
 
+### Content Preservation with `--copy`
+
+When generating to **output directories**, you can use the `--copy` flag to preserve file contents:
+
+```bash
+# Generate structure with empty files (default)
+sr generate ./output
+
+# Generate structure AND copy file contents
+sr generate ./output --copy
+```
+
+**Use `--copy` when:**
+- Creating project templates from existing codebases
+- Distributing complete starter kits
+- Preserving file contents in generated output
+- Building project generators
+
+**Note:** `--copy` cannot be used with `--ignore-tooling` as they're mutually exclusive flags.
+
 ### Real-World Examples
 
 1️⃣ **Cleaning up experimental folders**  
@@ -585,7 +746,6 @@ It does **not track history or file content** — Git or another version control
 
 > **Tip:** Think of `scaffoldrite generate` as a **structure-only enforcement tool**. It ensures your project layout matches the defined structure without overwriting any existing file content.
 
-
 ## ❓ FAQ
 
 ### "What if I edit files manually?"
@@ -601,8 +761,23 @@ sr generate ./project-b
 ### "Is this like a linter for file structure?"
 Exactly! It's ESLint/Prettier for your project's organization.
 
-### "What about generated files?"
-Add them to `.scaffoldignore` or use `--allow-extra` during validation.
+### "What about heavy files dev files like node modules?"
+You can always add them to `.scaffoldignore` or use `--allow-extra` during validation to avoid heavy computation.
+
+### "How do I preserve file content when generating templates?"
+Use the `--copy` flag when generating to an output directory:
+```bash
+sr generate ./template --copy
+```
+This copies file contents from your source directory to the output directory.
+
+### "Can I use --copy and --ignore-tooling together?"
+No, these flags are mutually exclusive. Choose:
+- `--copy` to preserve file contents
+- `--ignore-tooling` to generate without .scaffoldrite config
+
+### "Does --copy work when generating in the same directory?"
+No, `--copy` only works when generating to a different output directory than your source.
 
 ---
 

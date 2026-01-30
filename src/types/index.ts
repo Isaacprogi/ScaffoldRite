@@ -35,3 +35,13 @@ export type Operation =
       from: string;
       to: string;
     };
+
+
+  // Add to types/index.js or similar
+export interface GenerateOptions {
+  dryRun: boolean;
+  ignoreList: string[];
+  onProgress?: (event: ProgressEvent) => void;
+  onStart?: (total: number) => void;
+  copyContents?: boolean; // Add this
+}
