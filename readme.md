@@ -8,12 +8,6 @@
 
 ![ScaffoldRite Screenshot](https://raw.githubusercontent.com/isaacprogi/scaffoldrite/main/public/scaffoldrite-banner.png)
 
-Here it is **clean, corrected, and ready to paste into your README** (proper Markdown, fixed code blocks, no extra commentary).
-
----
-
-Here’s your updated README content with **migrate option and `--force` note** reflected clearly and properly formatted:
-
 
 
 ## 🚨 v2.0.0 – Breaking Change: Config Location
@@ -625,12 +619,8 @@ Sometimes you need exceptions. That's where `.scaffoldignore` comes in:
 ```ignore
 # .scaffoldignore - works like .gitignore
 node_modules/      # Ignore dependencies
-*.log             # Ignore log files
 dist/             # Ignore build output
 .temp/            # Ignore temporary files
-
-# But KEEP these in structure
-!dist/README.md   # Except this one file
 ```
 
 **Used when:**

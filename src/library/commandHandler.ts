@@ -39,8 +39,6 @@ const arg3 = args[0];
 const arg4 = args[1];
 
 
-
-
 const passedFlags = getPassedFlags();
 const allowedFlags = ALLOWED_FLAGS[command];
 const dryRun = hasFlag("--dry-run");
@@ -49,8 +47,6 @@ const verbose = hasFlag("--verbose");
 const summary = hasFlag("--summary");
 
 const ignoreTooling = hasFlag("--ignore-tooling");
-
-
 
 const requiresInit = ["update", "merge", "validate", "generate", "create", "delete", "rename", "list"];
 if (requiresInit.includes(command)) {
@@ -63,7 +59,6 @@ if (requiresInit.includes(command)) {
         exit(1);
     }
 }
-
 
 const isStructure = hasFlag("--structure") || hasFlag("--sr");
 const isFS = hasFlag("--fs");
@@ -84,6 +79,8 @@ const migrate = hasFlag("--migrate");
 const parsed = parseStructure(DEFAULT_TEMPLATE);
 
 const copyContents = hasFlag("--copy");
+
+
 
 
 if (!command || command === "--help" || command === "-h") {
@@ -134,7 +131,6 @@ runRequirements({
     fromFs,
     printUsage,
 });
-
 
 
 
@@ -227,27 +223,27 @@ export const commandHandlers: Record<string, CommandHandler> = {
         /* ===============================
          * HANDLE MIGRATION
          * =============================== */
-if (migrate) {
-    let migrated = false;
+        if (migrate) {
+            let migrated = false;
 
-    if (fs.existsSync(legacyStructure)) {
-        fs.renameSync(legacyStructure, STRUCTURE_PATH);
-        console.log(theme.success(`${icons.check} Moved structure.sr → .scaffoldrite/structure.sr`));
-        migrated = true;
-    }
+            if (fs.existsSync(legacyStructure)) {
+                fs.renameSync(legacyStructure, STRUCTURE_PATH);
+                console.log(theme.success(`${icons.check} Moved structure.sr → .scaffoldrite/structure.sr`));
+                migrated = true;
+            }
 
-    if (fs.existsSync(legacyIgnore)) {
-        fs.renameSync(legacyIgnore, IGNORE_PATH);
-        console.log(theme.success(`${icons.check} Moved .scaffoldignore → .scaffoldrite/.scaffoldignore`));
-        migrated = true;
-    }
+            if (fs.existsSync(legacyIgnore)) {
+                fs.renameSync(legacyIgnore, IGNORE_PATH);
+                console.log(theme.success(`${icons.check} Moved .scaffoldignore → .scaffoldrite/.scaffoldignore`));
+                migrated = true;
+            }
 
-    if (!migrated) {
-        console.log(theme.info(`${icons.info} No legacy config found to migrate.`));
-    }
+            if (!migrated) {
+                console.log(theme.info(`${icons.info} No legacy config found to migrate.`));
+            }
 
-    return;
-}
+            return;
+        }
 
 
 
