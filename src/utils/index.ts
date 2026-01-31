@@ -264,7 +264,7 @@ export function getFlagValuesAfter(flag: string) {
 }
 
 export const ALLOWED_FLAGS: Record<string, string[]> = {
-  init: ["--force", "--empty", "--from-fs"],
+  init: ["--force", "--empty", "--from-fs","--migrate"],
   update: ["--from-fs", "--yes", "-y"],
   merge: ["--from-fs", "--yes", "-y"],
   validate: ["--allow-extra"],
@@ -286,7 +286,7 @@ export const ALLOWED_FLAGS: Record<string, string[]> = {
 export function printUsage(cmd?: string) {
   if (cmd && ALLOWED_FLAGS[cmd]) {
     const argsMap: Record<string, string> = {
-      init: "[--empty | --from-fs [dir]] [--force] [--yes | -y]",
+      init: "[--empty | --from-fs [dir]] [--force] [--yes | -y] [--migrate]",
       update: "[--from-fs [dir]] [--yes | -y]",
       merge: "[--from-fs [dir]] [--yes | -y]",
       validate: "[--allow-extra] [--allow-extra <path1> <path2> ...]",
@@ -312,7 +312,7 @@ export function printUsage(cmd?: string) {
   } else {
     console.log(theme.primary.bold(`
 Usage:
-  scaffoldrite init [--empty | --from-fs [dir]] [--force] [--yes | -y]
+  scaffoldrite init [--empty | --from-fs [dir]] [--force] [--yes | -y] [--migrate]
   scaffoldrite update [--from-fs [dir]] [--yes | -y]
   scaffoldrite merge [--from-fs [dir]] [--yes | -y]
   scaffoldrite validate [--allow-extra] [--allow-extra <path1> <path2> ...]

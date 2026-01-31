@@ -8,6 +8,80 @@
 
 ![ScaffoldRite Screenshot](https://raw.githubusercontent.com/isaacprogi/scaffoldrite/main/public/scaffoldrite-banner.png)
 
+Here it is **clean, corrected, and ready to paste into your README** (proper Markdown, fixed code blocks, no extra commentary).
+
+---
+
+Here’s your updated README content with **migrate option and `--force` note** reflected clearly and properly formatted:
+
+
+
+## 🚨 v2.0.0 – Breaking Change: Config Location
+
+Scaffoldrite v2 introduces a **dedicated config directory**.
+
+### What Changed
+
+**Before (v1.x):**
+```
+
+structure.sr
+.scaffoldignore
+
+```
+
+**Now (v2.x):**
+```
+
+.scaffoldrite/
+├─ structure.sr
+└─ .scaffoldignore
+
+````
+
+Scaffoldrite no longer reads config files from the project root.
+
+---
+
+### 🔁 Migration
+
+You have two options:
+
+#### Option 1: Regenerate (recommended)
+```bash
+sr init
+````
+
+#### Option 2: Migrate existing config
+
+Run:
+
+```bash
+sr init --migrate
+```
+
+This will:
+
+* Move `structure.sr` → `.scaffoldrite/structure.sr`
+* Move `.scaffoldignore` → `.scaffoldrite/.scaffoldignore`
+
+> ⚠ If `.scaffoldrite/` already contains these files, use `--force` to overwrite:
+
+```bash
+sr init --migrate --force
+```
+
+If no legacy config is found, Scaffoldrite will simply notify you:
+
+```
+ℹ No legacy config found to migrate.
+```
+
+---
+
+
+
+
 ## ⚠️ Filesystem Changes
 
 ### Drift Detection
@@ -70,7 +144,7 @@ scaffoldrite  # Full name (great for scripts)
 ```bash
 sr init
 ```
-This creates `structure.sr`—your project's architectural blueprint.
+> This creates `.scaffoldrite/structure.sr`—your project's architectural blueprint.
 
 ### 4. Define Your Vision
 Edit `structure.sr`:

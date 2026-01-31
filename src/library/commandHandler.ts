@@ -79,6 +79,7 @@ const ifNotExists = hasFlag("--if-not-exists");
 
 const allowExtraPaths = getFlagValuesAfter("--allow-extra");
 const allowExtra = hasFlag("--allow-extra") && allowExtraPaths.length === 0;
+const migrate = hasFlag("--migrate");
 
 const parsed = parseStructure(DEFAULT_TEMPLATE);
 
@@ -193,13 +194,23 @@ export const commandHandlers: Record<string, CommandHandler> = {
         }
 
 
+        const legacyStructure = path.join(baseDir, "structure.sr");
+        const legacyIgnore = path.join(baseDir, ".scaffoldignore");
+
+        const structureExists = fs.existsSync(STRUCTURE_PATH);
+        const ignoreExists = fs.existsSync(IGNORE_PATH);
+
+
+
+
+
+
         /* ===============================
          * OVERWRITE GUARDS
          * =============================== */
         const existingConfigs = [];
 
-        const structureExists = fs.existsSync(STRUCTURE_PATH)
-        const ignoreExists = fs.existsSync(IGNORE_PATH)
+
 
         if (structureExists) existingConfigs.push("structure.sr");
         if (ignoreExists) existingConfigs.push(".scaffoldignore");
@@ -214,8 +225,31 @@ export const commandHandlers: Record<string, CommandHandler> = {
         }
 
         /* ===============================
-         * FLAG VALIDATION
+         * HANDLE MIGRATION
          * =============================== */
+if (migrate) {
+    let migrated = false;
+
+    if (fs.existsSync(legacyStructure)) {
+        fs.renameSync(legacyStructure, STRUCTURE_PATH);
+        console.log(theme.success(`${icons.check} Moved structure.sr → .scaffoldrite/structure.sr`));
+        migrated = true;
+    }
+
+    if (fs.existsSync(legacyIgnore)) {
+        fs.renameSync(legacyIgnore, IGNORE_PATH);
+        console.log(theme.success(`${icons.check} Moved .scaffoldignore → .scaffoldrite/.scaffoldignore`));
+        migrated = true;
+    }
+
+    if (!migrated) {
+        console.log(theme.info(`${icons.info} No legacy config found to migrate.`));
+    }
+
+    return;
+}
+
+
 
 
         /* ===============================
