@@ -8,7 +8,7 @@ import { command } from "./utils";
 import { theme, icons } from "./data";
 import { hasFlag } from "./utils";
 import { exit } from "./utils";
-import "dotenv/config";
+// import "dotenv/config";
 
 
 const cwd = process.cwd();
