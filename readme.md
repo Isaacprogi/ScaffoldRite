@@ -621,7 +621,6 @@ Sometimes you need exceptions. That's where `.scaffoldignore` comes in:
 node_modules/      # Ignore dependencies
 dist/             # Ignore build output
 .temp/            # Ignore temporary files
-
 ```
 
 **Used when:**
@@ -819,17 +818,64 @@ When generating to **output directories**, you can use the `--copy` flag to pres
 # Generate structure with empty files (default)
 sr generate ./output
 
-# Generate structure AND copy file contents
+
+## 💾 Preserving Content & Mitigating Risks
+
+Scaffoldrite focuses on **structure, not file content**. By default, `sr generate` creates missing files or folders **without preserving existing file content**. To make this safer, follow these best practices:
+
+### 1️⃣ Use `--copy` when generating to a different directory
+
+```bash
 sr generate ./output --copy
 ```
 
-**Use `--copy` when:**
-- Creating project templates from existing codebases
-- Distributing complete starter kits
-- Preserving file contents in generated output
-- Building project generators
+* Copies existing file contents from source to output
+* Maintains templates or boilerplate if defined
+* Great for creating project templates or starter kits
 
-**Note:** `--copy` cannot be used with `--ignore-tooling` as they're mutually exclusive flags.
+**Notes:**
+
+* `--copy` **does not work in-place**; use Git or manual backup for regenerating in the same directory.
+* Cannot be combined with `--ignore-tooling`.
+
+### 2️⃣ Commit changes before regenerating
+
+Always commit your work before running `sr generate`:
+
+```bash
+git add .
+git commit -m "Save work before sr generate"
+```
+
+This ensures you can **restore deleted or modified files** if anything goes wrong.
+
+### 3️⃣ Validate first
+
+Preview what Scaffoldrite would change without affecting your files:
+
+```bash
+sr validate --allow-extra
+```
+
+This shows missing, extra, or misaligned files, so you can make informed decisions.
+
+### 4️⃣ Rename carefully
+
+Instead of renaming in `structure.sr` first:
+
+1. Rename the file in your filesystem.
+2. Sync your `structure.sr`:
+
+```bash
+sr update --from-fs .
+```
+
+This preserves content because the filesystem rename happens before Scaffoldrite updates the structure.
+
+### Warning
+
+> ⚠ Renaming a file in `structure.sr` **will delete the old file in the filesystem**. Commit or back up your work first.
+
 
 ### Real-World Examples
 
