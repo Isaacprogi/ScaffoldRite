@@ -2,26 +2,11 @@
 import fs from "fs";
 import path from "path";
 import depcheck from "depcheck";
-import fetch from "node-fetch";
 import { theme, icons } from "../../data";
 
 const TS_TYPE_REGEX = /^@types\//;
 
-/**
- * Checks if a package exists on npm
- */
-async function isPackageValidOnNpm(pkg: string): Promise<boolean> {
-  try {
-    const res = await fetch(`https://registry.npmjs.org/${pkg}`);
-    return res.ok;
-  } catch {
-    return false;
-  }
-}
-
 export async function checkAndReportPackages(): Promise<void> {
-  const validateFlag = process.argv.includes("--validate");
-
   console.log(theme.primary.bold(`${icons.folder} Checking project dependencies...\n`));
 
   const packageJsonPath = path.join(process.cwd(), "package.json");
@@ -36,7 +21,6 @@ export async function checkAndReportPackages(): Promise<void> {
 
   // 1️⃣ Check runtime-resolvable deps
   for (const dep of Object.keys(allDeps)) {
-    if (TS_TYPE_REGEX.test(dep)) continue; // skip TypeScript types
     try {
       require.resolve(dep);
     } catch {
@@ -48,10 +32,10 @@ export async function checkAndReportPackages(): Promise<void> {
   const options = { ignoreDirs: ["dist", "build", "node_modules"] };
   const result = await depcheck(process.cwd(), options);
 
+  // Combine depcheck missing deps (filter duplicates)
   const depcheckMissing = Object.keys(result.missing || {}).filter(
     (dep) => !missingDeps.includes(dep)
   );
-
   const finalMissing = [...missingDeps, ...depcheckMissing];
 
   if (finalMissing.length === 0) {
@@ -59,27 +43,25 @@ export async function checkAndReportPackages(): Promise<void> {
     return;
   }
 
+  // Separate runtime deps vs TypeScript types
+  const runtimeDeps: string[] = [];
+  const typeDeps: string[] = [];
+
+  finalMissing.forEach((pkg) => {
+    if (TS_TYPE_REGEX.test(pkg)) typeDeps.push(pkg);
+    else runtimeDeps.push(pkg);
+  });
+
   console.log(theme.error.bold(`${icons.error} Missing packages:`));
-  finalMissing.forEach((pkg) => console.log(theme.warning(`  - ${pkg}`)));
 
-  // 3️⃣ Validate missing packages on npm (if flag provided)
-  if (validateFlag) {
-    console.log("\n" + theme.info("Validating missing packages on npm..."));
-    const validationResults = await Promise.all(
-      finalMissing.map(async (pkg) => {
-        const valid = await isPackageValidOnNpm(pkg);
-        return { pkg, valid };
-      })
-    );
+  runtimeDeps.forEach((pkg) => console.log(theme.warning(`  - ${pkg} (runtime)`)));
+  typeDeps.forEach((pkg) => console.log(theme.warning(`  - ${pkg} (TypeScript type)`)));
 
-    validationResults.forEach(({ pkg, valid }) => {
-      if (valid) {
-        console.log(theme.success(`✔ ${pkg} exists on npm`));
-      } else {
-        console.log(theme.error(`✗ ${pkg} does NOT exist on npm`));
-      }
-    });
-  }
+  console.log(); // newline
 
-  console.log("\n" + theme.info(`Run: npm install ${finalMissing.join(" ")}`));
+  if (runtimeDeps.length)
+    console.log(theme.info(`Install runtime packages: npm install ${runtimeDeps.join(" ")}`));
+
+  if (typeDeps.length)
+    console.log(theme.info(`Install TypeScript types as dev deps: npm install -D ${typeDeps.join(" ")}`));
 }
