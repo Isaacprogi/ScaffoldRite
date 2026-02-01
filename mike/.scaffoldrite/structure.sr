@@ -1,0 +1,21 @@
+folder public {
+  file vite.svg
+}
+folder src {
+  folder assets {
+    file react.svg
+  }
+  file App.css
+  file App.tsx
+  file index.css
+  file main.tsx
+}
+file .gitignore
+file eslint.config.js
+file index.html
+file package.json
+file README.md
+file tsconfig.app.json
+file tsconfig.json
+file tsconfig.node.json
+file vite.config.ts

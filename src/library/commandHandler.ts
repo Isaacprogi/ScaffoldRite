@@ -31,6 +31,8 @@ import { exit } from "../utils/index";
 import { CommandHandler } from "../types/index";
 import { command } from "../utils/index";
 import { warnCopyWithoutOutput } from "../utils/index";
+import { execSync } from "child_process";
+import { ai } from "./ai/ait";
 
 
 
@@ -143,6 +145,7 @@ export const commandHandlers: Record<string, CommandHandler> = {
         );
         exit(0);
     },
+    ai,
 
     // history:async()=> {
 
@@ -859,6 +862,6 @@ export const commandHandlers: Record<string, CommandHandler> = {
         process.stdout.write("\n");
         console.log(theme.success.bold(`${icons.check} Renamed successfully.`));
         return;
-    }
-
-};
+    },
+    
+}
