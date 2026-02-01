@@ -2,9 +2,11 @@ import { execSync } from "child_process";
 import { theme, icons } from "../../data";
 import path from "path";
 import fs from "fs";
-import { generateStructureWithGroq } from "./generateStructureWithGroq";
+import { generateStructure } from "./generateStructure";
 
-
+// ─────────────────────────────────────────────
+// HELPER: readline wrapper
+// ─────────────────────────────────────────────
 function createAsk() {
   const rl = require("readline").createInterface({
     input: process.stdin,
@@ -17,7 +19,20 @@ function createAsk() {
   return { ask, close: () => rl.close() };
 }
 
+// ─────────────────────────────────────────────
+// HELPER: sanitize AI output for ScaffoldRite
+// ─────────────────────────────────────────────
+function sanitizeStructureSR(input: string): string {
+  return input
+    .split("\n")
+    .filter((line) => !line.match(/^\s*(STRUCTURE|FORMAT|SYNTAX|RULES)/i))
+    .join("\n")
+    .trim();
+}
 
+// ─────────────────────────────────────────────
+// MAIN AI FUNCTION
+// ─────────────────────────────────────────────
 export const ai = async () => {
   try {
     // ─────────────────────────────────────────────
@@ -41,7 +56,10 @@ export const ai = async () => {
 
     execSync(
       `npx create-vite@latest "${projectName}" --template ${template} --no-rolldown --no-immediate`,
-      { stdio: "inherit", shell: process.platform === "win32" ? "cmd.exe" : "/bin/sh" }
+      {
+        stdio: "inherit",
+        shell: process.platform === "win32" ? "cmd.exe" : "/bin/sh",
+      }
     );
 
     const projectPath = path.resolve(process.cwd(), projectName);
@@ -56,7 +74,7 @@ export const ai = async () => {
     });
 
     // ─────────────────────────────────────────────
-    // 4️⃣ RE-CREATE readline (CRITICAL)
+    // 4️⃣ ASK FOR AI ASSISTANCE
     // ─────────────────────────────────────────────
     ({ ask, close } = createAsk());
 
@@ -70,23 +88,50 @@ export const ai = async () => {
           "\n📝 Describe your project or what you want to add/change:\n"
         );
 
-        const structurePath = path.join(projectPath, ".scaffoldrite", "structure.sr");
+        const structurePath = path.join(
+          projectPath,
+          ".scaffoldrite",
+          "structure.sr"
+        );
         const existingStructure = fs.readFileSync(structurePath, "utf-8");
 
-        const updatedStructure = await generateStructureWithGroq({
+        const result = await generateStructure({
           existingStructure,
           description,
         });
 
-        fs.writeFileSync(structurePath, updatedStructure);
+        // 🧠 CLARIFICATION MODE
+        if (result.startsWith("CLARIFICATION_REQUIRED")) {
+          console.log("\n🤖 I need clarification:\n");
+          console.log(result);
 
-        close(); // ❗ CLOSE before execSync again
+          const confirm = await ask("\nIs this what you meant? (yes/no): ");
 
-        execSync("sr generate .", { cwd: projectPath, stdio: "inherit" });
-        execSync("sr init --sr --with-icon", { cwd: projectPath, stdio: "inherit" });
+          if (confirm.toLowerCase() === "yes") {
+            await ask("\n✏️ Please rephrase clearly what you want:\n");
+            continue;
+          } else {
+            console.log("\n🔁 Okay, please describe what you want again.\n");
+            continue;
+          }
+        }
 
+        // ✅ STRUCTURE MODE
+        const clean = sanitizeStructureSR(result);
+        fs.writeFileSync(structurePath, clean);
+
+        // Generate the project structure
+        execSync("sr generate .", {
+          cwd: projectPath,
+          stdio: "inherit",
+        });
+        execSync("sr list --sr --with-icon", {
+          cwd: projectPath,
+          stdio: "inherit",
+        });
+
+        // Ask if satisfied
         ({ ask, close } = createAsk());
-
         const satisfied = await ask(
           "\n✅ Are you satisfied with the structure? (yes/no): "
         );
@@ -97,11 +142,13 @@ export const ai = async () => {
 
     close();
 
+    // ─────────────────────────────────────────────
+    // 5️⃣ FINISH
+    // ─────────────────────────────────────────────
     console.log(theme.success(`\n🎉 Project ${projectName} is ready!\n`));
     console.log(theme.muted(`  cd ${projectName}`));
     console.log(theme.muted("  npm install"));
     console.log(theme.muted("  npm run dev"));
-
   } catch (err) {
     console.error(theme.error(`❌ Failed: ${(err as Error).message}`));
   }
