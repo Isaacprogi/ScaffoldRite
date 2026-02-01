@@ -11,7 +11,7 @@ export async function checkAndReportPackages(): Promise<void> {
 
   const packageJsonPath = path.join(process.cwd(), "package.json");
   if (!fs.existsSync(packageJsonPath)) {
-    console.error(theme.error(`${icons.error} package.json not found in current directory.`));
+    console.error(theme.error(`${icons.error} package.json was not found in current directory.`));
     return;
   }
 
