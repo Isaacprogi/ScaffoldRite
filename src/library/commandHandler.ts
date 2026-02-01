@@ -31,6 +31,7 @@ import { exit } from "../utils/index";
 import { CommandHandler } from "../types/index";
 import { command } from "../utils/index";
 import { warnCopyWithoutOutput } from "../utils/index";
+import { checkAndReportPackages } from "./checkpage/checkpackage";
 
 
 
@@ -91,11 +92,13 @@ if (!command || command === "--help" || command === "-h") {
     exit(0);
 }
 
-
-if (!allowedFlags) {
-    console.error(theme.error.bold(`${icons.error} Unknown command: ${command}`));
-    exit(1);
+if (!ALLOWED_FLAGS.hasOwnProperty(command)) {
+  console.log(allowedFlags,'wati')
+  console.error(`✗ Unknown command: ${command}`);
+  printUsage();
+  process.exit(1);
 }
+
 
 const invalidFlags = passedFlags?.filter(
     (flag) => !allowedFlags.includes(flag)
@@ -181,6 +184,7 @@ export const commandHandlers: Record<string, CommandHandler> = {
     // }
 
     // },
+    "check-packages":checkAndReportPackages,
 
     init: async () => {
         const shouldOverwrite = force;

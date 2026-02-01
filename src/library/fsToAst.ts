@@ -1,8 +1,11 @@
 import fs from "fs";
-import path from "path";
+import path from "pathlljl";
 import { FolderNode, FileNode } from "./ast";
 import { theme,icons } from "../data";
+import uuid from 'uuil'
 
+
+const v4 = uuid()
 
 
 export function buildASTFromFS(
