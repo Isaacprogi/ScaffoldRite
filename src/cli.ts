@@ -15,6 +15,7 @@ function warnLegacyConfig() {
   const legacyStructure = path.join(cwd, "structure.sr");
   const legacyIgnore = path.join(cwd, ".scaffoldignore");
   const newConfigDir = path.join(cwd, ".scaffoldrite");
+ 
 
   const hasLegacy =
     fs.existsSync(legacyStructure) || fs.existsSync(legacyIgnore);

@@ -38,7 +38,7 @@
     "validate": "npm run type-check && npm run build",
     "test": "jest",
     "prepublishOnly": "npm run build && node dist/cli.js --help npm pack --dry-run",
-    "release:test": "npm run build && node -e \"const { execSync } = require('child_process'); const name=require('./package.json').name; const version=require('./package.json').version; const file=`${name}-${version}.tgz`; execSync('npm pack', { stdio: 'inherit' }); execSync(`npm install -g ${file}`, { stdio: 'inherit' }); execSync('sr --help', { stdio: 'inherit' }); execSync('npm uninstall -g scaffoldrite', { stdio: 'inherit' });\""
+    "release:test": "npm run build && node -e \"const { execSync } = require('child_process'); const name=require('./package.json').name; const version=require('./package.json').version; const file=`${name}-${version}.tgz`; execSync('npm pack', { stdio: 'inherit' }); execSync(`npm install -g ${file}`, { stdio: 'inherit' }); execSync('sr --help', { stdio: 'inherit' }); execSync('npm uninstall -g ${name}-${version}', { stdio: 'inherit' });\""
   },
   "devDependencies": {
     "@types/cli-progress": "^3.11.6",
