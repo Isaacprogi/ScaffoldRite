@@ -15,10 +15,13 @@ function warnLegacyConfig() {
   const legacyStructure = path.join(cwd, "structure.sr");
   const legacyIgnore = path.join(cwd, ".scaffoldignore");
   const newConfigDir = path.join(cwd, ".scaffoldrite");
- 
+  const scaffoldriteProjectConfig = path.join(newConfigDir, "scaffoldrite-project.json");
+  const scaffoldriteGlobalConfig = path.join(newConfigDir, "scaffoldrite.json");
+
 
   const hasLegacy =
-    fs.existsSync(legacyStructure) || fs.existsSync(legacyIgnore);
+    fs.existsSync(legacyStructure) || fs.existsSync(legacyIgnore)
+    || fs.existsSync(scaffoldriteProjectConfig) || fs.existsSync(scaffoldriteGlobalConfig);
 
   const hasNewConfig = fs.existsSync(newConfigDir);
 

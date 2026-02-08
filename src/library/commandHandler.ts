@@ -23,7 +23,6 @@ import { HistoryEntry } from "../types/index";
 // import { v4 as uuidv4 } from "uuid";
 // import chalk from "chalk";
 import { icons, theme } from "../data/index";
-import chalk from 'chalk'
 import { runRequirements, checkMutuallyExclusiveFlags } from "../utils/index";
 import { SCAFFOLDRITE_DIR, STRUCTURE_PATH, IGNORE_PATH } from "../utils/index";
 import { baseDir } from "../utils/index";
@@ -186,141 +185,113 @@ export const commandHandlers: Record<string, CommandHandler> = {
     // },
     "check-packages":checkAndReportPackages,
 
-    init: async () => {
-        const shouldOverwrite = force;
+ init: async () => {
+    const shouldOverwrite = force;
+    const sDir = path.join(baseDir, ".scaffoldrite");
+
+    // Create folder if missing
+    if (!fs.existsSync(sDir)) {
+        fs.mkdirSync(sDir, { recursive: true });
+    }
+    const projectConfig = path.join(sDir, "project.json");
+
+    const legacyStructure = path.join(baseDir, "structure.sr");
+    const legacyIgnore = path.join(baseDir, ".scaffoldignore");
+
+    const structureExists = fs.existsSync(STRUCTURE_PATH);
+    const ignoreExists = fs.existsSync(IGNORE_PATH);
 
 
-        const sDir = path.join(baseDir, ".scaffoldrite");
+    const existingConfigs = [];
+    if (structureExists) existingConfigs.push("structure.sr");
+    if (ignoreExists) existingConfigs.push(".scaffoldignore");
+    if (projectConfig) existingConfigs.push("project.json");
 
-        // Create folder if missing
-        if (!fs.existsSync(sDir)) {
-            fs.mkdirSync(sDir, { recursive: true });
-        }
-
-
-        const legacyStructure = path.join(baseDir, "structure.sr");
-        const legacyIgnore = path.join(baseDir, ".scaffoldignore");
-
-        const structureExists = fs.existsSync(STRUCTURE_PATH);
-        const ignoreExists = fs.existsSync(IGNORE_PATH);
-
-
-
-
-
-
-        /* ===============================
-         * OVERWRITE GUARDS
-         * =============================== */
-        const existingConfigs = [];
-
-
-
-        if (structureExists) existingConfigs.push("structure.sr");
-        if (ignoreExists) existingConfigs.push(".scaffoldignore");
-
-        if (!shouldOverwrite && existingConfigs.length > 0) {
-            console.error(
-                theme.error.bold(`${icons.error} The following files already exist:\n`) +
-                existingConfigs.map(f => theme.muted(`  - ${f}`)).join("\n") +
-                theme.warning(`\n\nUse --force to overwrite everything.`)
-            );
-            exit(1);
-        }
-
-        /* ===============================
-         * HANDLE MIGRATION
-         * =============================== */
-if (migrate) {
-    let migrated = false;
-
-    if (fs.existsSync(legacyStructure)) {
-        fs.renameSync(legacyStructure, STRUCTURE_PATH);
-        console.log(theme.success(`${icons.check} Moved structure.sr → .scaffoldrite/structure.sr`));
-        migrated = true;
+    if (!shouldOverwrite && existingConfigs.length > 0) {
+        console.error(
+            theme.error.bold(`${icons.error} The following files already exist:\n`) +
+            existingConfigs.map(f => theme.muted(`  - ${f}`)).join("\n") +
+            theme.warning(`\n\nUse --force to overwrite everything.`)
+        );
+        exit(1);
     }
 
-    if (fs.existsSync(legacyIgnore)) {
-        fs.renameSync(legacyIgnore, IGNORE_PATH);
-        console.log(theme.success(`${icons.check} Moved .scaffoldignore → .scaffoldrite/.scaffoldignore`));
-        migrated = true;
+    /* =============================== HANDLE MIGRATION =============================== */
+    if (migrate) {
+        let migrated = false;
+        if (fs.existsSync(legacyStructure)) {
+            fs.renameSync(legacyStructure, STRUCTURE_PATH);
+            console.log(theme.success(`${icons.check} Moved structure.sr → .scaffoldrite/structure.sr`));
+            migrated = true;
+        }
+        if (fs.existsSync(legacyIgnore)) {
+            fs.renameSync(legacyIgnore, IGNORE_PATH);
+            console.log(theme.success(`${icons.check} Moved .scaffoldignore → .scaffoldrite/.scaffoldignore`));
+            migrated = true;
+        }
+        if (!migrated) console.log(theme.info(`${icons.info} No legacy config found to migrate.`));
+        return;
     }
 
-    if (!migrated) {
-        console.log(theme.info(`${icons.info} No legacy config found to migrate.`));
+    /* =============================== EMPTY INIT =============================== */
+    if (empty) {
+        const root: FolderNode = { type: "folder", name: ".", children: [] };
+        saveStructure(root, parsed.rawConstraints, STRUCTURE_PATH);
+        if (shouldOverwrite || !fs.existsSync(IGNORE_PATH)) {
+            fs.writeFileSync(IGNORE_PATH, DEFAULT_IGNORE_TEMPLATE);
+        }
+        console.log(theme.success(`${icons.success} Empty structure.sr created`));
+    } else if (fromFs) {
+        /* =============================== INIT FROM FILESYSTEM =============================== */
+        const targetDir = path.resolve(arg3 ?? baseDir);
+        const ignoreList = getIgnoreList();
+        const ast = buildASTFromFS(targetDir, ignoreList);
+        saveStructure(ast, parsed.rawConstraints, STRUCTURE_PATH);
+        if (shouldOverwrite || !fs.existsSync(IGNORE_PATH)) {
+            fs.writeFileSync(IGNORE_PATH, DEFAULT_IGNORE_TEMPLATE);
+        }
+        console.log(theme.success(`${icons.success} structure.sr generated from filesystem: `) + theme.light(targetDir));
+    } else {
+        /* =============================== DEFAULT INIT (TEMPLATE) =============================== */
+        saveStructure(parsed.root, parsed.rawConstraints, STRUCTURE_PATH);
+        if (shouldOverwrite || !fs.existsSync(IGNORE_PATH)) {
+            fs.writeFileSync(IGNORE_PATH, DEFAULT_IGNORE_TEMPLATE);
+        }
+        console.log(theme.success(`${icons.success} structure.sr created`));
+    }
+
+    /* =============================== CREATE GLOBAL JSON =============================== */
+    if (shouldOverwrite || !fs.existsSync(projectConfig)) {
+        fs.writeFileSync(
+            projectConfig,
+            JSON.stringify({
+                framework: "",
+                language: "",
+                version: "1.0.0",
+                author: "",
+                conventions: {
+                    description: "",
+                    folderStructure: [],
+                    namingRules: [], 
+                    folderDepthLimits: [],
+                    userNotes: []
+                },
+                additionalInfo: {
+                    stateManagement: "",
+                    styling: "",
+                    testing: "",
+                    routing: "",
+                    apiClient: ""
+                },
+                createdAt: new Date().toISOString()
+            }, null, 2)
+        );
+        console.log(theme.info(`${icons.info} Created project config: project.json`));
     }
 
     return;
-}
+},
 
-
-
-
-        /* ===============================
-         * EMPTY INIT
-         * =============================== */
-        if (empty) {
-            const root: FolderNode = {
-                type: "folder",
-                name: ".",
-                children: [],
-            };
-
-            saveStructure(root, parsed.rawConstraints, STRUCTURE_PATH);
-
-            if (shouldOverwrite || !fs.existsSync(IGNORE_PATH)) {
-                if (shouldOverwrite && (fs.existsSync(IGNORE_PATH) || fs.existsSync(STRUCTURE_PATH))) {
-                    console.warn(theme.warning(`${icons.warning} Overwriting existing due to --force`));
-                }
-
-                fs.writeFileSync(IGNORE_PATH, DEFAULT_IGNORE_TEMPLATE);
-            }
-
-            console.log(theme.success(`${icons.success} Empty structure.sr created`));
-            return;
-        }
-
-        /* ===============================
-         * INIT FROM FILESYSTEM
-         * =============================== */
-        if (fromFs) {
-            const targetDir = path.resolve(arg3 ?? baseDir);
-
-            const ignoreList = getIgnoreList();
-            const ast = buildASTFromFS(targetDir, ignoreList);
-
-
-            saveStructure(ast, parsed.rawConstraints, STRUCTURE_PATH);
-
-            if (shouldOverwrite || !fs.existsSync(IGNORE_PATH)) {
-                if (shouldOverwrite && (fs.existsSync(IGNORE_PATH) || fs.existsSync(STRUCTURE_PATH))) {
-                    console.warn(theme.warning(`${icons.warning} Overwriting existing due to --force`));
-                }
-
-                fs.writeFileSync(IGNORE_PATH, DEFAULT_IGNORE_TEMPLATE);
-            }
-
-            console.log(theme.success(`${icons.success} structure.sr generated from filesystem: `) + theme.light(targetDir));
-            return;
-        }
-
-        /* ===============================
-         * DEFAULT INIT (TEMPLATE)
-         * =============================== */
-
-        saveStructure(parsed.root, parsed.rawConstraints, STRUCTURE_PATH);
-
-        if (shouldOverwrite || !fs.existsSync(IGNORE_PATH)) {
-            if (shouldOverwrite && (fs.existsSync(IGNORE_PATH) || fs.existsSync(STRUCTURE_PATH))) {
-                console.warn(theme.warning(`${icons.warning} Overwriting existing due to --force`));
-            }
-
-            fs.writeFileSync(IGNORE_PATH, DEFAULT_IGNORE_TEMPLATE);
-        }
-
-        console.log(theme.success(`${icons.success} structure.sr created`));
-        return;
-    },
 
     update: async () => {
 

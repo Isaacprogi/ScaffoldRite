@@ -1,0 +1,21 @@
+{
+  "framework": "",
+  "language": "",
+  "version": "2.0.8",
+  "author": "",
+  "conventions": {
+    "description": "",
+    "folderStructure": [],
+    "namingRules": [],
+    "folderDepthLimits": [],
+    "userNotes": []
+  },
+  "additionalInfo": {
+    "stateManagement": "",
+    "styling": "",
+    "testing": "",
+    "routing": "",
+    "apiClient": ""
+  },
+  "createdAt": "2026-02-08T16:12:25.618Z"
+}
