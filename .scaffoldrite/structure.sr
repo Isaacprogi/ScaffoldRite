@@ -1,3 +1,46 @@
-folder src {
-  file index.ts
+folder public {
+  file scaffoldrite-banner.png
+  file structure.png
 }
+folder src {
+  folder data {
+    file index.ts
+  }
+  folder library {
+    folder checkpage {
+      file checkpackage.ts
+    }
+    file ast.ts
+    file commandHandler.ts
+    file constraints.ts
+    file fsToAst.ts
+    file generator.ts
+    file history.ts
+    file main.ts
+    file parser.ts
+    file progress.ts
+    file structure.ts
+    file validateFS.ts
+    file validator.ts
+    file visitor.ts
+  }
+  folder types {
+    file index.ts
+  }
+  folder utils {
+    file index.ts
+  }
+  file cli.ts
+}
+folder tests {
+  file _commandHandler.test.skip.ts
+  file structure.test.ts
+  file validateFS.test.ts
+}
+file .env
+file .gitignore
+file jest.config.mjs
+file package-lock.json
+file package.json
+file readme.md
+file tsconfig.json
