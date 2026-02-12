@@ -200,12 +200,13 @@ export const commandHandlers: Record<string, CommandHandler> = {
 
     const structureExists = fs.existsSync(STRUCTURE_PATH);
     const ignoreExists = fs.existsSync(IGNORE_PATH);
-
+    const projectExists = fs.existsSync(projectConfig);
+ 
 
     const existingConfigs = [];
     if (structureExists) existingConfigs.push("structure.sr");
     if (ignoreExists) existingConfigs.push(".scaffoldignore");
-    if (projectConfig) existingConfigs.push("project.json");
+    if (projectExists) existingConfigs.push("project.json");
 
     if (!shouldOverwrite && existingConfigs.length > 0) {
         console.error(
@@ -232,7 +233,7 @@ export const commandHandlers: Record<string, CommandHandler> = {
         if (!migrated) console.log(theme.info(`${icons.info} No legacy config found to migrate.`));
         return;
     }
-
+git b
     /* =============================== EMPTY INIT =============================== */
     if (empty) {
         const root: FolderNode = { type: "folder", name: ".", children: [] };
