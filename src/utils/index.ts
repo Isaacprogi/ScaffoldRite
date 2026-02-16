@@ -532,3 +532,50 @@ export async function warnIgnoreToolingUsage(
   return await confirmPrompt("Proceed and apply changes? (y/N): ");
 }
 
+
+
+
+export const projectConfigTemplate = {
+    name: path.basename(baseDir),
+    framework: "react",
+    language: "typescript",
+    version: "1.0.0",
+    author: "Your Name",
+    conventions: {
+        description: "A React project using TypeScript with modern best practices.",
+        folderStructure: [
+            "src/components",
+            "src/pages",
+            "src/hooks",
+            "src/utils",
+            "src/services",
+            "src/styles",
+            "public"
+        ],
+        namingRules: [
+            "Components use PascalCase (e.g., MyButton.tsx)",
+            "Files for hooks use camelCase starting with 'use' (e.g., useAuth.ts)",
+            "Utils use camelCase (e.g., fetchData.ts)",
+            "Folders use kebab-case (e.g., user-profile)"
+        ],
+        folderDepthLimits: [
+            "Components folder max depth 3",
+            "Pages folder max depth 2",
+            "Hooks and utils max depth 2"
+        ],
+        userNotes: [
+            "Keep components small and reusable",
+            "Use TypeScript interfaces/types for props and state",
+            "Follow React best practices for hooks and state management"
+        ]
+    },
+    additionalInfo: {
+        stateManagement: "Redux Toolkit or Zustand (depending on app size)",
+        styling: "Tailwind CSS with optional CSS modules",
+        testing: "Jest + React Testing Library",
+        routing: "React Router v6",
+        apiClient: "Axios or Fetch API wrapper"
+    }
+};
+
+
