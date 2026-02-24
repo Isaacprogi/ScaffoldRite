@@ -30,6 +30,7 @@ import { exit } from "../utils/index";
 import { CommandHandler } from "../types/index";
 import { command } from "../utils/index";
 import { warnCopyWithoutOutput } from "../utils/index";
+import { installPreCommitHook, removePreCommitHook } from "./core/gitHooks";
 
 
 const args = process.argv.slice(3).filter((a) => !a.startsWith("--"));
@@ -894,6 +895,15 @@ export const commandHandlers: Record<string, CommandHandler> = {
         process.stdout.write("\n");
         console.log(theme.success.bold(`${icons.check} Renamed successfully.`));
         return;
-    }
+    },
+
+    lock: async () => {
+        installPreCommitHook(baseDir);
+    },
+
+    unlock: async () => {
+        removePreCommitHook(baseDir);
+    },
+
 
 };
