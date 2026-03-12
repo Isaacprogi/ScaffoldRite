@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import { isHookInstalled } from "../core/gitHooks";
+import { isGitLockInstalled } from "../core/gitHooks";
 
 export async function doctorCommand(baseDir: string) {
   console.log("🩺 Scaffoldrite Doctor\n");
@@ -10,18 +10,18 @@ export async function doctorCommand(baseDir: string) {
   console.log(hasGit ? "✔ Git repository detected" : "✘ Not a Git repository");
 
   // Structure file
-  const hasStructure = fs.existsSync(path.join(baseDir, "structure.sr"));
+  const hasStructure = fs.existsSync(path.join(baseDir,'.scaffoldrite', "structure.sr"));
   console.log(hasStructure ? "✔ structure.sr found" : "✘ structure.sr missing");
 
   // Hooks
   console.log(
-    isHookInstalled(baseDir, "pre-commit")
+    isGitLockInstalled(baseDir, "pre-commit")
       ? "✔ Pre-commit hook installed"
       : "✘ Pre-commit hook not installed"
   );
 
   console.log(
-    isHookInstalled(baseDir, "pre-push")
+    isGitLockInstalled(baseDir, "pre-push")
       ? "✔ Pre-push hook installed"
       : "✘ Pre-push hook not installed"
   );

@@ -1,5 +1,13 @@
 import fs from "fs";
 import path from "path";
+import {
+  enablePreCommitHook,
+  disablePreCommitHook,
+  enablePrePushHook,
+  disablePrePushHook,
+  isPreCommitHookEnabled,
+  isPrePushHookEnabled
+} from "./lock";
 
 const START_MARKER = "# >>> scaffoldrite-structure-lock >>>";
 const END_MARKER = "# <<< scaffoldrite-structure-lock <<<";
@@ -13,7 +21,6 @@ function ensureGitRepo(baseDir: string) {
 function getHookPath(baseDir: string, hookName: string): string {
   const huskyPath = path.join(baseDir, ".husky", hookName);
   const gitPath = path.join(baseDir, ".git", "hooks", hookName);
-
   return fs.existsSync(huskyPath) ? huskyPath : gitPath;
 }
 
@@ -30,21 +37,28 @@ ${END_MARKER}
 `;
 }
 
-export function installHook(
-  baseDir: string,
-  options?: { prePush?: boolean }
-) {
+/* ==============================
+   INSTALL HOOK
+============================== */
+export function installGitLock(baseDir: string, options?: { prePush?: boolean }) {
   ensureGitRepo(baseDir);
 
   const hookName = options?.prePush ? "pre-push" : "pre-commit";
+
+  // Update settings
+  if (options?.prePush) {
+    enablePrePushHook();
+  } else {
+    enablePreCommitHook();
+  }
+
+  // Install hook snippet
   const hookPath = getHookPath(baseDir, hookName);
   const snippet = buildHookSnippet();
 
   let existingContent = "";
-
   if (fs.existsSync(hookPath)) {
     existingContent = fs.readFileSync(hookPath, "utf-8");
-
     if (existingContent.includes(START_MARKER)) {
       console.log(`Scaffoldrite already installed in ${hookName}.`);
       return;
@@ -54,28 +68,33 @@ export function installHook(
   }
 
   const newContent = existingContent.trimEnd() + "\n" + snippet;
-
   fs.writeFileSync(hookPath, newContent, { mode: 0o755 });
 
   console.log(`✅ Scaffoldrite installed in ${hookName}.`);
 }
 
-export function removeHook(
-  baseDir: string,
-  options?: { prePush?: boolean }
-) {
+/* ==============================
+   REMOVE HOOK
+============================== */
+export function removeGitLock(baseDir: string, options?: { prePush?: boolean }) {
   ensureGitRepo(baseDir);
 
   const hookName = options?.prePush ? "pre-push" : "pre-commit";
-  const hookPath = getHookPath(baseDir, hookName);
 
+  // Update settings
+  if (options?.prePush) {
+    disablePrePushHook();
+  } else {
+    disablePreCommitHook();
+  }
+
+  const hookPath = getHookPath(baseDir, hookName);
   if (!fs.existsSync(hookPath)) {
     console.log(`No ${hookName} hook found.`);
     return;
   }
 
   const content = fs.readFileSync(hookPath, "utf-8");
-
   if (!content.includes(START_MARKER)) {
     console.log("Scaffoldrite hook not found.");
     return;
@@ -94,13 +113,16 @@ export function removeHook(
   }
 }
 
-export function isHookInstalled(
+/* ==============================
+   CHECK HOOK
+============================== */
+export function isGitLockInstalled(
   baseDir: string,
   hookName: "pre-commit" | "pre-push"
 ): boolean {
-  const hookPath = getHookPath(baseDir, hookName);
-  if (!fs.existsSync(hookPath)) return false;
+  // Check settings first
+  if (hookName === "pre-commit") return isPreCommitHookEnabled();
+  if (hookName === "pre-push") return isPrePushHookEnabled();
 
-  const content = fs.readFileSync(hookPath, "utf-8");
-  return content.includes(START_MARKER);
+  return false;
 }

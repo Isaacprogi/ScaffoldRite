@@ -284,30 +284,44 @@ export const ALLOWED_FLAGS: Record<string, string[]> = {
   list: ["--structure", "--sr", "--fs", "--diff", "--with-icon"],
   find: ["--structure", "--sr", "--fs"], // ✅ updated
   version: [],
-  "check-packages": ["--validate"],
+   // New commands for hooks
+  lock: ["--pre-push",'--git','--structure', "--sr", '--ci'],   
+  unlock: ["--pre-push",'--git','--structure', "--sr", '--ci'], 
+  doctor: [],
+ deps: [
+  "--graph",
+  "--circular",
+  "--standalone",
+  "--json",
+  "--serve",
+  "--fs"
+]
 };
 
 export function printUsage(cmd?: string) {
-  if (cmd && ALLOWED_FLAGS[cmd]) {
-    const argsMap: Record<string, string> = {
-      init: "[--empty | --from-fs [dir]] [--force] [--yes | -y] [--migrate]",
-      update: "[--from-fs [dir]] [--yes | -y]",
-      merge: "[--from-fs [dir]] [--yes | -y]",
-      validate: "[--allow-extra] [--allow-extra <path1> <path2> ...]",
-      generate: "[dir] [--yes | -y] [--dry-run] [--verbose | --summary] [--ignore-tooling]",
-      list: "[[--structure | --sr] | --fs | --diff] [--with-icon]",
-      create: "<path> <file|folder> [--force | --if-not-exists] [--yes | -y] [--dry-run] [--verbose | --summary]",
-      delete: "<path> [--yes | -y] [--dry-run] [--verbose | --summary]",
-      rename: "<path> <newName> [--yes | -y] [--dry-run] [--verbose | --summary]",
-      find: "<query> [--structure | --sr | --fs]",
-      version: "",
-      "check-packages": "[--validate]",
-    };
+  const argsMap: Record<string, string> = {
+    init: "[--empty | --from-fs [dir]] [--force] [--yes | -y] [--migrate]",
+    update: "[--from-fs [dir]] [--yes | -y]",
+    merge: "[--from-fs [dir]] [--yes | -y]",
+    validate: "[--allow-extra] [--allow-extra <path1> <path2> ...]",
+    generate: "[dir] [--yes | -y] [--dry-run] [--verbose | --summary] [--ignore-tooling]",
+    list: "[[--structure | --sr] | --fs | --diff] [--with-icon]",
+    create: "<path> <file|folder> [--force | --if-not-exists] [--yes | -y] [--dry-run] [--verbose | --summary]",
+    delete: "<path> [--yes | -y] [--dry-run] [--verbose | --summary]",
+    rename: "<path> <newName> [--yes | -y] [--dry-run] [--verbose | --summary]",
+    find: "<query> [--structure | --sr | --fs]",
+    version: "",
 
+    // New commands usage
+    lock: "[--pre-push]    Install pre-commit (default) or pre-push hook",
+    unlock: "[--pre-push]    Remove pre-commit (default) or pre-push hook",
+    doctor: "              Verify hook health",
+  };
+
+  if (cmd && argsMap[cmd]) {
     const args = argsMap[cmd] ? ` ${argsMap[cmd]}` : "";
-
     console.log(
-      theme.primary.bold(`Usage for '${cmd}':`) + 
+      theme.primary.bold(`Usage for '${cmd}':`) +
       theme.light(`\n  scaffoldrite ${cmd}${args}`)
     );
   } else if (cmd) {
@@ -329,11 +343,20 @@ Usage:
   scaffoldrite delete <path> [--yes | -y] [--dry-run] [--verbose | --summary]
   scaffoldrite rename <path> <newName> [--yes | -y] [--dry-run] [--verbose | --summary]
   scaffoldrite version
-  scaffoldrite --help | -h   Show this message
+  scaffoldrite lock [--pre-push]     Install pre-commit (default) or pre-push hook
+  scaffoldrite unlock [--pre-push]   Remove pre-commit (default) or pre-push hook
+  scaffoldrite doctor                Verify hook health
+  scaffoldrite --help | -h          Show this message
 `));
   }
 }
 
+
+export const ALLOWED_COMMANDS = [
+  'init', 'update', 'merge', 'validate', 'generate',
+  'create', 'delete', 'rename', 'list', 'find',
+  'version', 'lock', 'unlock', 'doctor',"deps" 
+]
 
 export function structureToSRString(root: FolderNode, rawConstraints: string[]): string {
   sortTree(root);

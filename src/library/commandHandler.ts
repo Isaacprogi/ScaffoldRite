@@ -10,7 +10,7 @@ import { validateFS } from "./validateFS";
 import { buildASTFromFS } from "./fsToAst";
 import { DEFAULT_TEMPLATE, DEFAULT_IGNORE_TEMPLATE } from '../data/index'
 const pkg = require("../../package.json");
-import { getIgnoreList, warnIgnoreToolingUsage } from "../utils/index";
+import { ALLOWED_COMMANDS, getIgnoreList, warnIgnoreToolingUsage } from "../utils/index";
 import { createProgressBar } from "./progress";
 // import { Operation } from "../types/index";
 import {
@@ -30,7 +30,17 @@ import { exit } from "../utils/index";
 import { CommandHandler } from "../types/index";
 import { command } from "../utils/index";
 import { warnCopyWithoutOutput } from "../utils/index";
-import { installPreCommitHook, removePreCommitHook } from "./core/gitHooks";
+import { doctorCommand } from "./commands/doctor";
+import { buildDependencyGraph, printDependencyTree, findStandaloneFiles, detectCircular, printCircular, buildGraphFromStructure } from "./core/deps";
+import { startServer } from "./core/graph-server";
+import {
+  installStructureLock,
+  removeStructureLock,
+  enableCI,
+  disableCI
+} from "./core/lock";
+import { installGitLock, removeGitLock } from "./core/gitHooks";
+import { preventIfStructureLocked } from "./core/lock";
 
 
 const args = process.argv.slice(3).filter((a) => !a.startsWith("--"));
@@ -44,6 +54,7 @@ const dryRun = hasFlag("--dry-run");
 const bar = createProgressBar();
 const verbose = hasFlag("--verbose");
 const summary = hasFlag("--summary");
+const prePush = hasFlag("--pre-push")
 
 const ignoreTooling = hasFlag("--ignore-tooling");
 
@@ -83,14 +94,25 @@ const parsed = parseStructure(DEFAULT_TEMPLATE);
 const copyContents = hasFlag("--copy");
 
 
+const showCircular = hasFlag("--circular");
+const showStandalone = hasFlag("--standalone");
+const showJSON = hasFlag("--json");
+const serve = hasFlag("--serve");
+
+
 if (!command || command === "--help" || command === "-h") {
     printUsage();
     exit(0);
 }
 
-if (!ALLOWED_FLAGS.hasOwnProperty(command)) {
-    console.log(allowedFlags, 'wati')
+
+if (!ALLOWED_COMMANDS.includes(command)) {
     console.error(`✗ Unknown command: ${command}`);
+    printUsage();
+    process.exit(1);
+}
+if (!ALLOWED_FLAGS.hasOwnProperty(command)) {
+    console.log(allowedFlags !== undefined ? allowedFlags : "");
     printUsage();
     process.exit(1);
 }
@@ -181,6 +203,7 @@ export const commandHandlers: Record<string, CommandHandler> = {
 
     // },
     init: async () => {
+         await preventIfStructureLocked("init");
         const shouldOverwrite = force;
         const sDir = path.join(baseDir, ".scaffoldrite");
 
@@ -289,7 +312,7 @@ export const commandHandlers: Record<string, CommandHandler> = {
 
 
     update: async () => {
-
+        await preventIfStructureLocked("update");
         //  FAIL if structure.sr does not exist
         if (!fs.existsSync(STRUCTURE_PATH)) {
             console.error(theme.error.bold(`${icons.error} Error: structure.sr not found. Run \`scaffoldrite init\` first.`));
@@ -316,6 +339,7 @@ export const commandHandlers: Record<string, CommandHandler> = {
         return;
     },
     merge: async () => {
+         await preventIfStructureLocked("merge");
 
         // FAIL if structure.sr does not exist
         if (!fs.existsSync(STRUCTURE_PATH)) {
@@ -363,6 +387,7 @@ export const commandHandlers: Record<string, CommandHandler> = {
         return;
     },
     list: async () => {
+       
         const isDefault = !isFS && !isDiff && !isStructure;
 
         const targetDir = path.resolve(baseDir);
@@ -460,7 +485,8 @@ export const commandHandlers: Record<string, CommandHandler> = {
         }
     },
 
-    validate: () => {
+    validate: async () => {
+      
         const structure = loadAST();
 
         const outputDir = path.resolve(baseDir);
@@ -544,7 +570,7 @@ export const commandHandlers: Record<string, CommandHandler> = {
 
 
     generate: async () => {
-
+         await preventIfStructureLocked("generate");
 
         const structure = loadAST();
         validateConstraints(structure.root, structure.constraints);
@@ -661,6 +687,7 @@ export const commandHandlers: Record<string, CommandHandler> = {
     },
 
     create: async () => {
+        await preventIfStructureLocked("create");
         const structure = loadAST();
         const outputDir = path.resolve(baseDir);
         // const beforeStructureSR = structureToSRString(structure.root, structure.rawConstraints);
@@ -770,7 +797,7 @@ export const commandHandlers: Record<string, CommandHandler> = {
     },
 
     delete: async () => {
-
+        await preventIfStructureLocked("delete");
         const structure = loadAST();
         validateConstraints(structure.root, structure.constraints);
 
@@ -823,7 +850,7 @@ export const commandHandlers: Record<string, CommandHandler> = {
         return;
     },
     rename: async () => {
-
+        await preventIfStructureLocked("rename");
         const structure = loadAST();
         validateConstraints(structure.root, structure.constraints);
 
@@ -898,12 +925,102 @@ export const commandHandlers: Record<string, CommandHandler> = {
     },
 
     lock: async () => {
-        installPreCommitHook(baseDir);
-    },
+    
+    if (hasFlag("--git")) {
+        installGitLock(baseDir, { prePush });
+        return;
+    }
+
+    if (hasFlag("--structure")) {
+        installStructureLock();
+        return;
+    }
+
+    if (hasFlag("--ci")) {
+        console.log('sjsjsj')
+        enableCI();
+        return;
+    }
+
+    console.log("Please specify a lock type:");
+    console.log("  scaffoldrite lock --git");
+    console.log("  scaffoldrite lock --structure");
+    console.log("  scaffoldrite lock --ci");
+},
 
     unlock: async () => {
-        removePreCommitHook(baseDir);
+
+    if (hasFlag("--git")) {
+        removeGitLock(baseDir, { prePush });
+        return;
+    }
+
+    if (hasFlag("--structure")) {
+        removeStructureLock();
+        return;
+    }
+
+    if (hasFlag("--ci")) {
+        disableCI();
+        return;
+    }
+
+    console.log("Please specify a lock type:");
+    console.log("  scaffoldrite unlock --git");
+    console.log("  scaffoldrite unlock --structure");
+    console.log("  scaffoldrite unlock --ci");
+},
+    doctor: async () => {
+        doctorCommand(baseDir);
     },
 
+    deps: async () => {
+        const targetDir = path.resolve(baseDir);
+        const ignoreList = getIgnoreList();
 
+
+        const structure = loadAST();
+        let graph;
+        if (isFS) {
+            graph = buildDependencyGraph(targetDir, ignoreList);
+        } else {
+            graph = await buildGraphFromStructure(__dirname, structure.root);
+
+        }
+
+        const circular = detectCircular(graph);
+        const standalone = findStandaloneFiles(graph);
+
+        if (showCircular) {
+            if (circular.length > 0) {
+                console.log(theme.error.bold(`\nCircular Dependencies`));
+                printCircular(graph);
+            }
+            return
+        }
+        if (showStandalone) {
+            if (standalone.length > 0) {
+                console.log(theme.warning.bold(`\nStandalone Files`));
+                standalone.forEach(f => console.log(theme.light(`- ${f}`)));
+            }
+            return
+        }
+        console.log(theme.primary.bold(`\nFile Dependency Tree\n`));
+        printDependencyTree(graph);
+
+
+        if (standalone.length > 0) {
+            console.log(theme.warning.bold(`\nStandalone Files`));
+            standalone.forEach(f => console.log(theme.light(`- ${f}`)));
+        }
+
+        if (circular.length > 0) {
+            console.log(theme.error.bold(`\nCircular Dependencies`));
+            printCircular(graph);
+        }
+        if (serve) {
+            startServer(graph)
+        }
+
+    },
 };

@@ -1,3 +1,24 @@
+folder .husky {
+  folder _ {
+    file .gitignore
+    file applypatch-msg
+    file commit-msg
+    file h
+    file husky.sh
+    file post-applypatch
+    file post-checkout
+    file post-commit
+    file post-merge
+    file post-rewrite
+    file pre-applypatch
+    file pre-auto-gc
+    file pre-commit
+    file pre-merge-commit
+    file pre-push
+    file pre-rebase
+    file prepare-commit-msg
+  }
+}
 folder public {
   file scaffoldrite-banner.png
   file structure.png
@@ -7,6 +28,16 @@ folder src {
     file index.ts
   }
   folder library {
+    folder commands {
+      file doctor.ts
+      file lock.ts
+      file unlock.ts
+    }
+    folder core {
+      file deps.ts
+      file gitHooks.ts
+      file graph-server.ts
+    }
     file ast.ts
     file commandHandler.ts
     file constraints.ts
