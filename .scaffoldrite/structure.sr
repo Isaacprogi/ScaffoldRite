@@ -69,7 +69,6 @@ folder tests {
   file structure.test.ts
   file validateFS.test.ts
 }
-file .env
 file .gitignore
 file jest.config.mjs
 file package-lock.json
