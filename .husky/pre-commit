@@ -1,0 +1,10 @@
+#!/bin/sh
+
+# >>> scaffoldrite-structure-lock >>>
+# Scaffoldrite structure validation
+scaffoldrite validate
+if [ $? -ne 0 ]; then
+  echo "[38;2;239;71;111m[38;2;239;71;111m❌[39m[38;2;239;71;111m Scaffoldrite structure validation failed.[39m"
+  exit 1
+fi
+# <<< scaffoldrite-structure-lock <<<
