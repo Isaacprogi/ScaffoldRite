@@ -3,7 +3,6 @@ import path from "path";
 import { execSync } from "child_process";
 import { visit } from "./visitor";
 import { FolderNode } from "./ast";
-import { theme, icons } from "../data";
 
 export type ProgressEvent = {
   type: "folder" | "file" | "copy" | "delete" | "skip";
@@ -28,6 +27,7 @@ export async function generateFS(
     copyContents?: boolean;
     ignoreList?: string[];
     onProgress?: (e: ProgressEvent) => void;
+    force?: boolean;
     onStart?: (total: number) => void;
     ref?: string;
   },
@@ -37,7 +37,8 @@ export async function generateFS(
   const ref = options?.ref;
   const ignoreList = options?.ignoreList ?? [];
   const copyContents = options?.copyContents ?? false;
-  const failures: string[] = []; // Track failed copies here
+  const force = options?.force ?? false;
+  const failures: string[] = [];
 
   const isScaffoldriteInternal = (p: string) => {
     const rel = path.relative(root, p);
@@ -88,7 +89,7 @@ export async function generateFS(
   try { await scan(root); } catch {}
 
   for (const [p, info] of expected.entries()) {
-    if (actual.has(p)) {
+    if (actual.has(p) && !force) {
       ops.push({ type: "skip", path: p, count: 0 });
     } else {
       let operationType: "folder" | "file" | "copy" = info.type;
@@ -123,7 +124,7 @@ export async function generateFS(
         await fs.mkdir(op.path, { recursive: true });
       } else if (op.type === "file") {
         await fs.mkdir(path.dirname(op.path), { recursive: true });
-        await fs.writeFile(op.path, "");
+        await fs.writeFile(op.path, ""); // force overwrites automatically
       } else if (op.type === "copy") {
         await fs.mkdir(path.dirname(op.path), { recursive: true });
 
@@ -132,12 +133,11 @@ export async function generateFS(
             const relativePath = path.relative(root, op.path).split(path.sep).join("/");
             const content = execSync(`git show ${ref}:${relativePath}`, {
               maxBuffer: 10 * 1024 * 1024,
-              stdio: ['pipe', 'pipe', 'ignore'] 
+              stdio: ["pipe", "pipe", "ignore"],
             });
             await fs.writeFile(op.path, content);
-          } else {
-            const info = expected.get(op.path);
-            if (info?.sourcePath) await fs.copyFile(info.sourcePath, op.path);
+          } else if (expected.get(op.path)?.sourcePath) {
+            await fs.copyFile(expected.get(op.path)!.sourcePath!, op.path);
           }
         } catch {
           failures.push(path.relative(root, op.path));

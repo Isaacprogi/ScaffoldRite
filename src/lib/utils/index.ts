@@ -326,13 +326,16 @@ export function getFlagValuesAfter(flag: string) {
 }
 
 export const ALLOWED_FLAGS: Record<string, string[]> = {
-  init: ["--force", "--empty", "--from-fs", "--migrate"],
-  update: ["--from-fs", "--yes", "-y"],
-  merge: ["--from-fs", "--yes", "-y"],
+  init: ["--force", "--empty", "--from-fs", "--migrate","--dry-run"],
+  update: ["--from-fs", "--yes", "-y",'--dry-run'],
+  merge: ["--from-fs", "--yes", "-y",'--dry-run'],
   validate: [
   "--rules",
   "--allow-extra",
-   '--against',
+    '--against',
+    '--against-ref',
+    '--ag',
+    '--ag-ref',
 ],
   generate: [
     "--yes",
@@ -342,15 +345,35 @@ export const ALLOWED_FLAGS: Record<string, string[]> = {
     "--ignore-tooling",
     "--copy",
     '--against',
+    '--against-ref',
+    '--ag',
+    '--ag-ref',
+    '--force',
+    '--local-ast'
   ],
   create: ["--force", "--if-not-exists", "--yes", "--dry-run", "--verbose", "--summary"],
   delete: ["--yes", "--dry-run", "--verbose", "--summary"],
   rename: ["--yes", "--dry-run", "--verbose", "--summary"],
-  list: ["--structure", "--sr", "--fs", "--diff", "--with-icon",'--against'],
-  find: ["--structure", "--sr", "--fs",'--against'],
+  list: ["--structure", "--sr", "--fs", "--diff", "--with-icon",
+    '--against',
+    '--against-ref',
+    '--ag',
+    '--ag-ref',
+  ],
+  find: ["--structure", "--sr", "--fs",
+    '--against',
+    '--against-ref',
+    '--ag',
+    '--ag-ref',
+  ],
   version: [],
    // New commands for hooks
-  lock: ["--pre-push",'--git','--structure', "--sr", '--ci','--against','--only','--config'],   
+  lock: ["--pre-push",'--git','--structure', "--sr", '--ci',
+    '--against',
+    '--against-ref',
+    '--ag',
+    '--ag-ref',
+    '--only','--config'],   
   unlock: ["--pre-push",'--git','--structure', "--sr", '--ci'], 
   doctor: [],
  deps: [
@@ -550,16 +573,16 @@ export function checkMutuallyExclusiveFlags(ctx: MutuallyExclusiveContext) {
   }
 
   // 3️⃣ Generate flags
-  if (command === "generate") {
-    if (ignoreTooling && copyContents) {
-      fail(
-        theme.error.bold(`${icons.error} Mutually exclusive flags: --ignore-tooling and --copy cannot be used together.\n`) +
-        theme.primary(`Use either:\n`) +
-        theme.accent(`  --ignore-tooling    `) + theme.light(`Don't copy .scaffoldrite config to output\n`) +
-        theme.accent(`  --copy              `) + theme.light(`Copy file contents from source to output`)
-      );
-    }
-  }
+  // if (command === "generate") {
+  //   if (ignoreTooling && copyContents) {
+  //     fail(
+  //       theme.error.bold(`${icons.error} Mutually exclusive flags: --ignore-tooling and --copy cannot be used together.\n`) +
+  //       theme.primary(`Use either:\n`) +
+  //       theme.accent(`  --ignore-tooling    `) + theme.light(`Don't copy .scaffoldrite config to output\n`) +
+  //       theme.accent(`  --copy              `) + theme.light(`Copy file contents from source to output`)
+  //     );
+  //   }
+  // }
 
   // 4️⃣ List modes
   const listModes = [isFS, isStructure, isDiff].filter(Boolean);
@@ -621,6 +644,8 @@ export async function warnIgnoreToolingUsage(
   outputDir?: string,
 ): Promise<boolean> {
   if (!ignoreTooling) return true;
+
+  if (hasFlag("--yes") || hasFlag("-y")) return Promise.resolve(true);
 
   if (!outputDir || path.resolve(outputDir) === path.resolve(baseDir)) {
     console.log(

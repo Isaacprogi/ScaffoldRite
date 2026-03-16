@@ -91,6 +91,7 @@ const ifNotExists = hasFlag("--if-not-exists");
 const allowExtraPaths = getFlagValuesAfter("--allow-extra");
 const allowExtra = hasFlag("--allow-extra") && allowExtraPaths.length === 0;
 const migrate = hasFlag("--migrate");
+const isLocalAst = hasFlag("--local-ast");
 
 const parsed = parseStructure(DEFAULT_TEMPLATE);
 
@@ -114,7 +115,7 @@ if (!command || command === "--help" || command === "-h") {
 
 
 if (!ALLOWED_COMMANDS.includes(command)) {
-     console.error(theme.error.bold(`${icons.error} Unknown command: ${command}`));
+    console.error(theme.error.bold(`${icons.error} Unknown command: ${command}`));
     printUsage();
     process.exit(1);
 }
@@ -168,14 +169,14 @@ runRequirements({
 
 export const commandHandlers: Record<string, CommandHandler> = {
     version: () => {
-    console.log(
-        theme.primary.bold('Scaffoldrite') +
-        theme.muted(' v') +
-        theme.light.bold(pkg.version)
-    );
-    console.log(theme.info(`ℹ️ Run \`scaffoldrite changelog\` to see what’s new in this version.`));
-    exit(0);
-},
+        console.log(
+            theme.primary.bold('Scaffoldrite') +
+            theme.muted(' v') +
+            theme.light.bold(pkg.version)
+        );
+        console.log(theme.info(`ℹ️ Run \`scaffoldrite changelog\` to see what’s new in this version.`));
+        exit(0);
+    },
 
     // history:async()=> {
 
@@ -215,9 +216,15 @@ export const commandHandlers: Record<string, CommandHandler> = {
         const shouldOverwrite = force;
         const sDir = path.join(baseDir, ".scaffoldrite");
 
+        // Guard directory creation
         if (!fs.existsSync(sDir)) {
-            fs.mkdirSync(sDir, { recursive: true });
+            if (!dryRun) {
+                fs.mkdirSync(sDir, { recursive: true });
+            } else {
+                console.log(theme.info(`${icons.info} [Dry Run] Would create directory: .scaffoldrite`));
+            }
         }
+        
         const projectConfig = path.join(sDir, "project.json");
 
         const legacyStructure = path.join(baseDir, "structure.sr");
@@ -226,7 +233,6 @@ export const commandHandlers: Record<string, CommandHandler> = {
         const structureExists = fs.existsSync(STRUCTURE_PATH);
         const ignoreExists = fs.existsSync(IGNORE_PATH);
         const projectExists = fs.existsSync(projectConfig);
-
 
         const existingConfigs = [];
         if (structureExists) existingConfigs.push("structure.sr");
@@ -242,80 +248,106 @@ export const commandHandlers: Record<string, CommandHandler> = {
             exit(1);
         }
 
-
         if (migrate) {
             let migrated = false;
             if (fs.existsSync(legacyStructure)) {
-                fs.renameSync(legacyStructure, STRUCTURE_PATH);
-                console.log(theme.success(`${icons.check} Moved structure.sr → .scaffoldrite/structure.sr`));
+                if (!dryRun) {
+                    fs.renameSync(legacyStructure, STRUCTURE_PATH);
+                    console.log(theme.success(`${icons.check} Moved structure.sr → .scaffoldrite/structure.sr`));
+                } else {
+                    console.log(theme.info(`${icons.info} [Dry Run] Would move structure.sr → .scaffoldrite/structure.sr`));
+                }
                 migrated = true;
             }
             if (fs.existsSync(legacyIgnore)) {
-                fs.renameSync(legacyIgnore, IGNORE_PATH);
-                console.log(theme.success(`${icons.check} Moved .scaffoldignore → .scaffoldrite/.scaffoldignore`));
+                if (!dryRun) {
+                    fs.renameSync(legacyIgnore, IGNORE_PATH);
+                    console.log(theme.success(`${icons.check} Moved .scaffoldignore → .scaffoldrite/.scaffoldignore`));
+                } else {
+                    console.log(theme.info(`${icons.info} [Dry Run] Would move .scaffoldignore → .scaffoldrite/.scaffoldignore`));
+                }
                 migrated = true;
             }
             if (!migrated) console.log(theme.info(`${icons.info} No legacy config found to migrate.`));
             return;
         }
 
-
         if (empty) {
             const root: FolderNode = { type: "folder", name: ".", children: [] };
-            saveStructure(root, parsed.rawConstraints, STRUCTURE_PATH);
-            if (shouldOverwrite || !fs.existsSync(IGNORE_PATH)) {
-                fs.writeFileSync(IGNORE_PATH, DEFAULT_IGNORE_TEMPLATE);
+            if (!dryRun) {
+                saveStructure(root, parsed.rawConstraints, STRUCTURE_PATH);
+                if (shouldOverwrite || !fs.existsSync(IGNORE_PATH)) {
+                    fs.writeFileSync(IGNORE_PATH, DEFAULT_IGNORE_TEMPLATE);
+                }
+                console.log(theme.success(`${icons.success} Empty structure.sr created`));
+            } else {
+                console.log(theme.info(`${icons.info} [Dry Run] Would create empty structure.sr and .scaffoldignore`));
             }
-            console.log(theme.success(`${icons.success} Empty structure.sr created`));
         } else if (fromFs) {
             const targetDir = path.resolve(arg3 ?? baseDir);
             const ignoreList = getIgnoreList();
             const ast = buildASTFromFS(targetDir, ignoreList);
-            saveStructure(ast, parsed.rawConstraints, STRUCTURE_PATH);
-            if (shouldOverwrite || !fs.existsSync(IGNORE_PATH)) {
-                fs.writeFileSync(IGNORE_PATH, DEFAULT_IGNORE_TEMPLATE);
+            if (!dryRun) {
+                saveStructure(ast, parsed.rawConstraints, STRUCTURE_PATH);
+                if (shouldOverwrite || !fs.existsSync(IGNORE_PATH)) {
+                    fs.writeFileSync(IGNORE_PATH, DEFAULT_IGNORE_TEMPLATE);
+                }
+                console.log(theme.success(`${icons.success} structure.sr generated from filesystem: `) + theme.light(targetDir));
+            } else {
+                console.log(theme.info(`${icons.info} [Dry Run] Would generate structure.sr from filesystem: ${targetDir}`));
             }
-            console.log(theme.success(`${icons.success} structure.sr generated from filesystem: `) + theme.light(targetDir));
         } else {
-            saveStructure(parsed.root, parsed.rawConstraints, STRUCTURE_PATH);
-            if (shouldOverwrite || !fs.existsSync(IGNORE_PATH)) {
-                fs.writeFileSync(IGNORE_PATH, DEFAULT_IGNORE_TEMPLATE);
+            if (!dryRun) {
+                saveStructure(parsed.root, parsed.rawConstraints, STRUCTURE_PATH);
+                if (shouldOverwrite || !fs.existsSync(IGNORE_PATH)) {
+                    fs.writeFileSync(IGNORE_PATH, DEFAULT_IGNORE_TEMPLATE);
+                }
+                console.log(theme.success(`${icons.success} structure.sr created`));
+            } else {
+                console.log(theme.info(`${icons.info} [Dry Run] Would create structure.sr and .scaffoldignore`));
             }
-            console.log(theme.success(`${icons.success} structure.sr created`));
         }
 
         if (shouldOverwrite || !fs.existsSync(projectConfig)) {
-            fs.writeFileSync(
-                projectConfig,
-                JSON.stringify({
-                    framework: "",
-                    language: "",
-                    version: "1.0.0",
-                    author: "",
-                    conventions: {
-                        description: "",
-                        folderStructure: [],
-                        namingRules: [],
-                        folderDepthLimits: [],
-                        userNotes: []
-                    },
-                    additionalInfo: {
-                        stateManagement: "",
-                        styling: "",
-                        testing: "",
-                        routing: "",
-                        apiClient: ""
-                    },
-                }, null, 2)
-            );
-            console.log(theme.info(`${icons.info} Created project config: project.json`));
+            if (!dryRun) {
+                fs.writeFileSync(
+                    projectConfig,
+                    JSON.stringify({
+                        framework: "",
+                        language: "",
+                        version: "1.0.0",
+                        author: "",
+                        conventions: {
+                            description: "",
+                            folderStructure: [],
+                            namingRules: [],
+                            folderDepthLimits: [],
+                            userNotes: []
+                        },
+                        additionalInfo: {
+                            stateManagement: "",
+                            styling: "",
+                            testing: "",
+                            routing: "",
+                            apiClient: ""
+                        },
+                    }, null, 2)
+                );
+                console.log(theme.info(`${icons.info} Created project config: project.json`));
+            } else {
+                console.log(theme.info(`${icons.info} [Dry Run] Would create project config: project.json`));
+            }
+        }
+
+        if (dryRun) {
+            console.log(theme.primary.bold(`\n${icons.info} [Dry Run] Init simulation complete. No files were changed.`));
         }
 
         return;
     },
 
 
-    update: async () => {
+   update: async () => {
         await preventIfStructureLocked("update");
         if (!fs.existsSync(STRUCTURE_PATH)) {
             console.error(theme.error.bold(`${icons.error} Error: structure.sr not found. Run \`scaffoldrite init\` first.`));
@@ -335,9 +367,15 @@ export const commandHandlers: Record<string, CommandHandler> = {
             return;
         }
 
-        saveStructure(ast, constraints, STRUCTURE_PATH);
+        // 🛡️ Guard the file update with dryRun
+        if (!dryRun) {
+            saveStructure(ast, constraints, STRUCTURE_PATH);
+            console.log(theme.success(`${icons.success} structure.sr updated from filesystem: `) + theme.light(targetDir));
+        } else {
+            console.log(theme.info(`${icons.info} [Dry Run] Would update structure.sr based on: `) + theme.light(targetDir));
+            console.log(theme.muted(`   (No changes were written to the disk)`));
+        }
 
-        console.log(theme.success(`${icons.success} structure.sr updated from filesystem: `) + theme.light(targetDir));
         return;
     },
     merge: async () => {
@@ -380,9 +418,15 @@ export const commandHandlers: Record<string, CommandHandler> = {
             return;
         }
 
-        saveStructure(structure.root, structure.rawConstraints, STRUCTURE_PATH);
+        // 🛡️ Guard the final save with dryRun
+        if (!dryRun) {
+            saveStructure(structure.root, structure.rawConstraints, STRUCTURE_PATH);
+            console.log(theme.success(`${icons.success} structure.sr merged with filesystem: `) + theme.light(targetDir));
+        } else {
+            console.log(theme.info(`${icons.info} [Dry Run] Would merge filesystem changes from ${theme.light(targetDir)} into structure.sr`));
+            console.log(theme.muted(`   (The merge was computed in memory but not saved)`));
+        }
 
-        console.log(theme.success(`${icons.success} structure.sr merged with filesystem: `) + theme.light(targetDir));
         return;
     },
     list: async () => {
@@ -425,8 +469,6 @@ export const commandHandlers: Record<string, CommandHandler> = {
                 console.error(theme.error.bold(`${icons.error} structure.sr not found. Run \`scaffoldrite init\` first.`));
                 exit(1);
             }
-
-            console.log(ignoreList)
             const filtered = filterTreeByIgnore(structure.root, ignoreList);
 
             console.log(theme.primary.bold(`${icons.file} structure.sr`));
@@ -598,26 +640,28 @@ export const commandHandlers: Record<string, CommandHandler> = {
         results.forEach(r => console.log(theme.light(`  ${r}`)));
     },
 
-    generate: async () => {
+   generate: async () => {
         await preventIfStructureLocked("generate");
 
         let structure;
-        if (hasAgainst) {
+        if (hasAgainst && !isLocalAst) {
+            // default behavior
             structure = loadASTFromRef(againstValue);
-            console.log(theme.info(`${icons.info} Generating from ${againstValue}`));
-        }
-        else {
+            console.log(theme.info(`${icons.info} Generating from AST of ${againstValue}`));
+        } else {
+            // user wants their current structure.sr
             structure = loadAST();
+            if (hasAgainst) {
+                console.log(theme.info(`${icons.info} Using local AST, referencing files from ${againstValue}`));
+            }
         }
 
         validateConstraints(structure.root, structure.constraints);
 
         const outputDir = path.resolve(arg3 ?? baseDir);
-        const warnoutDir = path.resolve(arg3 ?? baseDir);
+        // const warnoutDir = path.resolve(arg3 ?? baseDir);
 
-        console.log(outputDir,warnoutDir)
-
-        warnCopyWithoutOutput(hasFlag('--copy'), warnoutDir);
+        // warnCopyWithoutOutput(hasFlag('--copy'), warnoutDir);
 
         const proceed = await warnIgnoreToolingUsage(ignoreTooling, outputDir, baseDir);
 
@@ -640,6 +684,7 @@ export const commandHandlers: Record<string, CommandHandler> = {
             ignoreList,
             copyContents,
             ref: hasAgainst ? againstValue : undefined,
+            force: hasFlag("--force"),
             onStart(total) {
                 totalOps = total;
                 bar.start(total);
@@ -659,7 +704,7 @@ export const commandHandlers: Record<string, CommandHandler> = {
         if (failedFiles.length > 0) {
             console.log(`\n${icons.warning} ${theme.warning("Note:")} Some files could not be retrieved from git "${againstValue}":`);
             failedFiles.forEach(file => {
-                console.log(`  ${theme.muted("-")} ${theme.highlight(file)} ${theme.muted("(created empty file)")}`);
+                console.log(`  ${theme.muted("-")} ${theme.highlight(file)} ${theme.muted("(created empty file)")}`);
             });
             console.log(theme.muted("Tip: This usually happens with gitignored files or files not present in that commit.\n"));
         }
@@ -700,6 +745,8 @@ export const commandHandlers: Record<string, CommandHandler> = {
                     if (fs.existsSync(ignoreSrc)) fs.copyFileSync(ignoreSrc, path.join(scaffoldDir, ".scaffoldignore"));
                 }
             }
+        } else {
+            console.log(theme.info(`${icons.info} [Dry Run] Skipping metadata sync and .scaffoldrite directory creation.`));
         }
 
         if (verbose) {
@@ -707,11 +754,11 @@ export const commandHandlers: Record<string, CommandHandler> = {
             console.log(theme.muted(`─`.repeat(40)));
             for (const line of logLines) {
                 if (line.startsWith("CREATE")) {
-                    console.log(theme.success(`  ${icons.success} ${line}`));
+                    console.log(theme.success(`  ${icons.success} ${line}`));
                 } else if (line.startsWith("SKIP")) {
-                    console.log(theme.muted(`  ${icons.info} ${line}`));
+                    console.log(theme.muted(`  ${icons.info} ${line}`));
                 } else {
-                    console.log(theme.info(`  ${icons.info} ${line}`));
+                    console.log(theme.info(`  ${icons.info} ${line}`));
                 }
             }
         } else if (summary) {
@@ -719,233 +766,311 @@ export const commandHandlers: Record<string, CommandHandler> = {
             console.log(theme.muted(`─`.repeat(40)));
             for (const line of logLines.filter(l => !l.startsWith("SKIP"))) {
                 if (line.startsWith("CREATE")) {
-                    console.log(theme.success(`  ${icons.success} ${line}`));
+                    console.log(theme.success(`  ${icons.success} ${line}`));
                 } else {
-                    console.log(theme.info(`  ${icons.info} ${line}`));
+                    console.log(theme.info(`  ${icons.info} ${line}`));
                 }
             }
         }
 
-        console.log(theme.success.bold(`\n${icons.check} Generation completed successfully!`));
+        const finalStatus = dryRun 
+            ? theme.info.bold(`\n[Dry Run] Generation simulation completed!`) 
+            : theme.success.bold(`\n${icons.check} Generation completed successfully!`);
+        
+        console.log(finalStatus);
         return;
     },
 
-    create: async () => {
-        await preventIfStructureLocked("create");
-        const structure = loadAST();
-        const outputDir = path.resolve(baseDir);
-        // const beforeStructureSR = structureToSRString(structure.root, structure.rawConstraints);
-        const ignoreList = getIgnoreList();
+   create: async () => {
+  await preventIfStructureLocked("create");
 
+  const structure = loadAST();
+  const outputDir = path.resolve(baseDir);
 
-        // const beforeFSSnapshotSR = structureToSRString(buildASTFromFS(outputDir, ignoreList), []);
+  // const beforeStructureSR = structureToSRString(structure.root, structure.rawConstraints);
+  const ignoreList = getIgnoreList();
 
-        // const operations: Operation[] = [];
+  // const beforeFSSnapshotSR = structureToSRString(
+  //   buildASTFromFS(outputDir, ignoreList),
+  //   []
+  // );
 
-        validateConstraints(structure.root, structure.constraints);
+  // const operations: Operation[] = [];
 
-        const fullPath = path.join(outputDir, arg3);
+  validateConstraints(structure.root, structure.constraints);
 
+  const fullPath = path.join(outputDir, arg3);
 
-        // If force and the path exists, stash it first
-        // if (force && fs.existsSync(fullPath)) {
-        //   const backupPath = path.join(SCAFFOLDRITE_DIR, 'history', crypto.randomUUID());
-        //   fs.cpSync(fullPath, backupPath, { recursive: true });
-        //   operations.push({
-        //     type: 'delete',
-        //     path: arg3,
-        //     backupPath
-        //   });
-        //   fs.rmSync(fullPath, { recursive: true, force: true });
-        // }
+  // If force and the path exists, stash it first
+  // if (force && fs.existsSync(fullPath)) {
+  //   const backupPath = path.join(
+  //     SCAFFOLDRITE_DIR,
+  //     "history",
+  //     crypto.randomUUID()
+  //   );
 
-        // Add node to structure
-        addNode(structure.root, arg3, arg4 as "file" | "folder", { force, ifNotExists });
+  //   fs.cpSync(fullPath, backupPath, { recursive: true });
 
-        // Record create operation AFTER handling force
-        // operations.push({
-        //   type: "create",
-        //   path: arg3,
-        //   nodeType: arg4 as "file" | "folder",
-        // });
+  //   operations.push({
+  //     type: "delete",
+  //     path: arg3,
+  //     backupPath,
+  //   });
 
-        validateConstraints(structure.root, structure.constraints);
+  //   fs.rmSync(fullPath, { recursive: true, force: true });
+  // }
 
-        if (!(await confirmProceed(outputDir))) {
-            console.log(theme.muted(`${icons.info} Creation cancelled.`));
-            return;
-        }
+  // Add node to structure
+  addNode(structure.root, arg3, arg4 as "file" | "folder", {
+    force,
+    ifNotExists,
+  });
 
-        saveStructure(structure.root, structure.rawConstraints, STRUCTURE_PATH);
+  // Record create operation AFTER handling force
+  // operations.push({
+  //   type: "create",
+  //   path: arg3,
+  //   nodeType: arg4 as "file" | "folder",
+  // });
 
-        const logLines: string[] = [];
+  validateConstraints(structure.root, structure.constraints);
 
-        await generateFS(structure.root, outputDir, {
-            dryRun,
-            ignoreList,
-            onProgress(e) {
-                logLines.push(`${e.type.toUpperCase()} ${e.path}`);
-            },
-        });
+  if (!(await confirmProceed(outputDir))) {
+    console.log(theme.muted(`${icons.info} Creation cancelled.`));
+    return;
+  }
 
-        if (verbose) {
-            console.log(theme.primary.bold(`\n📋 Operations:`));
-            console.log(theme.muted(`─`.repeat(40)));
-            for (const line of logLines) {
-                if (line.startsWith("CREATE")) {
-                    console.log(theme.success(`  ${icons.success} ${line}`));
-                } else if (line.startsWith("SKIP")) {
-                    console.log(theme.muted(`  ${icons.info} ${line}`));
-                } else {
-                    console.log(theme.info(`  ${icons.info} ${line}`));
-                }
-            }
-        } else if (summary) {
-            console.log(theme.primary.bold(`\n📊 Summary:`));
-            console.log(theme.muted(`─`.repeat(40)));
-            for (const line of logLines.filter(l => !l.startsWith("SKIP"))) {
-                console.log(theme.success(`  ${icons.success} ${line}`));
-            }
-        }
+  // Save structure update (Guard with dryRun)
+  if (!dryRun) {
+    saveStructure(
+      structure.root,
+      structure.rawConstraints,
+      STRUCTURE_PATH
+    );
+  } else {
+    console.log(
+      theme.info(
+        `${icons.info} [Dry Run] Skipping update to structure.sr`
+      )
+    );
+  }
 
-        // const afterStructureSR = structureToSRString(structure.root, structure.rawConstraints);
-        // const afterFSSnapshotSR = structureToSRString(buildASTFromFS(outputDir, ignoreList), []);
+  const logLines: string[] = [];
 
-
-
-
-        // Write history
-        // if (!dryRun) {
-        //   writeHistory({
-        //     id: uuidv4(),
-        //     command,
-        //     args: process.argv.slice(3),
-        //     flags: passedFlags,
-        //     timestamp: Date.now(),
-        //     operations,
-        //     before: {
-        //       structure: beforeStructureSR,
-        //       fsSnapshot: beforeFSSnapshotSR
-        //     },
-        //     after: {
-        //       structure: afterStructureSR,
-        //       fsSnapshot: afterFSSnapshotSR
-        //     },
-        //   });
-
-        // }
-
-        process.stdout.write("\n");
-        console.log(theme.success.bold(`${icons.check} Created successfully.`));
-        return;
+  await generateFS(structure.root, outputDir, {
+    dryRun,
+    ignoreList,
+    onProgress(e) {
+      logLines.push(`${e.type.toUpperCase()} ${e.path}`);
     },
+  });
 
-    delete: async () => {
+  if (verbose) {
+    console.log(theme.primary.bold(`\n📋 Operations:`));
+    console.log(theme.muted(`─`.repeat(40)));
+
+    for (const line of logLines) {
+      if (line.startsWith("CREATE")) {
+        console.log(theme.success(`  ${icons.success} ${line}`));
+      } else if (line.startsWith("SKIP")) {
+        console.log(theme.muted(`  ${icons.info} ${line}`));
+      } else {
+        console.log(theme.info(`  ${icons.info} ${line}`));
+      }
+    }
+  } else if (summary) {
+    console.log(theme.primary.bold(`\n📊 Summary:`));
+    console.log(theme.muted(`─`.repeat(40)));
+
+    for (const line of logLines.filter((l) => !l.startsWith("SKIP"))) {
+      console.log(theme.success(`  ${icons.success} ${line}`));
+    }
+  }
+
+  // const afterStructureSR = structureToSRString(
+  //   structure.root,
+  //   structure.rawConstraints
+  // );
+
+  // const afterFSSnapshotSR = structureToSRString(
+  //   buildASTFromFS(outputDir, ignoreList),
+  //   []
+  // );
+
+  // Write history
+  // if (!dryRun) {
+  //   writeHistory({
+  //     id: uuidv4(),
+  //     command,
+  //     args: process.argv.slice(3),
+  //     flags: passedFlags,
+  //     timestamp: Date.now(),
+  //     operations,
+  //     before: {
+  //       structure: beforeStructureSR,
+  //       fsSnapshot: beforeFSSnapshotSR,
+  //     },
+  //     after: {
+  //       structure: afterStructureSR,
+  //       fsSnapshot: afterFSSnapshotSR,
+  //     },
+  //   });
+  // }
+
+  process.stdout.write("\n");
+
+  const status = dryRun
+    ? theme.info("[Dry Run] Creation simulated.")
+    : theme.success.bold(`${icons.check} Created successfully.`);
+
+  console.log(status);
+
+  return;
+},
+
+   delete: async () => {
         await preventIfStructureLocked("delete");
         const structure = loadAST();
         validateConstraints(structure.root, structure.constraints);
 
-        deleteNode(structure.root, arg3);
+        const targetPath = arg3;
+        if (!targetPath) {
+            console.error(theme.error.bold(`${icons.error} Error: Please provide a path to delete.`));
+            exit(1);
+        }
+
+        // 1️⃣ Update in-memory AST
+        deleteNode(structure.root, targetPath);
 
         validateConstraints(structure.root, structure.constraints);
 
         const outputDir = path.resolve(baseDir);
 
+        // 2️⃣ Confirmation
         if (!(await confirmProceed(outputDir))) {
             console.log(theme.muted(`${icons.info} Deletion cancelled.`));
             return;
         }
 
-        saveStructure(structure.root, structure.rawConstraints, STRUCTURE_PATH);
+        // 3️⃣ Save structure update (Guard with dryRun)
+        if (!dryRun) {
+            saveStructure(structure.root, structure.rawConstraints, STRUCTURE_PATH);
+        } else {
+            console.log(theme.info(`${icons.info} [Dry Run] Skipping update to structure.sr`));
+        }
+
         const logLines: string[] = [];
         const ignoreList = getIgnoreList();
 
+        // 4️⃣ Sync Filesystem
         await generateFS(structure.root, outputDir, {
-            dryRun,
+            dryRun, // This utility already handles the physical deletion logic
             ignoreList,
             onProgress(e) {
                 logLines.push(`${e.type.toUpperCase()} ${e.path}`);
             },
         });
 
+        // 5️⃣ Output UI
         if (verbose) {
             console.log(theme.primary.bold(`\n📋 Operations:`));
             console.log(theme.muted(`─`.repeat(40)));
             for (const line of logLines) {
                 if (line.startsWith("DELETE")) {
-                    console.log(theme.error(`  ${icons.cross} ${line}`));
+                    console.log(theme.error(`  ${icons.cross} ${line}`));
                 } else if (line.startsWith("SKIP")) {
-                    console.log(theme.muted(`  ${icons.info} ${line}`));
+                    console.log(theme.muted(`  ${icons.info} ${line}`));
                 } else {
-                    console.log(theme.info(`  ${icons.info} ${line}`));
+                    console.log(theme.info(`  ${icons.info} ${line}`));
                 }
             }
         } else if (summary) {
             console.log(theme.primary.bold(`\n📊 Summary:`));
             console.log(theme.muted(`─`.repeat(40)));
             for (const line of logLines.filter(l => !l.startsWith("SKIP"))) {
-                console.log(theme.error(`  ${icons.cross} ${line}`));
+                console.log(theme.error(`  ${icons.cross} ${line}`));
             }
         }
 
-
         process.stdout.write("\n");
-        console.log(theme.success.bold(`${icons.check} Deleted successfully.`));
+        const status = dryRun ? theme.info("[Dry Run] Deletion simulated.") : theme.success.bold(`${icons.check} Deleted successfully.`);
+        console.log(status);
         return;
     },
     rename: async () => {
         await preventIfStructureLocked("rename");
+        
         const structure = loadAST();
-        validateConstraints(structure.root, structure.constraints);
-
         const oldPath = arg3;
         const newName = arg4;
         const outputDir = path.resolve(baseDir);
 
+        if (!oldPath || !newName) {
+            console.error(theme.error.bold(`${icons.error} Error: Missing arguments. Usage: rename <path> <newName>`));
+            exit(1);
+        }
+
+        // 1️⃣ Validate constraints before doing anything
+        validateConstraints(structure.root, structure.constraints);
+
+        // 2️⃣ Prepare paths
         const oldFullPath = path.join(outputDir, oldPath);
         const newFullPath = path.join(outputDir, path.join(path.dirname(oldPath), newName));
 
-        const renamed = renameFSItem(oldFullPath, newFullPath);
-
-        if (!renamed) {
-            console.warn(theme.warning(`${icons.warning} Warning: Item not found in filesystem, will create new based on structure.sr.`));
-        }
-
-        // 3️⃣ Rename in structure.sr
+        // 3️⃣ Update the in-memory AST
         renameNode(structure.root, oldPath, newName);
 
+        // Re-validate to ensure the new name doesn't break constraints (e.g., naming conventions)
         validateConstraints(structure.root, structure.constraints);
 
+        // 4️⃣ User Confirmation
         if (!(await confirmProceed(outputDir))) {
             console.log(theme.muted(`${icons.info} Rename cancelled.`));
             return;
         }
 
-        saveStructure(structure.root, structure.rawConstraints, STRUCTURE_PATH);
+        // 5️⃣ Handle structure.sr update (with Dry Run guard)
+        if (!dryRun) {
+            saveStructure(structure.root, structure.rawConstraints, STRUCTURE_PATH);
+        } else {
+            console.log(theme.info(`${icons.info} [Dry Run] Would update ${STRUCTURE_PATH}`));
+        }
 
+        // 6️⃣ Handle physical filesystem rename (with Dry Run guard)
+        if (!dryRun) {
+            const renamed = renameFSItem(oldFullPath, newFullPath);
+            if (!renamed) {
+                console.warn(theme.warning(`${icons.warning} Warning: Item not found in filesystem, will create new based on structure.sr.`));
+            }
+        } else {
+            console.log(theme.info(`${icons.info} [Dry Run] Would rename ${oldPath} → ${newName}`));
+        }
+
+        // 7️⃣ Sync everything else
         const logLines: string[] = [];
         const ignoreList = getIgnoreList();
 
         await generateFS(structure.root, outputDir, {
-            dryRun,
+            dryRun, // generateFS handles its own logic internally
             ignoreList,
             onProgress(e) {
                 logLines.push(`${e.type.toUpperCase()} ${e.path}`);
             },
         });
 
+        // 8️⃣ Output formatting
         if (verbose) {
             console.log(theme.primary.bold(`\n📋 Operations:`));
             console.log(theme.muted(`─`.repeat(40)));
             for (const line of logLines) {
                 if (line.startsWith("CREATE")) {
-                    console.log(theme.success(`  ${icons.success} ${line}`));
+                    console.log(theme.success(`  ${icons.success} ${line}`));
                 } else if (line.startsWith("DELETE")) {
-                    console.log(theme.error(`  ${icons.cross} ${line}`));
+                    console.log(theme.error(`  ${icons.cross} ${line}`));
                 } else if (line.startsWith("SKIP")) {
-                    console.log(theme.muted(`  ${icons.info} ${line}`));
+                    console.log(theme.muted(`  ${icons.info} ${line}`));
                 } else {
-                    console.log(theme.info(`  ${icons.info} ${line}`));
+                    console.log(theme.info(`  ${icons.info} ${line}`));
                 }
             }
         } else if (summary) {
@@ -953,15 +1078,16 @@ export const commandHandlers: Record<string, CommandHandler> = {
             console.log(theme.muted(`─`.repeat(40)));
             for (const line of logLines.filter(l => !l.startsWith("SKIP"))) {
                 if (line.startsWith("CREATE")) {
-                    console.log(theme.success(`  ${icons.success} ${line}`));
+                    console.log(theme.success(`  ${icons.success} ${line}`));
                 } else if (line.startsWith("DELETE")) {
-                    console.log(theme.error(`  ${icons.cross} ${line}`));
+                    console.log(theme.error(`  ${icons.cross} ${line}`));
                 }
             }
         }
 
         process.stdout.write("\n");
-        console.log(theme.success.bold(`${icons.check} Renamed successfully.`));
+        const status = dryRun ? theme.info("[Dry Run] Rename simulated.") : theme.success.bold(`${icons.check} Renamed successfully.`);
+        console.log(status);
         return;
     },
 
@@ -1070,21 +1196,21 @@ export const commandHandlers: Record<string, CommandHandler> = {
     },
 
     changelog: async () => {
-    console.log(theme.primary.bold(`\n📝 Scaffoldrite v${pkg.version} Changelog\n`));
-    console.log(theme.muted(`─`.repeat(50)));
+        console.log(theme.primary.bold(`\n📝 Scaffoldrite v${pkg.version} Changelog\n`));
+        console.log(theme.muted(`─`.repeat(50)));
 
-    console.log(theme.success(`✨ New Features:`));
-    console.log(theme.light(`- Added 'deps' command with circular/standalone detection`));
-    console.log(theme.light(`- Improved 'generate' with ignore-tooling handling`));
-    console.log(theme.light(`- Added 'lock' and 'unlock' for CI/git/structure`));
+        console.log(theme.success(`✨ New Features:`));
+        console.log(theme.light(`- Added 'deps' command with circular/standalone detection`));
+        console.log(theme.light(`- Improved 'generate' with ignore-tooling handling`));
+        console.log(theme.light(`- Added 'lock' and 'unlock' for CI/git/structure`));
 
-    console.log(theme.warning(`⚠️ Improvements:`));
-    console.log(theme.light(`- Better validation messages`));
-    console.log(theme.light(`- Enhanced progress bar for generation`));
+        console.log(theme.warning(`⚠️ Improvements:`));
+        console.log(theme.light(`- Better validation messages`));
+        console.log(theme.light(`- Enhanced progress bar for generation`));
 
-    console.log(theme.info(`ℹ️ Bug Fixes:`));
-    console.log(theme.light(`- Fixed rename edge cases`));
-    console.log(theme.light(`- Fixed copy-from-git for empty dirs`));
-    process.exit(0);
-}
+        console.log(theme.info(`ℹ️ Bug Fixes:`));
+        console.log(theme.light(`- Fixed rename edge cases`));
+        console.log(theme.light(`- Fixed copy-from-git for empty dirs`));
+        process.exit(0);
+    }
 };
