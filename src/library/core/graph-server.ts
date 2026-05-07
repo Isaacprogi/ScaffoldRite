@@ -202,38 +202,224 @@ function convertToElements(graph) {
 }
 `;
 
-export function startServer(graph: any, port: number = 3210) {
+// export function startServer(graph: any, port: number = 3210) {
+//   const server = http.createServer((req: any, res: any) => {
+//     if (req.url === "/graph") {
+//       res.writeHead(200, { "Content-Type": "application/json" });
+//       res.end(JSON.stringify(graph));
+//       return;
+//     }
+
+//     if (req.url === "/cytoscape.min.js") {
+//       const cyPath = require.resolve('cytoscape/dist/cytoscape.min.js');
+//       res.writeHead(200, { "Content-Type": "application/javascript" });
+//       fs.createReadStream(cyPath).pipe(res);
+//       return;
+//     }
+
+//     if (req.url === "/graph-client.js") {
+//       res.writeHead(200, { "Content-Type": "application/javascript" });
+//       res.end(CLIENT_JS);
+//       return;
+//     }
+
+//     if (req.url === "/") {
+//       res.writeHead(200, { "Content-Type": "text/html" });
+//       res.end(getHTML());
+//       return;
+//     }
+
+//     res.writeHead(404);
+//     res.end("Not found");
+//   });
+
+//   server.listen(port, () => {
+//     console.log("Server: http://localhost:" + port);
+//   });
+// }
+
+
+
+// export function startServer(graph: any, port = 3210) {
+//   const distPath = path.resolve(__dirname, "../../../src/frontend/dist");
+
+//   console.log("========== SERVER DEBUG ==========");
+//   console.log("__dirname:", __dirname);
+//   console.log("distPath:", distPath);
+//   console.log("dist exists:", fs.existsSync(distPath));
+
+//   const indexPathCheck = path.join(distPath, "index.html");
+//   console.log("index.html path:", indexPathCheck);
+//   console.log("index exists:", fs.existsSync(indexPathCheck));
+//   console.log("==================================");
+
+//   const server = http.createServer((req: any, res: any) => {
+//     console.log("\n--- Incoming Request ---");
+//     console.log("URL:", req.url);
+
+//     // 1. API
+//     if (req.url === "/graph") {
+//       console.log("Serving /graph API");
+//       res.writeHead(200, { "Content-Type": "application/json" });
+//       res.end(JSON.stringify(graph));
+//       return;
+//     }
+
+//     const cleanUrl = req.url?.split("?")[0] || "/";
+//     console.log("Clean URL:", cleanUrl);
+
+//     let filePath = path.join(
+//       distPath,
+//       cleanUrl === "/" ? "index.html" : cleanUrl
+//     );
+
+//     console.log("Resolved filePath:", filePath);
+//     console.log("File exists:", fs.existsSync(filePath));
+
+//     // 2. Serve static files
+//     if (fs.existsSync(filePath)) {
+//       const ext = path.extname(filePath);
+
+//       const contentType =
+//         ext === ".js"
+//           ? "application/javascript"
+//           : ext === ".css"
+//           ? "text/css"
+//           : ext === ".html"
+//           ? "text/html"
+//           : "application/octet-stream";
+
+//       console.log("Serving file:", filePath);
+//       console.log("Content-Type:", contentType);
+
+//       res.writeHead(200, { "Content-Type": contentType });
+//       fs.createReadStream(filePath).pipe(res);
+//       return;
+//     }
+
+//     // 3. SPA fallback
+//     const indexPath = path.join(distPath, "index.html");
+//     console.log("Fallback to index.html:", indexPath);
+//     console.log("Fallback exists:", fs.existsSync(indexPath));
+
+//     if (fs.existsSync(indexPath)) {
+//       res.writeHead(200, { "Content-Type": "text/html" });
+//       fs.createReadStream(indexPath).pipe(res);
+//       return;
+//     }
+
+//     console.log("❌ 404 - File not found");
+//     res.writeHead(404);
+//     res.end("Not found");
+//   });
+
+//   server.listen(port, () => {
+//     console.log("\n🚀 Running on http://localhost:" + port);
+//   });
+// }
+
+import { findStandaloneFiles, detectCircular ,buildDependencyGraph } from "./deps";
+import { baseDir } from "../../lib/utils";
+import { getIgnoreList } from "../../lib/utils";
+
+export function startServer(
+  graph: any, 
+  circular: string[][], 
+  standalone: string[], 
+  port = 3210
+) {
+  const distPath = path.resolve(__dirname, "../../../src/front/dist");
+
+  console.log("========== SERVER DEBUG ==========");
+  console.log("__dirname:", __dirname);
+  console.log("distPath:", distPath);
+  console.log("dist exists:", fs.existsSync(distPath));
+
+  const indexPathCheck = path.join(distPath, "index.html");
+  console.log("index.html path:", indexPathCheck);
+  console.log("index exists:", fs.existsSync(indexPathCheck));
+  console.log("==================================");
+
   const server = http.createServer((req: any, res: any) => {
+    console.log("\n--- Incoming Request ---");
+    console.log("URL:", req.url);
+
+    // 1. API - Return all data
     if (req.url === "/graph") {
+      console.log("Serving /graph API");
       res.writeHead(200, { "Content-Type": "application/json" });
-      res.end(JSON.stringify(graph));
+      res.end(JSON.stringify({
+        graph,
+        circular,
+        standalone
+      }));
       return;
     }
 
-    if (req.url === "/cytoscape.min.js") {
-      const cyPath = require.resolve('cytoscape/dist/cytoscape.min.js');
-      res.writeHead(200, { "Content-Type": "application/javascript" });
-      fs.createReadStream(cyPath).pipe(res);
+    if (req.url === "/reload") {
+      const targetDir = path.resolve(baseDir);
+      const ignoreList = getIgnoreList();
+  graph = buildDependencyGraph(targetDir,ignoreList);
+  circular = detectCircular(graph);
+  standalone = findStandaloneFiles(graph);
+
+  res.writeHead(200);
+  res.end("reloaded");
+  return;
+}
+
+    const cleanUrl = req.url?.split("?")[0] || "/";
+    console.log("Clean URL:", cleanUrl);
+
+    let filePath = path.join(
+      distPath,
+      cleanUrl === "/" ? "index.html" : cleanUrl
+    );
+
+    console.log("Resolved filePath:", filePath);
+    console.log("File exists:", fs.existsSync(filePath));
+
+    // 2. Serve static files
+    if (fs.existsSync(filePath)) {
+      const ext = path.extname(filePath);
+
+      const contentType =
+        ext === ".js"
+          ? "application/javascript"
+          : ext === ".css"
+          ? "text/css"
+          : ext === ".html"
+          ? "text/html"
+          : "application/octet-stream";
+
+      console.log("Serving file:", filePath);
+      console.log("Content-Type:", contentType);
+
+      res.writeHead(200, { "Content-Type": contentType });
+      fs.createReadStream(filePath).pipe(res);
       return;
     }
 
-    if (req.url === "/graph-client.js") {
-      res.writeHead(200, { "Content-Type": "application/javascript" });
-      res.end(CLIENT_JS);
-      return;
-    }
+    // 3. SPA fallback
+    const indexPath = path.join(distPath, "index.html");
+    console.log("Fallback to index.html:", indexPath);
+    console.log("Fallback exists:", fs.existsSync(indexPath));
 
-    if (req.url === "/") {
+    if (fs.existsSync(indexPath)) {
       res.writeHead(200, { "Content-Type": "text/html" });
-      res.end(getHTML());
+      fs.createReadStream(indexPath).pipe(res);
       return;
     }
 
+    console.log("❌ 404 - File not found");
     res.writeHead(404);
     res.end("Not found");
   });
 
   server.listen(port, () => {
-    console.log("Server: http://localhost:" + port);
+    console.log("\n🚀 Running on http://localhost:" + port);
+    console.log(`📊 Graph data: ${Object.keys(graph).length} nodes`);
+    console.log(`🔄 Circular chains: ${circular.length}`);
+    console.log(`📄 Standalone files: ${standalone.length}`);
   });
 }

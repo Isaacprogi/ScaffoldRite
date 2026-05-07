@@ -27,12 +27,15 @@
     "scaffoldrite": "./dist/cli.js",
     "sr": "./dist/cli.js"
   },
-  "files": [
-    "dist"
+   "files": [
+    "dist",
+    "src/frontend/dist"
   ],
   "scripts": {
     "dev": "tsx src/cli.ts",
     "build": "tsc",
+    "build:frontend": "cd src/frontend && npm install && npm run build",
+    "build:all": "npm run build:frontend && npm run build",
     "start": "node dist/cli.js",
     "type-check": "tsc --noEmit",
     "validate": "npm run type-check && npm run build",

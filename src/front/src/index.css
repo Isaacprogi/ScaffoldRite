@@ -1,0 +1,53 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+/* src/index.css - Unified scrollbar styling for the entire app */
+
+/* Global scrollbar styles - applies to ALL scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #ec4899 #1e293b;
+}
+
+/* WebKit browsers (Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #1e293b; /* slate-800 */
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #ec4899; /* pink-600 */
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #f43f5e; /* rose-500 */
+}
+
+::-webkit-scrollbar-corner {
+  background: #0f172a; /* slate-900 */
+}
+
+/* For Firefox - same colors */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #ec4899 #1e293b;
+}
+
+/* Optional: Smooth scrolling for the whole app */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Optional: Style for when content is being scrolled */
+*:active::-webkit-scrollbar-thumb {
+  background: #fb7185; /* rose-400 */
+}

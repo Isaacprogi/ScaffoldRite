@@ -11,7 +11,12 @@
     "skipLibCheck": true
   },
   "include": ["src/**/*.ts", "src/library/core/graph-client.ts"],
-  "exclude": ["node_modules", "dist", "output"],
+   "exclude": [
+    "node_modules",
+    "dist",
+    "src/front",
+    "output"
+  ],
   "resolveJsonModule": true,
   "esModuleInterop": true
 }

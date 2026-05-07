@@ -1148,6 +1148,7 @@ export const commandHandlers: Record<string, CommandHandler> = {
     deps: async () => {
         const targetDir = path.resolve(baseDir);
         const ignoreList = getIgnoreList();
+        
 
 
         const structure = loadAST();
@@ -1156,6 +1157,7 @@ export const commandHandlers: Record<string, CommandHandler> = {
             graph = buildDependencyGraph(targetDir, ignoreList);
         } else {
             graph = await buildGraphFromStructure(__dirname, structure.root);
+            console.log(graph)
 
         }
 
@@ -1189,10 +1191,10 @@ export const commandHandlers: Record<string, CommandHandler> = {
             console.log(theme.error.bold(`\nCircular Dependencies`));
             printCircular(graph);
         }
-        if (serve) {
-            startServer(graph)
-        }
-
+        // In commandHandlers.deps
+    if (serve) {
+    startServer(graph, circular, standalone);
+}
     },
 
     changelog: async () => {

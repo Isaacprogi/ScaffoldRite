@@ -158,10 +158,12 @@ export function printDependencyTree(graph: DependencyGraph) {
 }
 
 export function findStandaloneFiles(graph: DependencyGraph): string[] {
-  const allFiles = new Set(Object.keys(graph));
   const imported = new Set<string>();
   Object.values(graph).forEach((deps) => deps.forEach((d) => imported.add(d)));
-  return [...allFiles].filter((f) => !imported.has(f));
+
+  return Object.keys(graph).filter(
+    (f) => !imported.has(f) && (graph[f] || []).length === 0
+  );
 }
 
 export function detectCircular(graph: DependencyGraph): string[][] {

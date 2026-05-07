@@ -6,3 +6,4 @@ build
 coverage
 .turbo
 .env
+src/frontend/node_modules

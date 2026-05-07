@@ -33,8 +33,63 @@ folder src {
   folder data {
     file index.ts
   }
+  folder frontend {
+    folder data {
+      file index.ts
+    }
+    folder public {
+      file favicon.svg
+      file icons.svg
+    }
+    folder src {
+      folder assets {
+        file logo_large.png
+        file logo_transparent.png
+        file logo-2.png
+        file logo.png
+      }
+      folder components {
+        file Graph.tsx
+        file Header.tsx
+        file List.tsx
+        file ListView.tsx
+        file Sidebar.tsx
+      }
+      folder hooks {
+        file ban.ts
+        file banga.ts
+        file mana.ts
+        file saba.ts
+        file useGraph.ts
+        file vaga.ts
+        file vanta.ts
+        file venue.ts
+      }
+      file App.css
+      file App.tsx
+      file index.css
+      file main.tsx
+      file val.tsx
+    }
+    folder types {
+      file index.ts
+    }
+    file .gitignore
+    file eslint.config.js
+    file index.html
+    file package-lock.json
+    file package.json
+    file postcss.config.js
+    file README.md
+    file tailwind.config.js
+    file tsconfig.app.json
+    file tsconfig.json
+    file tsconfig.node.json
+    file vite.config.ts
+  }
   folder lib {
     folder logs {
+      file ChatGPT Image May 5, 2026, 02_27_24 PM.png
       file index.ts
     }
     folder utils {
@@ -82,3 +137,4 @@ file package-lock.json
 file package.json
 file readme.md
 file tsconfig.json
+
