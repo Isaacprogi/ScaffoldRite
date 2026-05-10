@@ -224,7 +224,7 @@ export const commandHandlers: Record<string, CommandHandler> = {
                 console.log(theme.info(`${icons.info} [Dry Run] Would create directory: .scaffoldrite`));
             }
         }
-        
+
         const projectConfig = path.join(sDir, "project.json");
 
         const legacyStructure = path.join(baseDir, "structure.sr");
@@ -347,7 +347,7 @@ export const commandHandlers: Record<string, CommandHandler> = {
     },
 
 
-   update: async () => {
+    update: async () => {
         await preventIfStructureLocked("update");
         if (!fs.existsSync(STRUCTURE_PATH)) {
             console.error(theme.error.bold(`${icons.error} Error: structure.sr not found. Run \`scaffoldrite init\` first.`));
@@ -640,7 +640,7 @@ export const commandHandlers: Record<string, CommandHandler> = {
         results.forEach(r => console.log(theme.light(`  ${r}`)));
     },
 
-   generate: async () => {
+    generate: async () => {
         await preventIfStructureLocked("generate");
 
         let structure;
@@ -773,162 +773,125 @@ export const commandHandlers: Record<string, CommandHandler> = {
             }
         }
 
-        const finalStatus = dryRun 
-            ? theme.info.bold(`\n[Dry Run] Generation simulation completed!`) 
+        const finalStatus = dryRun
+            ? theme.info.bold(`\n[Dry Run] Generation simulation completed!`)
             : theme.success.bold(`\n${icons.check} Generation completed successfully!`);
-        
+
         console.log(finalStatus);
         return;
     },
 
-   create: async () => {
-  await preventIfStructureLocked("create");
+    create: async () => {
+        await preventIfStructureLocked("create");
 
-  const structure = loadAST();
-  const outputDir = path.resolve(baseDir);
+        const structure = loadAST();
+        const outputDir = path.resolve(baseDir);
 
-  // const beforeStructureSR = structureToSRString(structure.root, structure.rawConstraints);
-  const ignoreList = getIgnoreList();
+        const ignoreList = getIgnoreList();
 
-  // const beforeFSSnapshotSR = structureToSRString(
-  //   buildASTFromFS(outputDir, ignoreList),
-  //   []
-  // );
+        validateConstraints(structure.root, structure.constraints);
 
-  // const operations: Operation[] = [];
+        const fullPath = path.join(outputDir, arg3);
 
-  validateConstraints(structure.root, structure.constraints);
+        // Add node to structure (NOW returns a result)
+        const result = addNode(
+            structure.root,
+            arg3,
+            arg4 as "file" | "folder",
+            {
+                force,
+                ifNotExists,
+            }
+        );
 
-  const fullPath = path.join(outputDir, arg3);
+        validateConstraints(structure.root, structure.constraints);
 
-  // If force and the path exists, stash it first
-  // if (force && fs.existsSync(fullPath)) {
-  //   const backupPath = path.join(
-  //     SCAFFOLDRITE_DIR,
-  //     "history",
-  //     crypto.randomUUID()
-  //   );
+        if (!(await confirmProceed(outputDir))) {
+            console.log(theme.muted(`${icons.info} Creation cancelled.`));
+            return;
+        }
 
-  //   fs.cpSync(fullPath, backupPath, { recursive: true });
+        // Save structure update (Guard with dryRun)
+        if (!dryRun) {
+            saveStructure(
+                structure.root,
+                structure.rawConstraints,
+                STRUCTURE_PATH
+            );
+        } else {
+            console.log(
+                theme.info(
+                    `${icons.info} [Dry Run] Skipping update to structure.sr`
+                )
+            );
+        }
 
-  //   operations.push({
-  //     type: "delete",
-  //     path: arg3,
-  //     backupPath,
-  //   });
+        const logLines: string[] = [];
 
-  //   fs.rmSync(fullPath, { recursive: true, force: true });
-  // }
+        await generateFS(structure.root, outputDir, {
+            dryRun,
+            ignoreList,
+            onProgress(e) {
+                logLines.push(`${e.type.toUpperCase()} ${e.path}`);
+            },
+        });
 
-  // Add node to structure
-  addNode(structure.root, arg3, arg4 as "file" | "folder", {
-    force,
-    ifNotExists,
-  });
+        if (verbose) {
+            console.log(theme.primary.bold(`\n📋 Operations:`));
+            console.log(theme.muted(`─`.repeat(40)));
 
-  // Record create operation AFTER handling force
-  // operations.push({
-  //   type: "create",
-  //   path: arg3,
-  //   nodeType: arg4 as "file" | "folder",
-  // });
+            for (const line of logLines) {
+                if (line.startsWith("CREATE")) {
+                    console.log(theme.success(`  ${icons.success} ${line}`));
+                } else if (line.startsWith("SKIP")) {
+                    console.log(theme.muted(`  ${icons.info} ${line}`));
+                } else {
+                    console.log(theme.info(`  ${icons.info} ${line}`));
+                }
+            }
+        } else if (summary) {
+            console.log(theme.primary.bold(`\n📊 Summary:`));
+            console.log(theme.muted(`─`.repeat(40)));
 
-  validateConstraints(structure.root, structure.constraints);
+            for (const line of logLines.filter((l) => !l.startsWith("SKIP"))) {
+                console.log(theme.success(`  ${icons.success} ${line}`));
+            }
+        }
 
-  if (!(await confirmProceed(outputDir))) {
-    console.log(theme.muted(`${icons.info} Creation cancelled.`));
-    return;
-  }
+        process.stdout.write("\n");
 
-  // Save structure update (Guard with dryRun)
-  if (!dryRun) {
-    saveStructure(
-      structure.root,
-      structure.rawConstraints,
-      STRUCTURE_PATH
-    );
-  } else {
-    console.log(
-      theme.info(
-        `${icons.info} [Dry Run] Skipping update to structure.sr`
-      )
-    );
-  }
+        // ✅ CLEAN RESULT-BASED STATUS OUTPUT
+        if (dryRun) {
+            console.log(theme.info("[Dry Run] Creation simulated."));
+        } else {
+            switch (result) {
+                case "skipped":
+                    console.log(
+                        theme.warning(`${icons.info} Skipped (already exists).`)
+                    );
+                    break;
 
-  const logLines: string[] = [];
+                case "replaced":
+                    console.log(
+                        theme.success.bold(
+                            `${icons.check} Replaced existing item successfully.`
+                        )
+                    );
+                    break;
 
-  await generateFS(structure.root, outputDir, {
-    dryRun,
-    ignoreList,
-    onProgress(e) {
-      logLines.push(`${e.type.toUpperCase()} ${e.path}`);
+                case "created":
+                default:
+                    console.log(
+                        theme.success.bold(`${icons.check} Created successfully.`)
+                    );
+                    break;
+            }
+        }
+
+        return;
     },
-  });
 
-  if (verbose) {
-    console.log(theme.primary.bold(`\n📋 Operations:`));
-    console.log(theme.muted(`─`.repeat(40)));
-
-    for (const line of logLines) {
-      if (line.startsWith("CREATE")) {
-        console.log(theme.success(`  ${icons.success} ${line}`));
-      } else if (line.startsWith("SKIP")) {
-        console.log(theme.muted(`  ${icons.info} ${line}`));
-      } else {
-        console.log(theme.info(`  ${icons.info} ${line}`));
-      }
-    }
-  } else if (summary) {
-    console.log(theme.primary.bold(`\n📊 Summary:`));
-    console.log(theme.muted(`─`.repeat(40)));
-
-    for (const line of logLines.filter((l) => !l.startsWith("SKIP"))) {
-      console.log(theme.success(`  ${icons.success} ${line}`));
-    }
-  }
-
-  // const afterStructureSR = structureToSRString(
-  //   structure.root,
-  //   structure.rawConstraints
-  // );
-
-  // const afterFSSnapshotSR = structureToSRString(
-  //   buildASTFromFS(outputDir, ignoreList),
-  //   []
-  // );
-
-  // Write history
-  // if (!dryRun) {
-  //   writeHistory({
-  //     id: uuidv4(),
-  //     command,
-  //     args: process.argv.slice(3),
-  //     flags: passedFlags,
-  //     timestamp: Date.now(),
-  //     operations,
-  //     before: {
-  //       structure: beforeStructureSR,
-  //       fsSnapshot: beforeFSSnapshotSR,
-  //     },
-  //     after: {
-  //       structure: afterStructureSR,
-  //       fsSnapshot: afterFSSnapshotSR,
-  //     },
-  //   });
-  // }
-
-  process.stdout.write("\n");
-
-  const status = dryRun
-    ? theme.info("[Dry Run] Creation simulated.")
-    : theme.success.bold(`${icons.check} Created successfully.`);
-
-  console.log(status);
-
-  return;
-},
-
-   delete: async () => {
+    delete: async () => {
         await preventIfStructureLocked("delete");
         const structure = loadAST();
         validateConstraints(structure.root, structure.constraints);
@@ -999,7 +962,7 @@ export const commandHandlers: Record<string, CommandHandler> = {
     },
     rename: async () => {
         await preventIfStructureLocked("rename");
-        
+
         const structure = loadAST();
         const oldPath = arg3;
         const newName = arg4;
@@ -1148,18 +1111,21 @@ export const commandHandlers: Record<string, CommandHandler> = {
     deps: async () => {
         const targetDir = path.resolve(baseDir);
         const ignoreList = getIgnoreList();
-        
-
 
         const structure = loadAST();
+
         let graph;
+
         if (isFS) {
             graph = buildDependencyGraph(targetDir, ignoreList);
         } else {
-            graph = await buildGraphFromStructure(__dirname, structure.root);
-            console.log(graph)
-
+            graph = await buildGraphFromStructure(
+                targetDir,
+                structure.root
+            );
         }
+
+        console.log(graph);
 
         const circular = detectCircular(graph);
         const standalone = findStandaloneFiles(graph);
@@ -1169,50 +1135,39 @@ export const commandHandlers: Record<string, CommandHandler> = {
                 console.log(theme.error.bold(`\nCircular Dependencies`));
                 printCircular(graph);
             }
-            return
+            return;
         }
+
         if (showStandalone) {
             if (standalone.length > 0) {
                 console.log(theme.warning.bold(`\nStandalone Files`));
-                standalone.forEach(f => console.log(theme.light(`- ${f}`)));
+                standalone.forEach((f) =>
+                    console.log(theme.light(`- ${f}`))
+                );
             }
-            return
+            return;
         }
-        console.log(theme.primary.bold(`\nFile Dependency Tree\n`));
-        printDependencyTree(graph);
 
+        console.log(theme.primary.bold(`\nFile Dependency Tree\n`));
+
+        printDependencyTree(graph);
 
         if (standalone.length > 0) {
             console.log(theme.warning.bold(`\nStandalone Files`));
-            standalone.forEach(f => console.log(theme.light(`- ${f}`)));
+
+            standalone.forEach((f) =>
+                console.log(theme.light(`- ${f}`))
+            );
         }
 
         if (circular.length > 0) {
             console.log(theme.error.bold(`\nCircular Dependencies`));
+
             printCircular(graph);
         }
-        // In commandHandlers.deps
-    if (serve) {
-    startServer(graph, circular, standalone);
-}
+
+        if (serve) {
+            startServer(graph, circular, standalone);
+        }
     },
-
-    changelog: async () => {
-        console.log(theme.primary.bold(`\n📝 Scaffoldrite v${pkg.version} Changelog\n`));
-        console.log(theme.muted(`─`.repeat(50)));
-
-        console.log(theme.success(`✨ New Features:`));
-        console.log(theme.light(`- Added 'deps' command with circular/standalone detection`));
-        console.log(theme.light(`- Improved 'generate' with ignore-tooling handling`));
-        console.log(theme.light(`- Added 'lock' and 'unlock' for CI/git/structure`));
-
-        console.log(theme.warning(`⚠️ Improvements:`));
-        console.log(theme.light(`- Better validation messages`));
-        console.log(theme.light(`- Enhanced progress bar for generation`));
-
-        console.log(theme.info(`ℹ️ Bug Fixes:`));
-        console.log(theme.light(`- Fixed rename edge cases`));
-        console.log(theme.light(`- Fixed copy-from-git for empty dirs`));
-        process.exit(0);
-    }
 };

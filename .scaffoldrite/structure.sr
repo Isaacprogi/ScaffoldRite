@@ -33,7 +33,7 @@ folder src {
   folder data {
     file index.ts
   }
-  folder frontend {
+  folder front {
     folder data {
       file index.ts
     }
@@ -137,4 +137,4 @@ file package-lock.json
 file package.json
 file readme.md
 file tsconfig.json
-
+file link.ts

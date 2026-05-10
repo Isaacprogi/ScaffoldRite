@@ -34,7 +34,7 @@
   "scripts": {
     "dev": "tsx src/cli.ts",
     "build": "tsc",
-    "build:frontend": "cd src/frontend && npm install && npm run build",
+    "build:frontend": "cd src/front && npm install && npm run build",
     "build:all": "npm run build:frontend && npm run build",
     "start": "node dist/cli.js",
     "type-check": "tsc --noEmit",

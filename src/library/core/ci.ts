@@ -1,4 +1,4 @@
-export function getWorkflowContent(options?: { ref?: string; onlyAgainst?: boolean, hasAgainst?:boolean }): string {
+export function getWorkflowContent(options?: { ref?: string; onlyAgainst?: boolean, hasAgainst?: boolean }): string {
   if (!options?.hasAgainst || !options.ref) {
     // No ref provided
     return `name: Scaffoldrite Validation

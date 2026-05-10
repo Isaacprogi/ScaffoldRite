@@ -1,0 +1,18 @@
+name: Scaffoldrite Validation
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Scaffoldrite
+        run: npm install -g scaffoldrite
+
+      - name: Validate project structure
+        run: scaffoldrite validate

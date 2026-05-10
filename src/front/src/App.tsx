@@ -1,6 +1,6 @@
 // src/App.tsx
 import { useState, useRef, useEffect } from "react";
-import { useGraph } from "./hooks/useGraph";
+// import { useGraph } from "./hooks/useGraph";
 import { Sidebar } from "./components/Sidebar";
 import { Header } from "./components/Header";
 import { GraphView } from "./components/Graph";
@@ -16,9 +16,9 @@ export default function App() {
 const loading = false
 const data = mockData
 
-const refetch = () => {
+// const refetch = () => {
     
-}
+// }
 
   const [dependencyMode, setDependencyMode] = useState<DependencyMode>("all");
   const [viewMode, setViewMode] = useState<ViewMode>("graph");
@@ -74,7 +74,7 @@ const refetch = () => {
   if (!data) return null;
 
   return (
-    <div className="flex flex-col h-screen">
+    <div className="flex flex-col font-outfit h-screen">
       <div className="flex flex-1 overflow-hidden">
 
         <Sidebar 
