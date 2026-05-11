@@ -50,35 +50,41 @@ export function GraphView({
     const edges: any[] = [];
     const seen = new Set<string>();
 
+    // Helper function to get node color based on type
+    const getNodeColors = (fullPath: string) => {
+      const inCirc = isNodeInCircular(fullPath);
+      const isStand = isNodeStandalone(fullPath);
+
+      return {
+        backgroundColor: inCirc
+          ? "#dc2626" // red for circular
+          : isStand
+          ? "#f59e0b" // orange for standalone
+          : "#e94560", // pink/purple for regular
+        borderColor: inCirc
+          ? "#7f1d1d" // deep red border
+          : isStand
+          ? "#fde68a" // light orange border
+          : "#1e293b", // dark border for regular
+      };
+    };
+
     Object.keys(graphData).forEach((file) => {
       const fileId = makeId(file);
 
       if (!seen.has(fileId)) {
         seen.add(fileId);
-
-        const inCirc = isNodeInCircular(file);
-        const isStand = isNodeStandalone(file);
-
+        const colors = getNodeColors(file);
+        
         nodes.push({
           data: {
             id: fileId,
             label: getDisplayName(file),
             fullPath: file,
-            inCircular: inCirc,
-            isStandalone: isStand,
-
-            // ✅ DISTINCT COLORS HERE
-           backgroundColor: inCirc
-  ? "#dc2626" // 🔴 strong circular red
-  : isStand
-  ? "#f59e0b"
-  : "#e94560",
-
-            borderColor: inCirc
-  ? "#7f1d1d" // deep red border for emphasis
-  : isStand
-  ? "#fde68a"
-  : "#1e293b",
+            inCircular: isNodeInCircular(file),
+            isStandalone: isNodeStandalone(file),
+            backgroundColor: colors.backgroundColor,
+            borderColor: colors.borderColor,
           },
         });
       }
@@ -88,29 +94,17 @@ export function GraphView({
 
         if (!seen.has(depId)) {
           seen.add(depId);
-
-          const inCirc = isNodeInCircular(dep);
-          const isStand = isNodeStandalone(dep);
-
+          const colors = getNodeColors(dep);
+          
           nodes.push({
             data: {
               id: depId,
               label: getDisplayName(dep),
               fullPath: dep,
-              inCircular: inCirc,
-              isStandalone: isStand,
-
-              backgroundColor: inCirc
-                ? "#8b5cf6"
-                : isStand
-                ? "#f59e0b"
-                : "#e94560",
-
-              borderColor: inCirc
-                ? "#c4b5fd"
-                : isStand
-                ? "#fde68a"
-                : "#1e293b",
+              inCircular: isNodeInCircular(dep),
+              isStandalone: isNodeStandalone(dep),
+              backgroundColor: colors.backgroundColor,
+              borderColor: colors.borderColor,
             },
           });
         }
@@ -160,17 +154,38 @@ export function GraphView({
             "border-width": 2.5,
             "text-outline-color": "#1e1e1e",
             "text-outline-width": 2,
+            "transition-property": "width, height, border-width",
+            "transition-duration": 0.25,
           },
         },
         {
           selector: "edge",
           style: {
-            width: 1.5,
-            "line-color": "#404040",
-            "target-arrow-color": "#404040",
+            width: 2,
+            "line-color": "#60a5fa", // brighter blue color
+            "target-arrow-color": "#60a5fa",
             "target-arrow-shape": "triangle",
             "curve-style": "bezier",
-            opacity: 0.6,
+            opacity: 0.7,
+            "transition-property": "line-color, width, opacity",
+            "transition-duration": 0.25,
+          },
+        },
+        {
+          selector: "edge.highlighted",
+          style: {
+            width: 4,
+            "line-color": "#fbbf24", // glowing yellow/gold
+            "target-arrow-color": "#fbbf24",
+            opacity: 1,
+          },
+        },
+        {
+          selector: "node.highlighted",
+          style: {
+            width: 68,
+            height: 68,
+            "border-width": 4,
           },
         },
       ],
@@ -187,10 +202,50 @@ export function GraphView({
 
     const cy = cyRef.current;
 
+    // Add hover effects for edges
     cy.ready(() => {
       cy.resize();
       cy.fit(undefined, 60);
       cy.center();
+      
+      // Setup hover effects
+      cy.nodes().on("mouseover", function(this: any) {
+        const node = this;
+        const connectedEdges = node.connectedEdges();
+        
+        // Highlight the node
+        node.addClass("highlighted");
+        
+        // Highlight all connected edges
+        connectedEdges.addClass("highlighted");
+        
+        // Highlight connected nodes
+        connectedEdges.forEach((edge: any) => {
+          const source = edge.source();
+          const target = edge.target();
+          if (source.id() !== node.id()) source.addClass("highlighted");
+          if (target.id() !== node.id()) target.addClass("highlighted");
+        });
+      });
+      
+      cy.nodes().on("mouseout", function(this: any) {
+        const node = this;
+        const connectedEdges = node.connectedEdges();
+        
+        // Remove highlight from node
+        node.removeClass("highlighted");
+        
+        // Remove highlight from edges
+        connectedEdges.removeClass("highlighted");
+        
+        // Remove highlight from connected nodes
+        connectedEdges.forEach((edge: any) => {
+          const source = edge.source();
+          const target = edge.target();
+          if (source.id() !== node.id()) source.removeClass("highlighted");
+          if (target.id() !== node.id()) target.removeClass("highlighted");
+        });
+      });
     });
 
     cy.on("layoutstop", () => {
@@ -242,7 +297,7 @@ export function GraphView({
 
         edge.style({
           display: show ? "element" : "none",
-          opacity: show ? 0.6 : 0,
+          opacity: show ? 0.7 : 0,
         });
       });
     });
@@ -281,24 +336,35 @@ export function GraphView({
 
     const handleMouseOver = (e: any) => {
       const node = e.target;
+      const inCirc = node.data("inCircular");
+      const isStand = node.data("isStandalone");
 
       const tooltip = document.createElement("div");
       tooltip.id = "cy-tooltip";
 
+      // Determine node type and indicator
+      let typeIndicator = "";
+      if (inCirc) {
+        typeIndicator = '<div style="color:#ef4444; margin-top:4px;">🔄 Circular Dependency</div>';
+      } else if (isStand) {
+        typeIndicator = '<div style="color:#f59e0b; margin-top:4px;">📄 Standalone File</div>';
+      } else {
+        typeIndicator = '<div style="color:#e94560; margin-top:4px;">🔗 Regular Dependency</div>';
+      }
+
       tooltip.innerHTML = `
         <div style="font-family: ui-monospace, monospace; font-size: 11px;">
           <div style="font-weight:600; color:#e4e4e4;">${node.data("label")}</div>
-          <div style="color:#a1a1aa; font-size:10px;">${node.data("fullPath")}</div>
-          ${
-            node.data("inCircular")
-              ? '<div style="color:#a78bfa; margin-top:4px;">⚠️ Circular</div>'
-              : ""
-          }
+          <div style="color:#a1a1aa; font-size:10px; margin-top: 2px;">${node.data("fullPath")}</div>
+          ${typeIndicator}
+          <div style="color:#6b7280; font-size:10px; margin-top: 4px; border-top: 1px solid #374151; padding-top: 4px;">
+            📊 ${node.connectedEdges().length} connection${node.connectedEdges().length !== 1 ? 's' : ''}
+          </div>
         </div>
       `;
 
       tooltip.style.cssText =
-        "position:fixed; background:#2d2d2d; color:#fff; padding:8px; border-radius:4px; pointer-events:none; z-index:9999; border:1px solid #444;";
+        "position:fixed; background:#1f1f1f; color:#fff; padding:8px 12px; border-radius:6px; pointer-events:none; z-index:9999; border:1px solid #374151; box-shadow: 0 4px 12px rgba(0,0,0,0.3);";
 
       document.body.appendChild(tooltip);
 

@@ -1,57 +1,39 @@
-// src/components/Header.tsx
 import { 
   Network, 
   List, 
-  // Settings, 
-  FileText, 
-  FolderTree, 
+  Settings,
   Download, 
   RefreshCw,
-  ChevronDown,
-  Layout,
-  // Sparkles,
   Command,
-  // Eye,
-  // Palette
 } from 'lucide-react';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
+import { Modal } from './Modal';
+import { useApp } from '../hooks/useApp';
 
-type ViewMode = "graph" | "list";
-type DisplayMode = "full" | "filename";
 
 type Props = {
-  viewMode: ViewMode;
-  setViewMode: (mode: ViewMode) => void;
-  displayMode?: DisplayMode;
-  onDisplayModeChange?: (mode: DisplayMode) => void;
   onExport?: () => void;
   onReload?: () => void;
 };
 
-export function Header({ 
-  viewMode, 
-  setViewMode, 
-  displayMode = "full", 
-  onDisplayModeChange,
-  onExport,
-  onReload
-}: Props) {
-  const [showDropdown, setShowDropdown] = useState(false);
+
+export function Header({ onExport, onReload }: Props) {
+  const { 
+    viewMode, 
+    setViewMode, 
+    displayMode,
+    setDisplayMode,
+    showExportBtn,
+    setShowExportBtn,
+    showReloadBtn,
+    setShowReloadBtn,
+    enableTooltips,
+    setEnableTooltips
+  } = useApp();
+  
+  const [showSettings, setShowSettings] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [isReloading, setIsReloading] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setShowDropdown(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -73,6 +55,10 @@ export function Header({
       if (e.ctrlKey && e.key === '2') {
         e.preventDefault();
         setViewMode("list");
+      }
+      if (e.ctrlKey && e.key === 'd') {
+        e.preventDefault();
+        setShowSettings(true);
       }
     };
 
@@ -101,181 +87,185 @@ export function Header({
   };
 
   return (
-    <header className="bg-[#1e1e1e] border-b border-[#2d2d2d] px-6 h-[4rem] relative backdrop-blur-sm">
-      <div className="flex items-center justify-between h-full">
-        {/* Left side - Notion style */}
-        <div className='flex items-center gap-2'>
-
-          {/* Display Dropdown - Notion inspired */}
-          <div className="relative" ref={dropdownRef}>
+    <>
+      <header className="bg-[#1e1e1e] border-b border-[#2d2d2d] px-6 h-[4rem] relative backdrop-blur-sm">
+        <div className="flex items-center justify-between h-full">
+          {/* Left side */}
+          <div className='flex items-center gap-2'>
+            {/* Settings Button */}
             <button
-              onClick={() => setShowDropdown(!showDropdown)}
+              onClick={() => setShowSettings(true)}
               className="px-3 py-1.5 bg-[#2d2d2d] rounded-md text-[13px] font-medium transition-all
                        flex items-center gap-2 text-[#e4e4e4] hover:bg-[#3d3d3d] border border-transparent hover:border-[#4d4d4d]"
+              title="Settings (⌘D)"
             >
-              <Layout size={14} className="text-[#808080]" />
-              <span className="hidden sm:inline">Display</span>
-              <ChevronDown size={12} className={`transition-transform duration-200 ${showDropdown ? 'rotate-180' : ''}`} />
+              <Settings size={14} className="text-[#808080]" />
+              <span className="hidden sm:inline">Settings</span>
             </button>
 
-            {showDropdown && (
-              <div className="absolute left-0 mt-2 w-64 bg-[#2d2d2d] rounded-lg shadow-xl border border-[#3d3d3d] z-20 overflow-hidden backdrop-blur-sm">
-                <div className="px-3 py-2 border-b border-[#3d3d3d]">
-                  <p className="text-[10px] font-semibold text-[#808080] uppercase tracking-wider">Display Options</p>
-                </div>
-                
+            {/* Action Buttons */}
+            <div className="flex items-center gap-1 ml-1">
+              {/* Export Button */}
+              {showExportBtn && onExport && viewMode !== 'list' && (
                 <button
-                  onClick={() => {
-                    onDisplayModeChange?.("full");
-                    setShowDropdown(false);
-                  }}
-                  className={`w-full px-3 py-2 text-left text-[13px] transition-all flex items-center gap-3 group
-                            ${displayMode === "full" 
-                              ? 'bg-pink-500/10 text-pink-400' 
-                              : 'text-[#b4b4b4] hover:bg-white/5'
-                            }`}
+                  onClick={handleExport}
+                  className={`relative px-3 py-1.5 rounded-md text-[13px] font-medium transition-all
+                           flex items-center gap-2 text-[#e4e4e4] hover:bg-[#2d2d2d] group
+                           ${isExporting ? 'bg-green-500/20 text-green-400' : ''}`}
+                  title="Export as PNG (⌘E)"
                 >
-                  <div className={`p-1 rounded ${displayMode === "full" ? 'bg-pink-500/20' : 'bg-[#3d3d3d] group-hover:bg-[#4d4d4d]'}`}>
-                    <FolderTree size={14} className={displayMode === "full" ? 'text-pink-400' : 'text-[#808080]'} />
-                  </div>
-                  <div className="flex-1">
-                    <div className="font-medium">Full Path</div>
-                    <div className="text-[10px] text-[#808080]">Show complete file path</div>
-                  </div>
-                  {displayMode === "full" && (
-                    <div className="w-1.5 h-1.5 rounded-full bg-pink-500" />
+                  <Download size={14} className={`transition-transform group-hover:scale-110 ${isExporting ? 'animate-bounce' : ''}`} />
+                  <span className="hidden sm:inline">Export</span>
+                  {isExporting && (
+                    <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-green-500 animate-ping" />
                   )}
                 </button>
-                
+              )}
+
+              {/* Reload Button */}
+              {showReloadBtn && onReload && (
                 <button
-                  onClick={() => {
-                    onDisplayModeChange?.("filename");
-                    setShowDropdown(false);
-                  }}
-                  className={`w-full px-3 py-2 text-left text-[13px] transition-all flex items-center gap-3 group
-                            ${displayMode === "filename" 
-                              ? 'bg-pink-500/10 text-pink-400' 
-                              : 'text-[#b4b4b4] hover:bg-white/5'
-                            }`}
+                  onClick={handleReload}
+                  className={`relative px-3 py-1.5 rounded-md text-[13px] font-medium transition-all
+                           flex items-center gap-2 text-[#e4e4e4] hover:bg-[#2d2d2d] group`}
+                  title="Reload data (⌘R)"
                 >
-                  <div className={`p-1 rounded ${displayMode === "filename" ? 'bg-pink-500/20' : 'bg-[#3d3d3d] group-hover:bg-[#4d4d4d]'}`}>
-                    <FileText size={14} className={displayMode === "filename" ? 'text-pink-400' : 'text-[#808080]'} />
-                  </div>
-                  <div className="flex-1">
-                    <div className="font-medium">File Name Only</div>
-                    <div className="text-[10px] text-[#808080]">Show just the file name</div>
-                  </div>
-                  {displayMode === "filename" && (
-                    <div className="w-1.5 h-1.5 rounded-full bg-pink-500" />
+                  <RefreshCw size={14} className={`transition-all ${isReloading ? 'animate-spin' : 'group-hover:rotate-180'}`} />
+                  <span className="hidden sm:inline">Reload</span>
+                  {isReloading && (
+                    <span className="absolute inset-0 rounded-md bg-blue-500/10 animate-pulse" />
                   )}
                 </button>
-
-                <div className="px-3 py-2 border-t border-[#3d3d3d] bg-[#252525]">
-                  <p className="text-[10px] text-[#808080] flex items-center gap-1.5">
-                    <Command size={10} />
-                    <span>Press ⌘D to toggle display</span>
-                  </p>
-                </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
 
-          {/* Action Buttons - n8n style with animations */}
-          <div className="flex items-center gap-1 ml-1">
-            {/* Export Button */}
-            {onExport && viewMode !== 'list' && (
+          {/* Right side - view switcher */}
+          <div className="flex items-center gap-3">
+            {/* Keyboard shortcut hint */}
+            <div className="hidden md:flex items-center gap-1 text-[10px] text-[#808080] bg-[#2d2d2d] px-2 py-1 rounded">
+              <Command size={10} />
+              <span>+</span>
+              <span className="flex gap-0.5">
+                <kbd className="px-1 bg-[#3d3d3d] rounded">1</kbd>
+                <span>/</span>
+                <kbd className="px-1 bg-[#3d3d3d] rounded">2</kbd>
+              </span>
+            </div>
+
+            {/* View Toggle */}
+            <div className="flex gap-1 bg-[#2d2d2d] rounded-md p-0.5">
               <button
-                onClick={handleExport}
-                className={`relative px-3 py-1.5 rounded-md text-[13px] font-medium transition-all
-                         flex items-center gap-2 text-[#e4e4e4] hover:bg-[#2d2d2d] group
-                         ${isExporting ? 'bg-green-500/20 text-green-400' : ''}`}
-                title="Export as PNG (⌘E)"
+                onClick={() => setViewMode("graph")}
+                className={`
+                  px-3 py-1.5 rounded text-[13px] font-medium transition-all duration-200
+                  flex items-center gap-2 relative overflow-hidden
+                  ${viewMode === "graph" 
+                    ? 'bg-pink-500 text-white shadow-sm' 
+                    : 'text-[#b4b4b4] hover:text-[#e4e4e4] hover:bg-white/5'
+                  }
+                `}
               >
-                <Download size={14} className={`transition-transform group-hover:scale-110 ${isExporting ? 'animate-bounce' : ''}`} />
-                <span className="hidden sm:inline">Export</span>
-                {isExporting && (
-                  <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-green-500 animate-ping" />
+                <Network size={14} />
+                <span className="hidden sm:inline">Graph</span>
+                {viewMode === "graph" && (
+                  <span className="absolute inset-0 bg-gradient-to-r from-pink-500/0 via-white/20 to-pink-500/0 animate-shimmer" />
                 )}
               </button>
-            )}
 
-            {/* Reload Button */}
-            {onReload && (
               <button
-                onClick={handleReload}
-                className={`relative px-3 py-1.5 rounded-md text-[13px] font-medium transition-all
-                         flex items-center gap-2 text-[#e4e4e4] hover:bg-[#2d2d2d] group`}
-                title="Reload data (⌘R)"
+                onClick={() => setViewMode("list")}
+                className={`
+                  px-3 py-1.5 rounded text-[13px] font-medium transition-all duration-200
+                  flex items-center gap-2 relative overflow-hidden
+                  ${viewMode === "list" 
+                    ? 'bg-pink-500 text-white shadow-sm' 
+                    : 'text-[#b4b4b4] hover:text-[#e4e4e4] hover:bg-white/5'
+                  }
+                `}
               >
-                <RefreshCw size={14} className={`transition-all ${isReloading ? 'animate-spin' : 'group-hover:rotate-180'}`} />
-                <span className="hidden sm:inline">Reload</span>
-                {isReloading && (
-                  <span className="absolute inset-0 rounded-md bg-blue-500/10 animate-pulse" />
+                <List size={14} />
+                <span className="hidden sm:inline">List</span>
+                {viewMode === "list" && (
+                  <span className="absolute inset-0 bg-gradient-to-r from-pink-500/0 via-white/20 to-pink-500/0 animate-shimmer" />
                 )}
               </button>
-            )}
+            </div>
           </div>
         </div>
+      </header>
 
-        {/* Right side - n8n style view switcher */}
-        <div className="flex items-center gap-3">
-          {/* Keyboard shortcut hint - Notion style */}
-          <div className="hidden md:flex items-center gap-1 text-[10px] text-[#808080] bg-[#2d2d2d] px-2 py-1 rounded">
-            <Command size={10} />
-            <span>+</span>
-            <span className="flex gap-0.5">
-              <kbd className="px-1 bg-[#3d3d3d] rounded">1</kbd>
-              <span>/</span>
-              <kbd className="px-1 bg-[#3d3d3d] rounded">2</kbd>
-            </span>
+      {/* Settings Modal */}
+      <Modal isOpen={showSettings} onClose={() => setShowSettings(false)} title="Settings">
+        <div className="space-y-4">
+          {/* Display Type Toggle */}
+          <div>
+            <label className="text-sm text-[#e4e4e4] block mb-2 font-medium">Display Type</label>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setDisplayMode("full")}
+                className={`flex-1 px-3 py-2 rounded text-sm font-medium transition-all ${
+                  displayMode === "full" 
+                    ? 'bg-pink-500 text-white' 
+                    : 'bg-[#2d2d2d] text-[#b4b4b4] hover:bg-[#3d3d3d]'
+                }`}
+              >
+                Full Path
+              </button>
+              <button
+                onClick={() => setDisplayMode("filename")}
+                className={`flex-1 px-3 py-2 rounded text-sm font-medium transition-all ${
+                  displayMode === "filename" 
+                    ? 'bg-pink-500 text-white' 
+                    : 'bg-[#2d2d2d] text-[#b4b4b4] hover:bg-[#3d3d3d]'
+                }`}
+              >
+                File Name
+              </button>
+            </div>
           </div>
 
-          {/* View Toggle - n8n workflow style */}
-          <div className="flex gap-1 bg-[#2d2d2d] rounded-md p-0.5">
+          {/* Show Export Button Toggle */}
+          <div className="flex items-center justify-between">
+            <label className="text-sm text-[#e4e4e4] font-medium">Show Export Button</label>
             <button
-              onClick={() => setViewMode("graph")}
-              className={`
-                px-3 py-1.5 rounded text-[13px] font-medium transition-all duration-200
-                flex items-center gap-2 relative overflow-hidden
-                ${viewMode === "graph" 
-                  ? 'bg-pink-500 text-white shadow-sm' 
-                  : 'text-[#b4b4b4] hover:text-[#e4e4e4] hover:bg-white/5'
-                }
-              `}
+              onClick={() => setShowExportBtn(!showExportBtn)}
+              className={`w-10 h-5 rounded-full transition-all ${showExportBtn ? 'bg-pink-500' : 'bg-[#3d3d3d]'}`}
             >
-              <Network size={14} />
-              <span className="hidden sm:inline">Graph</span>
-              {viewMode === "graph" && (
-                <span className="absolute inset-0 bg-gradient-to-r from-pink-500/0 via-white/20 to-pink-500/0 animate-shimmer" />
-              )}
-            </button>
-
-            <button
-              onClick={() => setViewMode("list")}
-              className={`
-                px-3 py-1.5 rounded text-[13px] font-medium transition-all duration-200
-                flex items-center gap-2 relative overflow-hidden
-                ${viewMode === "list" 
-                  ? 'bg-pink-500 text-white shadow-sm' 
-                  : 'text-[#b4b4b4] hover:text-[#e4e4e4] hover:bg-white/5'
-                }
-              `}
-            >
-              <List size={14} />
-              <span className="hidden sm:inline">List</span>
-              {viewMode === "list" && (
-                <span className="absolute inset-0 bg-gradient-to-r from-pink-500/0 via-white/20 to-pink-500/0 animate-shimmer" />
-              )}
+              <div className={`w-4 h-4 rounded-full bg-white transition-transform m-0.5 ${showExportBtn ? 'translate-x-5' : ''}`} />
             </button>
           </div>
 
-          {/* Quick settings indicator - n8n style */}
-          {/* <div className="h-6 w-px bg-[#2d2d2d] mx-1" /> */}
-          {/* <button className="p-1.5 rounded-md text-[#808080] hover:text-[#e4e4e4] hover:bg-[#2d2d2d] transition-all group">
-            <Sparkles size={14} className="group-hover:rotate-12 transition-transform" />
-          </button> */}
+          {/* Show Reload Button Toggle */}
+          <div className="flex items-center justify-between">
+            <label className="text-sm text-[#e4e4e4] font-medium">Show Reload Button</label>
+            <button
+              onClick={() => setShowReloadBtn(!showReloadBtn)}
+              className={`w-10 h-5 rounded-full transition-all ${showReloadBtn ? 'bg-pink-500' : 'bg-[#3d3d3d]'}`}
+            >
+              <div className={`w-4 h-4 rounded-full bg-white transition-transform m-0.5 ${showReloadBtn ? 'translate-x-5' : ''}`} />
+            </button>
+          </div>
+
+          {/* Enable Tooltips Toggle */}
+          <div className="flex items-center justify-between">
+            <label className="text-sm text-[#e4e4e4] font-medium">Enable Tooltips</label>
+            <button
+              onClick={() => setEnableTooltips(!enableTooltips)}
+              className={`w-10 h-5 rounded-full transition-all ${enableTooltips ? 'bg-pink-500' : 'bg-[#3d3d3d]'}`}
+            >
+              <div className={`w-4 h-4 rounded-full bg-white transition-transform m-0.5 ${enableTooltips ? 'translate-x-5' : ''}`} />
+            </button>
+          </div>
+
+          <div className="pt-2 border-t border-[#2d2d2d]">
+            <p className="text-[10px] text-[#808080] flex items-center gap-1.5">
+              <Command size={10} />
+              <span>Press ⌘D to open settings</span>
+            </p>
+          </div>
         </div>
-      </div>
-    </header>
+      </Modal>
+    </>
   );
 }

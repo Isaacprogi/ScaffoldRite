@@ -171,7 +171,7 @@ export function Sidebar({
               <span className="text-[10px] font-semibold text-[#808080] uppercase tracking-wider">Views</span>
             </div>
             
-            {(["all", "circular", "standalone"] as Mode[]).map((m) => {
+            {(["all","deps", "circular", "standalone"] as Mode[]).map((m) => {
               const count =
                 m === "all"
                   ? totalNodes

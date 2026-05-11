@@ -6,13 +6,13 @@ import { Header } from "./components/Header";
 import { GraphView } from "./components/Graph";
 import { ListView } from "./components/ListView";
 import {mockData} from '../data'
+import { useApp } from "./hooks/useApp";
 
 type DependencyMode = "all" | "circular" | "standalone";
-type ViewMode = "graph" | "list";
-type DisplayMode = "full" | "filename";
 
 export default function App() {
-  const { data, refetch, loading } = useGraph() || mockData ; // ✅ added loading
+  const { data, refetch, loading } = useGraph() || mockData ;
+  const { displayMode,viewMode } = useApp();
 // const loading = false
 // const data = mockData
 
@@ -21,8 +21,8 @@ export default function App() {
 // }
 
   const [dependencyMode, setDependencyMode] = useState<DependencyMode>("all");
-  const [viewMode, setViewMode] = useState<ViewMode>("graph");
-  const [displayMode, setDisplayMode] = useState<DisplayMode>("full");
+
+
 
   const cyRef = useRef<any>(null);
 
@@ -87,14 +87,10 @@ export default function App() {
 
         <div className="flex-1 overflow-hidden">
 
-          <Header 
-            viewMode={viewMode} 
-            setViewMode={setViewMode}
-            displayMode={displayMode}
-            onDisplayModeChange={setDisplayMode}
-            onExport={handleExport}
-            onReload={handleReload}
-          />
+         <Header
+        onExport={handleExport}
+        onReload={handleReload}
+      />
 
           {viewMode === "graph" ? (
             <GraphView 
