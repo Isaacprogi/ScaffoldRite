@@ -5,7 +5,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-black text-white overflow-hidden">
       {/* Background Glow */}
-      <div className="absolute inset-0 -z-10">gfvrgfvr4fv4rffvrsw
+      <div className="absolute inset-0 -z-10">
         <div className="absolute top-0 left-1/2 h-75 w-124 -translate-x-1/2 rounded-full bg-yellow-500/20 blur-3xl" />
         <div className="absolute bottom-0 right-0 h-75 w-125 rounded-full bg-yellow-400/10 blur-3xl" />
       </div>
