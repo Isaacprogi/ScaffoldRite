@@ -27,7 +27,7 @@
     "scaffoldrite": "./dist/cli.js",
     "sr": "./dist/cli.js"
   },
-   "files": [
+  "files": [
     "dist",
     "src/frontend/dist"
   ],

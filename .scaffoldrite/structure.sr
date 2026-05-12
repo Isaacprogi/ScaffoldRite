@@ -99,6 +99,492 @@ folder docs {
     file layout.shared.ts
     file source.ts
   }
+  folder out {
+    folder _next {
+      folder iNdruYhK-z6qzzAODW9iB {
+      }
+      folder static {
+        folder chunks {
+          file 0-o8li4go.451.js
+          file 0..ig2-kzqgq_.js
+          file 0046ozrbbtt6c.js
+          file 00hd2-y4owrri.js
+          file 020ze7z2zl8u~.js
+          file 03~yq9q893hmn.js
+          file 059qvjjf7sv~c.js
+          file 05l1curezjn.0.js
+          file 07af7u~zmj65h.js
+          file 0an6ghlpx-lke.js
+          file 0dvftgp9w5l-_.js
+          file 0kufu~k99i.nu.js
+          file 0mb~p9ur6oaq4.js
+          file 0nago9qzlcs7t.js
+          file 0o..lwo7gs0y3.js
+          file 0qee-.5krzu1x.js
+          file 0v7ha8__h94an.js
+          file 0wytmddo~8ibb.js
+          file 10a845p7pomcs.js
+          file 10yu8anjfrtjm.js
+          file 113yxnklumn39.js
+          file 11fwu962hffm0.js
+          file 12-f_5~59r1c1.js
+          file 12kneneiavkw_.js
+          file 15z.rhoxgr.40.js
+          file 16ug4-n1~-7we.css
+          file turbopack-0leqeuymvqtn7.js
+        }
+        folder iNdruYhK-z6qzzAODW9iB {
+          file _buildManifest.js
+          file _clientMiddlewareManifest.js
+          file _ssgManifest.js
+        }
+        folder media {
+          file favicon.0x3dzn~oxb6tn.ico
+        }
+      }
+    }
+    folder _not-found {
+      folder __next._not-found {
+        file __PAGE__.txt
+      }
+      file __next._full.txt
+      file __next._head.txt
+      file __next._index.txt
+      file __next._not-found.txt
+      file __next._tree.txt
+      file index.html
+      file index.txt
+    }
+    folder 404 {
+      file index.html
+    }
+    folder api {
+      file search
+    }
+    folder docs {
+      folder __next.docs {
+        folder $oc$slug {
+          file __PAGE__.txt
+        }
+        file $oc$slug.txt
+      }
+      folder advanced-scenarios {
+        folder __next.docs {
+          folder $oc$slug {
+            file __PAGE__.txt
+          }
+          file $oc$slug.txt
+        }
+        file __next._full.txt
+        file __next._head.txt
+        file __next._index.txt
+        file __next._tree.txt
+        file __next.docs.txt
+        file index.html
+        file index.txt
+      }
+      folder commands {
+        folder __next.docs {
+          folder $oc$slug {
+            file __PAGE__.txt
+          }
+          file $oc$slug.txt
+        }
+        folder command-reference {
+          folder __next.docs {
+            folder $oc$slug {
+              file __PAGE__.txt
+            }
+            file $oc$slug.txt
+          }
+          file __next._full.txt
+          file __next._head.txt
+          file __next._index.txt
+          file __next._tree.txt
+          file __next.docs.txt
+          file index.html
+          file index.txt
+        }
+        folder commands {
+          folder create {
+            folder __next.docs {
+              folder $oc$slug {
+                file __PAGE__.txt
+              }
+              file $oc$slug.txt
+            }
+            file __next._full.txt
+            file __next._head.txt
+            file __next._index.txt
+            file __next._tree.txt
+            file __next.docs.txt
+            file index.html
+            file index.txt
+          }
+          folder delete {
+            folder __next.docs {
+              folder $oc$slug {
+                file __PAGE__.txt
+              }
+              file $oc$slug.txt
+            }
+            file __next._full.txt
+            file __next._head.txt
+            file __next._index.txt
+            file __next._tree.txt
+            file __next.docs.txt
+            file index.html
+            file index.txt
+          }
+          folder find {
+            folder __next.docs {
+              folder $oc$slug {
+                file __PAGE__.txt
+              }
+              file $oc$slug.txt
+            }
+            file __next._full.txt
+            file __next._head.txt
+            file __next._index.txt
+            file __next._tree.txt
+            file __next.docs.txt
+            file index.html
+            file index.txt
+          }
+          folder generate {
+            folder __next.docs {
+              folder $oc$slug {
+                file __PAGE__.txt
+              }
+              file $oc$slug.txt
+            }
+            file __next._full.txt
+            file __next._head.txt
+            file __next._index.txt
+            file __next._tree.txt
+            file __next.docs.txt
+            file index.html
+            file index.txt
+          }
+          folder init {
+            folder __next.docs {
+              folder $oc$slug {
+                file __PAGE__.txt
+              }
+              file $oc$slug.txt
+            }
+            file __next._full.txt
+            file __next._head.txt
+            file __next._index.txt
+            file __next._tree.txt
+            file __next.docs.txt
+            file index.html
+            file index.txt
+          }
+          folder list {
+            folder __next.docs {
+              folder $oc$slug {
+                file __PAGE__.txt
+              }
+              file $oc$slug.txt
+            }
+            file __next._full.txt
+            file __next._head.txt
+            file __next._index.txt
+            file __next._tree.txt
+            file __next.docs.txt
+            file index.html
+            file index.txt
+          }
+          folder merge {
+            folder __next.docs {
+              folder $oc$slug {
+                file __PAGE__.txt
+              }
+              file $oc$slug.txt
+            }
+            file __next._full.txt
+            file __next._head.txt
+            file __next._index.txt
+            file __next._tree.txt
+            file __next.docs.txt
+            file index.html
+            file index.txt
+          }
+          folder rename {
+            folder __next.docs {
+              folder $oc$slug {
+                file __PAGE__.txt
+              }
+              file $oc$slug.txt
+            }
+            file __next._full.txt
+            file __next._head.txt
+            file __next._index.txt
+            file __next._tree.txt
+            file __next.docs.txt
+            file index.html
+            file index.txt
+          }
+          folder update {
+            folder __next.docs {
+              folder $oc$slug {
+                file __PAGE__.txt
+              }
+              file $oc$slug.txt
+            }
+            file __next._full.txt
+            file __next._head.txt
+            file __next._index.txt
+            file __next._tree.txt
+            file __next.docs.txt
+            file index.html
+            file index.txt
+          }
+          folder validate {
+            folder __next.docs {
+              folder $oc$slug {
+                file __PAGE__.txt
+              }
+              file $oc$slug.txt
+            }
+            file __next._full.txt
+            file __next._head.txt
+            file __next._index.txt
+            file __next._tree.txt
+            file __next.docs.txt
+            file index.html
+            file index.txt
+          }
+        }
+        folder flags-reference {
+          folder __next.docs {
+            folder $oc$slug {
+              file __PAGE__.txt
+            }
+            file $oc$slug.txt
+          }
+          file __next._full.txt
+          file __next._head.txt
+          file __next._index.txt
+          file __next._tree.txt
+          file __next.docs.txt
+          file index.html
+          file index.txt
+        }
+        folder positional-arguments {
+          folder __next.docs {
+            folder $oc$slug {
+              file __PAGE__.txt
+            }
+            file $oc$slug.txt
+          }
+          file __next._full.txt
+          file __next._head.txt
+          file __next._index.txt
+          file __next._tree.txt
+          file __next.docs.txt
+          file index.html
+          file index.txt
+        }
+        file __next._full.txt
+        file __next._head.txt
+        file __next._index.txt
+        file __next._tree.txt
+        file __next.docs.txt
+        file index.html
+        file index.txt
+      }
+      folder community-license {
+        folder __next.docs {
+          folder $oc$slug {
+            file __PAGE__.txt
+          }
+          file $oc$slug.txt
+        }
+        file __next._full.txt
+        file __next._head.txt
+        file __next._index.txt
+        file __next._tree.txt
+        file __next.docs.txt
+        file index.html
+        file index.txt
+      }
+      folder constraints {
+        folder __next.docs {
+          folder $oc$slug {
+            file __PAGE__.txt
+          }
+          file $oc$slug.txt
+        }
+        file __next._full.txt
+        file __next._head.txt
+        file __next._index.txt
+        file __next._tree.txt
+        file __next.docs.txt
+        file index.html
+        file index.txt
+      }
+      folder daily-workflows {
+        folder __next.docs {
+          folder $oc$slug {
+            file __PAGE__.txt
+          }
+          file $oc$slug.txt
+        }
+        file __next._full.txt
+        file __next._head.txt
+        file __next._index.txt
+        file __next._tree.txt
+        file __next.docs.txt
+        file index.html
+        file index.txt
+      }
+      folder faqs {
+        folder __next.docs {
+          folder $oc$slug {
+            file __PAGE__.txt
+          }
+          file $oc$slug.txt
+        }
+        file __next._full.txt
+        file __next._head.txt
+        file __next._index.txt
+        file __next._tree.txt
+        file __next.docs.txt
+        file index.html
+        file index.txt
+      }
+      folder filesystem-content-handling {
+        folder __next.docs {
+          folder $oc$slug {
+            file __PAGE__.txt
+          }
+          file $oc$slug.txt
+        }
+        file __next._full.txt
+        file __next._head.txt
+        file __next._index.txt
+        file __next._tree.txt
+        file __next.docs.txt
+        file index.html
+        file index.txt
+      }
+      folder getting-started {
+        folder __next.docs {
+          folder $oc$slug {
+            file __PAGE__.txt
+          }
+          file $oc$slug.txt
+        }
+        file __next._full.txt
+        file __next._head.txt
+        file __next._index.txt
+        file __next._tree.txt
+        file __next.docs.txt
+        file index.html
+        file index.txt
+      }
+      folder ignoring-files {
+        folder __next.docs {
+          folder $oc$slug {
+            file __PAGE__.txt
+          }
+          file $oc$slug.txt
+        }
+        file __next._full.txt
+        file __next._head.txt
+        file __next._index.txt
+        file __next._tree.txt
+        file __next.docs.txt
+        file index.html
+        file index.txt
+      }
+      folder project-configuration {
+        folder __next.docs {
+          folder $oc$slug {
+            file __PAGE__.txt
+          }
+          file $oc$slug.txt
+        }
+        file __next._full.txt
+        file __next._head.txt
+        file __next._index.txt
+        file __next._tree.txt
+        file __next.docs.txt
+        file index.html
+        file index.txt
+      }
+      folder real-world-workflows {
+        folder __next.docs {
+          folder $oc$slug {
+            file __PAGE__.txt
+          }
+          file $oc$slug.txt
+        }
+        file __next._full.txt
+        file __next._head.txt
+        file __next._index.txt
+        file __next._tree.txt
+        file __next.docs.txt
+        file index.html
+        file index.txt
+      }
+      folder release {
+        folder v3 {
+          folder __next.docs {
+            folder $oc$slug {
+              file __PAGE__.txt
+            }
+            file $oc$slug.txt
+          }
+          file __next._full.txt
+          file __next._head.txt
+          file __next._index.txt
+          file __next._tree.txt
+          file __next.docs.txt
+          file index.html
+          file index.txt
+        }
+      }
+      folder structure-language {
+        folder __next.docs {
+          folder $oc$slug {
+            file __PAGE__.txt
+          }
+          file $oc$slug.txt
+        }
+        file __next._full.txt
+        file __next._head.txt
+        file __next._index.txt
+        file __next._tree.txt
+        file __next.docs.txt
+        file index.html
+        file index.txt
+      }
+      file __next._full.txt
+      file __next._head.txt
+      file __next._index.txt
+      file __next._tree.txt
+      file __next.docs.txt
+      file index.html
+      file index.txt
+    }
+    file __next.__PAGE__.txt
+    file __next._full.txt
+    file __next._head.txt
+    file __next._index.txt
+    file __next._tree.txt
+    file 404.html
+    file favicon.ico
+    file file.svg
+    file globe.svg
+    file index.html
+    file index.txt
+    file next.svg
+    file vercel.svg
+    file window.svg
+  }
   folder public {
     file file.svg
     file globe.svg
@@ -236,6 +722,7 @@ folder tests {
 }
 file .gitignore
 file jest.config.mjs
+file npm
 file package.json
 file readme.md
 file tsconfig.json
