@@ -64,7 +64,6 @@
     "dotenv": "^17.2.3",
     "ignore": "^7.0.5",
     "minimatch": "^10.2.5",
-    "node-fetch": "^3.3.2",
-    "scaffoldrite": "file:scaffoldrite-2.2.0.tgz"
+    "node-fetch": "^3.3.2"
   }
 }
