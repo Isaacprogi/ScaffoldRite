@@ -1,4 +1,4 @@
-Here’s a **simplified GitHub README** version of your Scaffoldrite docs, keeping it clean and pointing users to the docs site:
+Here’s your **clean, simplified, production-ready README** with **npx included** and a pointer to docs:
 
 ---
 
@@ -17,35 +17,44 @@ Your project’s architecture should be as reliable as your code. Scaffoldrite m
 
 ## 🚀 What is Scaffoldrite?
 
-Scaffoldrite is a CLI tool that lets you:
+Scaffoldrite is a CLI tool that helps you:
 
-* Define your project structure in a single file (`structure.sr`)
+* Define project structure in a single file (`structure.sr`)
 * Enforce architecture rules with constraints
-* Generate and validate consistent project layouts
-* Prevent structural chaos before it starts
+* Generate consistent project scaffolds
+* Validate filesystem structure automatically
 
 ---
 
 ## ⚡ Quick Start
 
-```bash
+### Run instantly (recommended)
+
+```bash id="8xq1p2"
+npx scaffoldrite init
+npx scaffoldrite generate .
+```
+
+---
+
+### Or install globally
+
+```bash id="k9d2lm"
 npm install -g scaffoldrite
 ```
 
-```bash
+```bash id="p3xv8a"
 sr init
 sr generate .
 ```
-
-That’s it. Your structure becomes reality.
 
 ---
 
 ## 📁 Core Idea
 
-You define your project like this:
+You define your project structure:
 
-```sr
+```sr id="structure_example"
 folder src {
   folder components {
     file Button.tsx
@@ -58,28 +67,36 @@ constraints {
 }
 ```
 
-Scaffoldrite ensures your filesystem always matches this blueprint.
+Scaffoldrite ensures your filesystem matches this blueprint.
 
 ---
 
 ## 🧠 Key Features
 
-* 🏗 Declarative project structure (`structure.sr`)
-* 🧱 Strong structural constraints (lint your folders)
-* ⚙ CLI-first workflow (init, generate, validate, update)
-* 🔁 Sync between filesystem and structure definition
-* 📦 Template generation for real-world projects
+* Declarative project structure (`structure.sr`)
+* Enforceable constraints for architecture rules
+* CLI-based workflow (init, generate, validate, update)
+* Sync between filesystem and structure definition
+* Template-friendly project generation
 
 ---
 
 ## 🛠 Common Commands
 
-```bash
-sr init                # create structure blueprint
-sr generate .          # generate project structure
-sr validate            # check compliance
-sr update --from-fs .  # sync from filesystem
-sr find Button         # search structure
+```bash id="cmds"
+npx scaffoldrite init
+npx scaffoldrite generate .
+npx scaffoldrite validate
+npx scaffoldrite update --from-fs .
+npx scaffoldrite find Button
+```
+
+Or using global install:
+
+```bash id="cmds_global"
+sr init
+sr generate .
+sr validate
 ```
 
 ---
@@ -96,16 +113,16 @@ sr find Button         # search structure
 
 ## 📖 Documentation
 
-Full documentation, guides, constraints reference, and advanced usage:
+Full documentation, guides, and advanced usage:
 
-👉 **[https://github.com/isaacprogi/scaffoldrite](https://github.com/isaacprogi/scaffoldrite)**
+👉 [https://github.com/isaacprogi/scaffoldrite](https://github.com/isaacprogi/scaffoldrite)
 
 ---
 
 ## 🤝 Community
 
-* ⭐ Star the project: [https://github.com/Isaacprogi/scaffoldrite](https://github.com/Isaacprogi/scaffoldrite)
-* 🐛 Report issues: [https://github.com/Isaacprogi/scaffoldrite/issues](https://github.com/Isaacprogi/scaffoldrite/issues)
+* ⭐ Star: [https://github.com/Isaacprogi/scaffoldrite](https://github.com/Isaacprogi/scaffoldrite)
+* 🐛 Issues: [https://github.com/Isaacprogi/scaffoldrite/issues](https://github.com/Isaacprogi/scaffoldrite/issues)
 * 💬 Discussions: [https://github.com/Isaacprogi/scaffoldrite/discussions](https://github.com/Isaacprogi/scaffoldrite/discussions)
 
 ---
@@ -116,6 +133,6 @@ MIT
 
 ---
 
-**Build structure like you build code — intentionally.**
+**Your project structure is code. Treat it that way.**
 
 *Happy structuring 🏗️*
