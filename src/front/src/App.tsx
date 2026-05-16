@@ -12,7 +12,6 @@ export default function App() {
   const { displayMode, viewMode, dependencyMode, setDependencyMode } = useApp();
   const [isMobile, setIsMobile] = useState(false);
 
-
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768);
@@ -22,7 +21,6 @@ export default function App() {
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
-
 
   const totalNodes = Object.keys(data?.graph || {}).length;
   const circularCount = data?.circular?.length || 0;
@@ -59,12 +57,12 @@ export default function App() {
 
   if (loading && !data) {
     return (
-      <div className="flex items-center justify-center h-screen bg-slate-900 text-white">
+      <div className="flex items-center justify-center h-screen bg-[#1e1e1e] text-white">
         <div className="text-center px-4">
-          <div className="text-4xl mb-4 animate-pulse">📊</div>
+          <div className="inline-block w-12 h-12 border-4 border-gray-600 border-t-blue-500 rounded-full animate-spin mb-4"></div>
           <p>Loading graph data...</p>
           <p className="text-xs text-slate-500 mt-2">
-            Fetching from localhost:3210/graph
+            Fetching from localhost:3210
           </p>
         </div>
       </div>
