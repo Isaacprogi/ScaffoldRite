@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ArrowRight, FolderTree, ShieldCheck, Sparkles } from "lucide-react";
-import Logo from '../app/assets/logo.png'
+import Logo from "../app/assets/logo.png";
 import Image from "next/image";
 
 export default function Home() {
@@ -15,16 +15,19 @@ export default function Home() {
       {/* Navbar */}
       <header className="border-b border-white/10">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
-          <div className="flex items-center gap-3">
-            <div className="flex  items-center justify-center rounded-xl text-black font-black text-lg">
-              <Image src={Logo} alt="Scaffoldrite Logo" className="h-20 w-20" />
-            </div>
+          <div className="flex items-center gap-2">
+            <Image src={Logo} alt="Scaffoldrite Logo" className="h-24 w-24" />
+            <span className="text-m font-medium text-[#e4e4e4] tracking-tight">
+              <span className="text-blue-400">Scaffold</span>
 
-            <div>
-              <h1 className="text-lg font-bold tracking-tight">
-                Scaffoldrite
-              </h1>
-            </div>
+              <span className="text-amber-400">rite</span>
+            </span>
+          </div>
+
+          {/* Animated line */}
+          <div className="flex-1 mx-8 mt-1 bg-blue-600 relative">
+            <div className="h-px w-full bg-yellow-400/20" />
+            <div className="absolute top-0 left-0 h-px w-1/3 bg-yellow-400 animate-pulse" />
           </div>
 
           <Link
@@ -38,8 +41,6 @@ export default function Home() {
 
       {/* Hero */}
       <main className="mx-auto flex max-w-7xl flex-col items-center px-6 py-24 text-center">
-       
-
         <h1 className="max-w-5xl text-5xl font-black leading-tight tracking-tight sm:text-7xl">
           Structure your projects
           <span className="text-yellow-400"> the right way.</span>
@@ -47,7 +48,7 @@ export default function Home() {
 
         <p className="mt-8 max-w-2xl text-lg leading-8 text-zinc-400 sm:text-xl">
           Scaffoldrite helps developers define, enforce, and generate scalable
-          folder structures with powerful templates and automation.
+          folder structures.
         </p>
 
         <div className="mt-12 flex flex-col gap-4 sm:flex-row">
@@ -78,18 +79,14 @@ export default function Home() {
           </div>
 
           <div className="overflow-hidden rounded-2xl border border-white/10 bg-black p-6 text-left font-mono text-sm text-zinc-300">
-            <p className="text-yellow-400">
-              npx scaffoldrite generate .
-            </p>
+            <p className="text-yellow-400">npx scaffoldrite generate .</p>
 
             <div className="mt-6 space-y-2 text-zinc-400">
               <p>✔ Parsing structure.sr</p>
               <p>✔ Validating structure</p>
               <p>✔ Generating folders</p>
               <p>✔ Creating files</p>
-              <p className="text-green-400">
-                ✔ Project generated successfully
-              </p>
+              <p className="text-green-400">✔ Project generated successfully</p>
             </div>
           </div>
         </div>
@@ -102,9 +99,8 @@ export default function Home() {
             <h3 className="text-xl font-bold">Define Structures</h3>
 
             <p className="mt-3 leading-7 text-zinc-400">
-              Create reusable and scalable project structures using the
-              powerful <span className="text-yellow-300">structure.sr</span>{" "}
-              format.
+              Create reusable and scalable project structures using the powerful{" "}
+              <span className="text-yellow-300">structure.sr</span> format.
             </p>
           </div>
 
